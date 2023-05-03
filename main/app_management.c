@@ -1,26 +1,16 @@
 #include <esp_err.h>
 #include <esp_log.h>
-#include <esp_system.h>
 #include <freertos/FreeRTOS.h>
-#include <freertos/queue.h>
-#include <freertos/task.h>
 #include <sdkconfig.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 
 #include "appfs_wrapper.h"
-#include "bootscreen.h"
 #include "cJSON.h"
-#include "filesystems.h"
 #include "graphics_wrapper.h"
 #include "hardware.h"
 #include "http_download.h"
-#include "menu.h"
-#include "metadata.h"
-#include "pax_codecs.h"
-#include "pax_gfx.h"
-#include "rp2040.h"
 #include "system_wrapper.h"
 #include "wifi_connect.h"
 

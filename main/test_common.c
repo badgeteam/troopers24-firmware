@@ -7,33 +7,34 @@
 #include <unistd.h>
 
 #include "hardware.h"
-#include "ice40.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
 
 typedef bool (*test_fn)(uint32_t *rc);
 
 bool test_wait_for_response(uint32_t *rc) {
     printf("Waiting for button press...\r\n");
-    RP2040                *rp2040         = get_rp2040();
-    rp2040_input_message_t button_message = {0};
+
+    // TODO: Replace
+//    rp2040_input_message_t button_message = {0};
+
     if (rc != NULL) *rc = 0;
     while (1) {
-        if (xQueueReceive(rp2040->queue, &button_message, portMAX_DELAY) == pdTRUE) {
-            if (button_message.state) {
-                switch (button_message.input) {
-                    case RP2040_INPUT_BUTTON_HOME:
-                    case RP2040_INPUT_BUTTON_MENU:
-                    case RP2040_INPUT_BUTTON_BACK:
-                        return false;
-                    case RP2040_INPUT_BUTTON_ACCEPT:
-                        if (rc != NULL) *rc = 1;
-                        return true;
-                    default:
-                        break;
-                }
-            }
-        }
+        // TODO: Replace
+//        if (xQueueReceive(rp2040->queue, &button_message, portMAX_DELAY) == pdTRUE) {
+//            if (button_message.state) {
+//                switch (button_message.input) {
+//                    case RP2040_INPUT_BUTTON_HOME:
+//                    case RP2040_INPUT_BUTTON_MENU:
+//                    case RP2040_INPUT_BUTTON_BACK:
+//                        return false;
+//                    case RP2040_INPUT_BUTTON_ACCEPT:
+//                        if (rc != NULL) *rc = 1;
+//                        return true;
+//                    default:
+//                        break;
+//                }
+//            }
+//        }
     }
 }
 

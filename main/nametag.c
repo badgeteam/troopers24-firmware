@@ -18,7 +18,6 @@
 #include "hardware.h"
 #include "nvs.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
 #include "sdkconfig.h"
 #include "soc/rtc.h"
 #include "wifi_connect.h"
@@ -110,7 +109,7 @@ static void show_name(xQueueHandle button_queue, const char *name, nickname_them
 }
 
 static void place_in_sleep(xQueueHandle button_queue) {
-    esp_sleep_enable_ext0_wakeup(GPIO_INT_RP2040, false);
+    esp_sleep_enable_ext0_wakeup(GPIO_INT_KEY, false);
     ESP_LOGW(TAG, "Entering deep sleep now!");
     fflush(stdout);
     fflush(stderr);
@@ -181,7 +180,6 @@ void show_nametag(xQueueHandle button_queue) {
     if (theme != NICKNAME_THEME_GAMER) {
         ESP_LOGI(TAG, "Scheduled sleep in %d millis", SLEEP_DELAY);
     }
-    rp2040_input_message_t msg;
     bool                   quit = false;
     while (!quit) {
         if (esp_timer_get_time() / 1000 > sleep_time) {
@@ -194,35 +192,37 @@ void show_nametag(xQueueHandle button_queue) {
             }
         }
         show_name(button_queue, buffer, theme, true);
-        if (xQueueReceive(button_queue, &msg, pdMS_TO_TICKS(SLEEP_DELAY + 10))) {
-            if (msg.state) {
-                switch (msg.input) {
-                    case RP2040_INPUT_JOYSTICK_LEFT:
-                    case RP2040_INPUT_JOYSTICK_RIGHT:
-                    case RP2040_INPUT_JOYSTICK_DOWN:
-                    case RP2040_INPUT_JOYSTICK_UP:
-                        hue = esp_random() & 255;
-                        break;
-                    case RP2040_INPUT_BUTTON_BACK:
-                    case RP2040_INPUT_BUTTON_HOME:
-                        quit = true;
-                        break;
-                    case RP2040_INPUT_BUTTON_MENU:
-                        edit_nickname(button_queue);
-                        free(buffer);
-                        buffer = read_nickname();
-                        break;
-                    case RP2040_INPUT_BUTTON_SELECT:
-                        theme = (theme + 1) % NICKNAME_THEME_LAST;
-                        set_theme(theme);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            sleep_time = esp_timer_get_time() / 1000 + SLEEP_DELAY;
-            ESP_LOGI(TAG, "Recheduled sleep in %d millis", SLEEP_DELAY);
-        }
+        // TODO: Replace
+//        rp2040_input_message_t msg;
+//        if (xQueueReceive(button_queue, &msg, pdMS_TO_TICKS(SLEEP_DELAY + 10))) {
+//            if (msg.state) {
+//                switch (msg.input) {
+//                    case RP2040_INPUT_JOYSTICK_LEFT:
+//                    case RP2040_INPUT_JOYSTICK_RIGHT:
+//                    case RP2040_INPUT_JOYSTICK_DOWN:
+//                    case RP2040_INPUT_JOYSTICK_UP:
+//                        hue = esp_random() & 255;
+//                        break;
+//                    case RP2040_INPUT_BUTTON_BACK:
+//                    case RP2040_INPUT_BUTTON_HOME:
+//                        quit = true;
+//                        break;
+//                    case RP2040_INPUT_BUTTON_MENU:
+//                        edit_nickname(button_queue);
+//                        free(buffer);
+//                        buffer = read_nickname();
+//                        break;
+//                    case RP2040_INPUT_BUTTON_SELECT:
+//                        theme = (theme + 1) % NICKNAME_THEME_LAST;
+//                        set_theme(theme);
+//                        break;
+//                    default:
+//                        break;
+//                }
+//            }
+//            sleep_time = esp_timer_get_time() / 1000 + SLEEP_DELAY;
+//            ESP_LOGI(TAG, "Recheduled sleep in %d millis", SLEEP_DELAY);
+//        }
     }
 
     uint8_t led_buffer[50 * 3] = {0};

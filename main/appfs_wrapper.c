@@ -17,7 +17,6 @@
 #include "hardware.h"
 #include "menu.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
 #include "soc/rtc.h"
 #include "soc/rtc_cntl_reg.h"
 #include "system_wrapper.h"

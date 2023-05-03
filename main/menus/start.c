@@ -19,7 +19,6 @@
 #include "nametag.h"
 #include "pax_codecs.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
 #include "sao.h"
 #include "sao_eeprom.h"
 #include "settings.h"
@@ -59,7 +58,6 @@ typedef enum action {
     ACTION_SETTINGS,
     ACTION_UPDATE,
     ACTION_OTA,
-    ACTION_MSC,
     ACTION_SAO
 } menu_start_action_t;
 
@@ -126,7 +124,8 @@ void menu_start(xQueueHandle button_queue, const char* version) {
     menu_insert_item_icon(menu, "Settings", NULL, (void*) ACTION_SETTINGS, -1, &icon_settings);
     menu_insert_item_icon(menu, "App update", NULL, (void*) ACTION_UPDATE, -1, &icon_update);
     menu_insert_item_icon(menu, "OS update", NULL, (void*) ACTION_OTA, -1, &icon_update);
-    // menu_insert_item_icon(menu, "Disk", NULL, (void*) ACTION_MSC, -1, &icon_dev);
+
+    printf("[!!!] 1\n");
 
     SAO sao = {0};
     sao_identify(&sao);
@@ -139,97 +138,64 @@ void menu_start(xQueueHandle button_queue, const char* version) {
     bool                render = true;
     menu_start_action_t action = ACTION_NONE;
 
-    uint8_t analogReadTimer = 0;
-    float   battery_voltage = 0;
-    float   usb_voltage     = 0;
-
-    uint8_t battery_percent  = 0;
-    bool    battery_charging = false;
-
-    RP2040* rp2040 = get_rp2040();
-
     bool full_redraw = true;
     while (1) {
-        rp2040_input_message_t buttonMessage = {0};
         bool                   user_input    = false;
-        if (xQueueReceive(button_queue, &buttonMessage, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-            if (buttonMessage.state) {
-                switch (buttonMessage.input) {
-                    case RP2040_INPUT_JOYSTICK_DOWN:
-                        menu_navigate_next_row(menu);
-                        user_input  = true;
-                        render      = true;
-                        full_redraw = true;
-                        break;
-                    case RP2040_INPUT_JOYSTICK_UP:
-                        menu_navigate_previous_row(menu);
-                        user_input  = true;
-                        render      = true;
-                        full_redraw = true;
-                        break;
-                    case RP2040_INPUT_JOYSTICK_LEFT:
-                        menu_navigate_previous(menu);
-                        user_input = true;
-                        render     = true;
-                        break;
-                    case RP2040_INPUT_JOYSTICK_RIGHT:
-                        menu_navigate_next(menu);
-                        user_input = true;
-                        render     = true;
-                        break;
-                    case RP2040_INPUT_BUTTON_ACCEPT:
-                    case RP2040_INPUT_JOYSTICK_PRESS:
-                    case RP2040_INPUT_BUTTON_SELECT:
-                    case RP2040_INPUT_BUTTON_START:
-                        action = (menu_start_action_t) menu_get_callback_args(menu, menu_get_position(menu));
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        if (analogReadTimer > 0) {
-            analogReadTimer--;
-        } else {
-            analogReadTimer = 10;  // No need to update these values really quickly
-            if (rp2040_read_vbat(rp2040, &battery_voltage) != ESP_OK) {
-                battery_voltage = 0;
-            }
-            if (rp2040_read_vusb(rp2040, &usb_voltage) != ESP_OK) {
-                usb_voltage = 0;
-            }
-
-            if (battery_voltage >= 3.6) {
-                battery_percent = ((battery_voltage - 3.6) * 100) / (4.1 - 3.6);
-                if (battery_percent > 100) battery_percent = 100;
-            } else {
-                battery_percent = 0;
-            }
-
-            battery_charging = (usb_voltage > 4.0) && (battery_percent < 100);
-
-            render = true;
-        }
+        // TODO: Use our keyboard module
+//        rp2040_input_message_t buttonMessage = {0};
+//        if (xQueueReceive(button_queue, &buttonMessage, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+//            if (buttonMessage.state) {
+//                switch (buttonMessage.input) {
+//                    case RP2040_INPUT_JOYSTICK_DOWN:
+//                        menu_navigate_next_row(menu);
+//                        user_input  = true;
+//                        render      = true;
+//                        full_redraw = true;
+//                        break;
+//                    case RP2040_INPUT_JOYSTICK_UP:
+//                        menu_navigate_previous_row(menu);
+//                        user_input  = true;
+//                        render      = true;
+//                        full_redraw = true;
+//                        break;
+//                    case RP2040_INPUT_JOYSTICK_LEFT:
+//                        menu_navigate_previous(menu);
+//                        user_input = true;
+//                        render     = true;
+//                        break;
+//                    case RP2040_INPUT_JOYSTICK_RIGHT:
+//                        menu_navigate_next(menu);
+//                        user_input = true;
+//                        render     = true;
+//                        break;
+//                    case RP2040_INPUT_BUTTON_ACCEPT:
+//                    case RP2040_INPUT_JOYSTICK_PRESS:
+//                    case RP2040_INPUT_BUTTON_SELECT:
+//                    case RP2040_INPUT_BUTTON_START:
+//                        action = (menu_start_action_t) menu_get_callback_args(menu, menu_get_position(menu));
+//                        break;
+//                    default:
+//                        break;
+//                }
+//            }
+//        }
 
         if (render) {
             if (full_redraw) {
+                printf("[!!!] 3\n");
                 char textBuffer[64];
                 snprintf(textBuffer, sizeof(textBuffer), "v%s", version);
                 render_start_help(pax_buffer, textBuffer);
             }
             if (full_redraw || user_input) {
+                printf("[!!!] 4\n");
                 if (full_redraw) {
                     menu_render_grid(pax_buffer, menu, 0, 0, 320, 220);
-                    render_battery(pax_buffer, battery_percent, battery_charging);
                     display_flush();
                 } else {
                     menu_render_grid_changes(pax_buffer, menu, 0, 0, 320, 220);
                     display_flush();
                 }
-            } else {
-                render_battery(pax_buffer, battery_percent, battery_charging);
-                display_flush();
             }
 
             render      = false;
@@ -251,10 +217,6 @@ void menu_start(xQueueHandle button_queue, const char* version) {
                 update_apps(button_queue);
             } else if (action == ACTION_OTA) {
                 ota_update(false);
-            } else if (action == ACTION_MSC) {
-                display_boot_screen("Starting mass storage mode...");
-                rp2040_set_msc_control(rp2040, 0x01);  // Signal starting
-                esp_restart();
             } else if (action == ACTION_SAO) {
                 menu_sao(button_queue);
             }

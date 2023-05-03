@@ -4,7 +4,6 @@
 
 #include "hardware.h"
 #include "pax_keyboard.h"
-#include "rp2040.h"
 
 void render_outline(float position_x, float position_y, float width, float height, pax_col_t border_color, pax_col_t background_color) {
     pax_buf_t* pax_buffer = get_pax_buffer();
@@ -77,76 +76,77 @@ bool keyboard(xQueueHandle buttonQueue, float aPosX, float aPosY, float aWidth, 
 
     bool running = true;
     while (running) {
-        rp2040_input_message_t buttonMessage = {0};
-        if (xQueueReceive(buttonQueue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-            uint8_t pin   = buttonMessage.input;
-            bool    value = buttonMessage.state;
-            switch (pin) {
-                case RP2040_INPUT_JOYSTICK_DOWN:
-                    if (value) {
-                        pkb_press(&kb_ctx, PKB_DOWN);
-                    } else {
-                        pkb_release(&kb_ctx, PKB_DOWN);
-                    }
-                    break;
-                case RP2040_INPUT_JOYSTICK_UP:
-                    if (value) {
-                        pkb_press(&kb_ctx, PKB_UP);
-                    } else {
-                        pkb_release(&kb_ctx, PKB_UP);
-                    }
-                    break;
-                case RP2040_INPUT_JOYSTICK_LEFT:
-                    if (value) {
-                        pkb_press(&kb_ctx, PKB_LEFT);
-                    } else {
-                        pkb_release(&kb_ctx, PKB_LEFT);
-                    }
-                    break;
-                case RP2040_INPUT_JOYSTICK_RIGHT:
-                    if (value) {
-                        pkb_press(&kb_ctx, PKB_RIGHT);
-                    } else {
-                        pkb_release(&kb_ctx, PKB_RIGHT);
-                    }
-                    break;
-                case RP2040_INPUT_JOYSTICK_PRESS:
-                    if (value) {
-                        pkb_press(&kb_ctx, PKB_SHIFT);
-                    } else {
-                        pkb_release(&kb_ctx, PKB_SHIFT);
-                    }
-                    break;
-                case RP2040_INPUT_BUTTON_ACCEPT:
-                    if (value) {
-                        pkb_press(&kb_ctx, PKB_CHARSELECT);
-                    } else {
-                        pkb_release(&kb_ctx, PKB_CHARSELECT);
-                    }
-                    break;
-                case RP2040_INPUT_BUTTON_BACK:
-                    if (value) {
-                        pkb_press(&kb_ctx, PKB_DELETE_BEFORE);
-                    } else {
-                        pkb_release(&kb_ctx, PKB_DELETE_BEFORE);
-                    }
-                    break;
-                case RP2040_INPUT_BUTTON_SELECT:
-                    if (value) {
-                        pkb_press(&kb_ctx, PKB_MODESELECT);
-                    } else {
-                        pkb_release(&kb_ctx, PKB_MODESELECT);
-                    }
-                    break;
-                case RP2040_INPUT_BUTTON_HOME:
-                    if (value) {
-                        running = false;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
+        // TODO: Implement
+//        rp2040_input_message_t buttonMessage = {0};
+//        if (xQueueReceive(buttonQueue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+//            uint8_t pin   = buttonMessage.input;
+//            bool    value = buttonMessage.state;
+//            switch (pin) {
+//                case RP2040_INPUT_JOYSTICK_DOWN:
+//                    if (value) {
+//                        pkb_press(&kb_ctx, PKB_DOWN);
+//                    } else {
+//                        pkb_release(&kb_ctx, PKB_DOWN);
+//                    }
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_UP:
+//                    if (value) {
+//                        pkb_press(&kb_ctx, PKB_UP);
+//                    } else {
+//                        pkb_release(&kb_ctx, PKB_UP);
+//                    }
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_LEFT:
+//                    if (value) {
+//                        pkb_press(&kb_ctx, PKB_LEFT);
+//                    } else {
+//                        pkb_release(&kb_ctx, PKB_LEFT);
+//                    }
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_RIGHT:
+//                    if (value) {
+//                        pkb_press(&kb_ctx, PKB_RIGHT);
+//                    } else {
+//                        pkb_release(&kb_ctx, PKB_RIGHT);
+//                    }
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_PRESS:
+//                    if (value) {
+//                        pkb_press(&kb_ctx, PKB_SHIFT);
+//                    } else {
+//                        pkb_release(&kb_ctx, PKB_SHIFT);
+//                    }
+//                    break;
+//                case RP2040_INPUT_BUTTON_ACCEPT:
+//                    if (value) {
+//                        pkb_press(&kb_ctx, PKB_CHARSELECT);
+//                    } else {
+//                        pkb_release(&kb_ctx, PKB_CHARSELECT);
+//                    }
+//                    break;
+//                case RP2040_INPUT_BUTTON_BACK:
+//                    if (value) {
+//                        pkb_press(&kb_ctx, PKB_DELETE_BEFORE);
+//                    } else {
+//                        pkb_release(&kb_ctx, PKB_DELETE_BEFORE);
+//                    }
+//                    break;
+//                case RP2040_INPUT_BUTTON_SELECT:
+//                    if (value) {
+//                        pkb_press(&kb_ctx, PKB_MODESELECT);
+//                    } else {
+//                        pkb_release(&kb_ctx, PKB_MODESELECT);
+//                    }
+//                    break;
+//                case RP2040_INPUT_BUTTON_HOME:
+//                    if (value) {
+//                        running = false;
+//                    }
+//                    break;
+//                default:
+//                    break;
+//            }
+//        }
         pkb_loop(&kb_ctx);
         if (kb_ctx.dirty) {
             pkb_redraw(pax_buffer, &kb_ctx);

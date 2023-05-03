@@ -77,7 +77,7 @@ esp_err_t format_internal_filesystem() {
 }
 
 esp_err_t mount_sdcard_filesystem() {
-    esp_err_t res  = mount_sd(GPIO_SD_CMD, GPIO_SD_CLK, GPIO_SD_D0, GPIO_SD_PWR, "/sd", false, 5);
+    esp_err_t res  = mount_sd(GPIO_SD_CMD, GPIO_SD_CLK, GPIO_SD_D0, 0, "/sd", false, 5);
     sdcard_mounted = (res == ESP_OK);
     return res;
 }

@@ -23,7 +23,6 @@
 #include "metadata.h"
 #include "pax_codecs.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
 #include "system_wrapper.h"
 #include "wifi_connect.h"
 
@@ -59,14 +58,16 @@ static void hatchery_menu_destroy(menu_t* menu) {
 }
 
 int wait_for_button_press(xQueueHandle button_queue, TickType_t timeout) {
-    int button = -1;
-    while (true) {
-        rp2040_input_message_t message;
-        xQueueReceive(button_queue, &message, portMAX_DELAY);
-        button = message.input;
-        if (message.state) break;
-    }
-    return button;
+    return -1;
+    // TODO: Replace
+//    int button = -1;
+//    while (true) {
+//        rp2040_input_message_t message;
+//        xQueueReceive(button_queue, &message, portMAX_DELAY);
+//        button = message.input;
+//        if (message.state) break;
+//    }
+//    return button;
 }
 
 static void* hatchery_menu_show(xQueueHandle button_queue, menu_t* menu, const char* prompt, bool* back_btn, bool* select_btn, bool* menu_btn, bool* home_btn) {
@@ -85,39 +86,40 @@ static void* hatchery_menu_show(xQueueHandle button_queue, menu_t* menu, const c
 
         int button   = wait_for_button_press(button_queue, portMAX_DELAY);
         return_value = menu_get_callback_args(menu, menu_get_position(menu));
-        switch (button) {
-            case RP2040_INPUT_JOYSTICK_DOWN:
-                menu_navigate_next(menu);
-                render = true;
-                break;
-            case RP2040_INPUT_JOYSTICK_UP:
-                menu_navigate_previous(menu);
-                render = true;
-                break;
-            case RP2040_INPUT_BUTTON_ACCEPT:
-            case RP2040_INPUT_JOYSTICK_PRESS:
-            case RP2040_INPUT_BUTTON_START:
-                quit = true;
-                break;
-            case RP2040_INPUT_BUTTON_BACK:
-                quit = true;
-                if (back_btn) *back_btn = true;
-                break;
-            case RP2040_INPUT_BUTTON_SELECT:
-                quit = true;
-                if (select_btn) *select_btn = true;
-                break;
-            case RP2040_INPUT_BUTTON_MENU:
-                quit = true;
-                if (menu_btn) *menu_btn = true;
-                break;
-            case RP2040_INPUT_BUTTON_HOME:
-                quit = true;
-                if (home_btn) *home_btn = true;
-                break;
-            default:
-                break;
-        }
+        // TODO: Replace
+//        switch (button) {
+//            case RP2040_INPUT_JOYSTICK_DOWN:
+//                menu_navigate_next(menu);
+//                render = true;
+//                break;
+//            case RP2040_INPUT_JOYSTICK_UP:
+//                menu_navigate_previous(menu);
+//                render = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_ACCEPT:
+//            case RP2040_INPUT_JOYSTICK_PRESS:
+//            case RP2040_INPUT_BUTTON_START:
+//                quit = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_BACK:
+//                quit = true;
+//                if (back_btn) *back_btn = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_SELECT:
+//                quit = true;
+//                if (select_btn) *select_btn = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_MENU:
+//                quit = true;
+//                if (menu_btn) *menu_btn = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_HOME:
+//                quit = true;
+//                if (home_btn) *home_btn = true;
+//                break;
+//            default:
+//                break;
+//        }
     }
 
     return return_value;
@@ -345,43 +347,44 @@ bool menu_hatchery_install_app(xQueueHandle button_queue, const char* type_slug)
         }
 
         int button = wait_for_button_press(button_queue, portMAX_DELAY);
-        switch (button) {
-            case RP2040_INPUT_JOYSTICK_DOWN:
-                menu_navigate_next(menu);
-                render = true;
-                break;
-            case RP2040_INPUT_JOYSTICK_UP:
-                menu_navigate_previous(menu);
-                render = true;
-                break;
-            case RP2040_INPUT_BUTTON_ACCEPT:
-            case RP2040_INPUT_JOYSTICK_PRESS:
-            case RP2040_INPUT_BUTTON_START:
-                {
-                    int action = (int) menu_get_callback_args(menu, menu_get_position(menu));
-                    switch (action) {
-                        case 0:
-                            result = menu_hatchery_install_app_execute(button_queue, type_slug, false);
-                            break;
-                        case 1:
-                            result = menu_hatchery_install_app_execute(button_queue, type_slug, true);
-                            break;
-                        case 2:
-                        default:
-                            break;
-                    }
-                    quit = true;
-                    break;
-                }
-            case RP2040_INPUT_BUTTON_BACK:
-            case RP2040_INPUT_BUTTON_SELECT:
-            case RP2040_INPUT_BUTTON_MENU:
-            case RP2040_INPUT_BUTTON_HOME:
-                quit = true;
-                break;
-            default:
-                break;
-        }
+        // TODO: Replace
+//        switch (button) {
+//            case RP2040_INPUT_JOYSTICK_DOWN:
+//                menu_navigate_next(menu);
+//                render = true;
+//                break;
+//            case RP2040_INPUT_JOYSTICK_UP:
+//                menu_navigate_previous(menu);
+//                render = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_ACCEPT:
+//            case RP2040_INPUT_JOYSTICK_PRESS:
+//            case RP2040_INPUT_BUTTON_START:
+//                {
+//                    int action = (int) menu_get_callback_args(menu, menu_get_position(menu));
+//                    switch (action) {
+//                        case 0:
+//                            result = menu_hatchery_install_app_execute(button_queue, type_slug, false);
+//                            break;
+//                        case 1:
+//                            result = menu_hatchery_install_app_execute(button_queue, type_slug, true);
+//                            break;
+//                        case 2:
+//                        default:
+//                            break;
+//                    }
+//                    quit = true;
+//                    break;
+//                }
+//            case RP2040_INPUT_BUTTON_BACK:
+//            case RP2040_INPUT_BUTTON_SELECT:
+//            case RP2040_INPUT_BUTTON_MENU:
+//            case RP2040_INPUT_BUTTON_HOME:
+//                quit = true;
+//                break;
+//            default:
+//                break;
+//        }
     }
 
     menu_free(menu);
@@ -447,34 +450,35 @@ bool menu_hatchery_app_info(xQueueHandle button_queue, const char* type_slug, co
         }
 
         int button = wait_for_button_press(button_queue, portMAX_DELAY);
-        switch (button) {
-            case RP2040_INPUT_JOYSTICK_DOWN:
-                render = true;
-                break;
-            case RP2040_INPUT_JOYSTICK_UP:
-                render = true;
-                break;
-            case RP2040_INPUT_BUTTON_ACCEPT:
-            case RP2040_INPUT_JOYSTICK_PRESS:
-            case RP2040_INPUT_BUTTON_START:
-                render = true;
-                menu_hatchery_install_app(button_queue, type_slug);
-                break;
-            case RP2040_INPUT_BUTTON_BACK:
-                quit = true;
-                break;
-            case RP2040_INPUT_BUTTON_SELECT:
-                quit = true;
-                break;
-            case RP2040_INPUT_BUTTON_MENU:
-                quit = true;
-                break;
-            case RP2040_INPUT_BUTTON_HOME:
-                quit = true;
-                break;
-            default:
-                break;
-        }
+        // TODO: Replace
+//        switch (button) {
+//            case RP2040_INPUT_JOYSTICK_DOWN:
+//                render = true;
+//                break;
+//            case RP2040_INPUT_JOYSTICK_UP:
+//                render = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_ACCEPT:
+//            case RP2040_INPUT_JOYSTICK_PRESS:
+//            case RP2040_INPUT_BUTTON_START:
+//                render = true;
+//                menu_hatchery_install_app(button_queue, type_slug);
+//                break;
+//            case RP2040_INPUT_BUTTON_BACK:
+//                quit = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_SELECT:
+//                quit = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_MENU:
+//                quit = true;
+//                break;
+//            case RP2040_INPUT_BUTTON_HOME:
+//                quit = true;
+//                break;
+//            default:
+//                break;
+//        }
     }
 
     hatchery_free_app_info();

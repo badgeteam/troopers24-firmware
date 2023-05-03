@@ -16,18 +16,14 @@
 #include "appfs.h"
 #include "appfs_wrapper.h"
 #include "bootscreen.h"
-#include "fpga_download.h"
-#include "fpga_util.h"
 #include "graphics_wrapper.h"
 #include "gui_element_header.h"
 #include "hardware.h"
-#include "ice40.h"
 #include "ili9341.h"
 #include "menu.h"
 #include "metadata.h"
 #include "pax_codecs.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
 #include "rtc_memory.h"
 #include "system_wrapper.h"
 
@@ -48,45 +44,6 @@ extern const uint8_t dev_png_end[] asm("_binary_dev_png_end");
 static appfs_handle_t python_appfs_fd      = APPFS_INVALID_FD;
 static bool           python_not_installed = false;
 
-static void start_fpga_app(xQueueHandle button_queue, const char* path) {
-    ILI9341*          ili9341    = get_ili9341();
-    pax_buf_t*        pax_buffer = get_pax_buffer();
-    const pax_font_t* font       = pax_font_saira_regular;
-    char              filename[128];
-    snprintf(filename, sizeof(filename), "%s/bitstream.bin", path);
-    FILE* fd = fopen(filename, "rb");
-    if (fd == NULL) {
-        pax_background(pax_buffer, 0xFFFFFF);
-        pax_draw_text(pax_buffer, 0xFFFF0000, font, 18, 0, 0, "Failed to open file\n\nPress A or B to go back");
-        display_flush();
-        wait_for_button();
-        return;
-    }
-    size_t   bitstream_length = get_file_size(fd);
-    uint8_t* bitstream        = load_file_to_ram(fd);
-    ICE40*   ice40            = get_ice40();
-    ili9341_deinit(ili9341);
-    ili9341_select(ili9341, false);
-    vTaskDelay(200 / portTICK_PERIOD_MS);
-    ili9341_select(ili9341, true);
-    esp_err_t res = ice40_load_bitstream(ice40, bitstream, bitstream_length);
-    free(bitstream);
-    fclose(fd);
-    if (res == ESP_OK) {
-        fpga_irq_setup(ice40);
-        fpga_host(button_queue, ice40, false, path);
-        fpga_irq_cleanup(ice40);
-        ice40_disable(ice40);
-        ili9341_init(ili9341);
-    } else {
-        ice40_disable(ice40);
-        ili9341_init(ili9341);
-        pax_background(pax_buffer, 0xFFFFFF);
-        pax_draw_text(pax_buffer, 0xFFFF0000, font, 18, 0, 0, "Failed to load bitstream\n\nPress A or B to go back");
-        display_flush();
-        wait_for_button();
-    }
-}
 
 static void start_python_app(const char* path) {
     rtc_memory_string_write(path);
@@ -160,9 +117,7 @@ static bool populate_menu(menu_t* menu) {
 
 static void start_app(xQueueHandle button_queue, launcher_app_t* app_to_start) {
     display_boot_screen("Starting app...");
-    if ((strlen(app_to_start->type) == strlen("ice40")) && (strncmp(app_to_start->type, "ice40", strlen(app_to_start->type)) == 0)) {
-        start_fpga_app(button_queue, app_to_start->path);
-    } else if ((strlen(app_to_start->type) == strlen("python")) && (strncmp(app_to_start->type, "python", strlen(app_to_start->type)) == 0)) {
+    if ((strlen(app_to_start->type) == strlen("python")) && (strncmp(app_to_start->type, "python", strlen(app_to_start->type)) == 0)) {
         if (python_not_installed) {
             render_message("Python is not installed\n\nPlease install 'Python'\nusing the Hatchery under\n'ESP32 native binaries\\Utility'");
             display_flush();
@@ -242,31 +197,32 @@ static bool show_app_details(xQueueHandle button_queue, launcher_app_t* app) {
             display_flush();
             render = false;
         }
-        rp2040_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
-            if (buttonMessage.state) {
-                switch (buttonMessage.input) {
-                    case RP2040_INPUT_BUTTON_HOME:
-                    case RP2040_INPUT_BUTTON_BACK:
-                        quit = true;
-                        break;
-                    case RP2040_INPUT_JOYSTICK_PRESS:
-                    case RP2040_INPUT_BUTTON_ACCEPT:
-                    case RP2040_INPUT_BUTTON_START:
-                        start_app(button_queue, app);
-                        render = true;
-                        break;
-                    case RP2040_INPUT_BUTTON_SELECT:
-                        if (uninstall_app(button_queue, app)) {
-                            return_value = true;
-                            quit         = true;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
+        // TODO: Replace
+//        rp2040_input_message_t buttonMessage = {0};
+//        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
+//            if (buttonMessage.state) {
+//                switch (buttonMessage.input) {
+//                    case RP2040_INPUT_BUTTON_HOME:
+//                    case RP2040_INPUT_BUTTON_BACK:
+//                        quit = true;
+//                        break;
+//                    case RP2040_INPUT_JOYSTICK_PRESS:
+//                    case RP2040_INPUT_BUTTON_ACCEPT:
+//                    case RP2040_INPUT_BUTTON_START:
+//                        start_app(button_queue, app);
+//                        render = true;
+//                        break;
+//                    case RP2040_INPUT_BUTTON_SELECT:
+//                        if (uninstall_app(button_queue, app)) {
+//                            return_value = true;
+//                            quit         = true;
+//                        }
+//                        break;
+//                    default:
+//                        break;
+//                }
+//            }
+//        }
     }
     return return_value;
 }
@@ -314,47 +270,48 @@ void menu_launcher(xQueueHandle button_queue) {
                 render = false;
             }
 
-            rp2040_input_message_t buttonMessage = {0};
-            if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-                if (buttonMessage.state) {
-                    switch (buttonMessage.input) {
-                        case RP2040_INPUT_JOYSTICK_DOWN:
-                            menu_navigate_next(menu);
-                            render = true;
-                            break;
-                        case RP2040_INPUT_JOYSTICK_UP:
-                            menu_navigate_previous(menu);
-                            render = true;
-                            break;
-                        case RP2040_INPUT_BUTTON_HOME:
-                        case RP2040_INPUT_BUTTON_BACK:
-                            quit = true;
-                            break;
-                        case RP2040_INPUT_BUTTON_ACCEPT:
-                        case RP2040_INPUT_JOYSTICK_PRESS:
-                        case RP2040_INPUT_BUTTON_START:
-                            app_to_start = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
-                            break;
-                        case RP2040_INPUT_BUTTON_MENU:
-                            {
-                                launcher_app_t* app = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
-                                if (app != NULL) {
-                                    if (show_app_details(button_queue, app)) {
-                                        reload = true;
-                                        quit   = true;
-                                    } else {
-                                        render = true;
-                                    }
-                                }
-                                break;
-                            }
-                        case RP2040_INPUT_BUTTON_SELECT:
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
+            // TODO: Replace
+//            rp2040_input_message_t buttonMessage = {0};
+//            if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+//                if (buttonMessage.state) {
+//                    switch (buttonMessage.input) {
+//                        case RP2040_INPUT_JOYSTICK_DOWN:
+//                            menu_navigate_next(menu);
+//                            render = true;
+//                            break;
+//                        case RP2040_INPUT_JOYSTICK_UP:
+//                            menu_navigate_previous(menu);
+//                            render = true;
+//                            break;
+//                        case RP2040_INPUT_BUTTON_HOME:
+//                        case RP2040_INPUT_BUTTON_BACK:
+//                            quit = true;
+//                            break;
+//                        case RP2040_INPUT_BUTTON_ACCEPT:
+//                        case RP2040_INPUT_JOYSTICK_PRESS:
+//                        case RP2040_INPUT_BUTTON_START:
+//                            app_to_start = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
+//                            break;
+//                        case RP2040_INPUT_BUTTON_MENU:
+//                            {
+//                                launcher_app_t* app = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
+//                                if (app != NULL) {
+//                                    if (show_app_details(button_queue, app)) {
+//                                        reload = true;
+//                                        quit   = true;
+//                                    } else {
+//                                        render = true;
+//                                    }
+//                                }
+//                                break;
+//                            }
+//                        case RP2040_INPUT_BUTTON_SELECT:
+//                            break;
+//                        default:
+//                            break;
+//                    }
+//                }
+//            }
 
             if (app_to_start != NULL) {
                 start_app(button_queue, app_to_start);

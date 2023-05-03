@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "hardware.h"
-#include "rp2040.h"
 
 void restart() {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -18,24 +17,26 @@ void restart() {
 }
 
 bool wait_for_button() {
-    RP2040* rp2040 = get_rp2040();
-    if (rp2040 == NULL) return false;
-    while (1) {
-        rp2040_input_message_t buttonMessage = {0};
-        if (xQueueReceive(rp2040->queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
-            if (buttonMessage.state) {
-                switch (buttonMessage.input) {
-                    case RP2040_INPUT_BUTTON_BACK:
-                    case RP2040_INPUT_BUTTON_HOME:
-                        return false;
-                    case RP2040_INPUT_BUTTON_ACCEPT:
-                        return true;
-                    default:
-                        break;
-                }
-            }
-        }
-    }
+    // TODO: Replace
+//    RP2040* rp2040 = get_rp2040();
+//    if (rp2040 == NULL) return false;
+//    while (1) {
+//        rp2040_input_message_t buttonMessage = {0};
+//        if (xQueueReceive(rp2040->queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
+//            if (buttonMessage.state) {
+//                switch (buttonMessage.input) {
+//                    case RP2040_INPUT_BUTTON_BACK:
+//                    case RP2040_INPUT_BUTTON_HOME:
+//                        return false;
+//                    case RP2040_INPUT_BUTTON_ACCEPT:
+//                        return true;
+//                    default:
+//                        break;
+//                }
+//            }
+//        }
+//    }
+    return true;
 }
 
 uint8_t* load_file_to_ram(FILE* fd) {

@@ -1,13 +1,9 @@
 idf_component_register(
     SRCS "main.c"
          "appfs_wrapper.c"
-         "fpga_test.c"
-         "rp2040_updater.c"
          "settings.c"
          "system_wrapper.c"
          "wifi_ota.c"
-         "fpga_download.c"
-         "fpga_util.c"
          "audio.c"
          "bootscreen.c"
          "menus/hatchery.c"
@@ -16,15 +12,12 @@ idf_component_register(
          "menus/dev.c"
          "menus/wifi.c"
          "menus/sao.c"
-         "menus/ir.c"
          "menus/launcher.c"
          "nametag.c"
          "file_browser.c"
          "test_common.c"
          "factory_test.c"
          "button_test.c"
-         "adc_test.c"
-         "webusb.c"
          "wifi_test.c"
          "sao_eeprom.c"
          "rtc_memory.c"
@@ -35,16 +28,13 @@ idf_component_register(
          "filesystems.c"
          "app_management.c"
          "app_update.c"
-         "msc.c"
          "terminal.c"
     INCLUDE_DIRS "."
                  "include"
                  "menus"
     EMBED_TXTFILES ${project_dir}/resources/isrgrootx1.pem
                    ${project_dir}/resources/custom_ota_cert.pem
-    EMBED_FILES ${project_dir}/resources/fpga_selftest.bin
-                ${project_dir}/resources/rp2040_firmware.bin
-                ${project_dir}/resources/boot.snd
+    EMBED_FILES ${project_dir}/resources/boot.snd
                 ${project_dir}/resources/mch2022_logo.png
                 ${project_dir}/resources/icons/dev.png
                 ${project_dir}/resources/icons/home.png

@@ -20,8 +20,6 @@
 #include "nametag.h"
 #include "pax_codecs.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
-#include "rp2040_updater.h"
 #include "system_wrapper.h"
 #include "wifi.h"
 #include "wifi_connect.h"
@@ -36,7 +34,6 @@ typedef enum action {
     ACTION_WIFI,
     ACTION_OTA,
     ACTION_OTA_NIGHTLY,
-    ACTION_RP2040_BL,
     ACTION_NICKNAME,
     ACTION_BRIGHTNESS,
     ACTION_LOCK,
@@ -80,16 +77,18 @@ void edit_lock(xQueueHandle button_queue) {
 }
 
 uint8_t wait_for_button_adv() {
-    RP2040* rp2040 = get_rp2040();
-    if (rp2040 == NULL) return false;
-    while (1) {
-        rp2040_input_message_t buttonMessage = {0};
-        if (xQueueReceive(rp2040->queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
-            if (buttonMessage.state) {
-                return buttonMessage.input;
-            }
-        }
-    }
+    return 0;
+    // TODO: Replace
+//    RP2040* rp2040 = get_rp2040();
+//    if (rp2040 == NULL) return false;
+//    while (1) {
+//        rp2040_input_message_t buttonMessage = {0};
+//        if (xQueueReceive(rp2040->queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
+//            if (buttonMessage.state) {
+//                return buttonMessage.input;
+//            }
+//        }
+//    }
 }
 
 void edit_brightness(xQueueHandle button_queue) {
@@ -117,36 +116,37 @@ void edit_brightness(xQueueHandle button_queue) {
         pax_draw_text(pax_buffer, 0xFF000000, font, 18, 5, 240 - 18, "⤓ modify  🅱 back");
         display_flush();
         uint8_t button = wait_for_button_adv(button_queue);
-        switch (button) {
-            case RP2040_INPUT_BUTTON_BACK:
-            case RP2040_INPUT_BUTTON_HOME:
-                quit = true;
-                break;
-            case RP2040_INPUT_JOYSTICK_UP:
-            case RP2040_INPUT_JOYSTICK_RIGHT:
-                if (state > 255 - 32) {
-                    state = 255;
-                } else {
-                    state += 32;
-                }
-                nvs_set_u8(handle, "brightness", state);
-                nvs_commit(handle);
-                rp2040_set_lcd_backlight(get_rp2040(), state);
-                break;
-            case RP2040_INPUT_JOYSTICK_DOWN:
-            case RP2040_INPUT_JOYSTICK_LEFT:
-                if (state <= 32) {
-                    state = 32;
-                } else {
-                    state -= 32;
-                }
-                nvs_set_u8(handle, "brightness", state);
-                nvs_commit(handle);
-                rp2040_set_lcd_backlight(get_rp2040(), state);
-                break;
-            default:
-                break;
-        }
+        // TODO: Replace
+//        switch (button) {
+//            case RP2040_INPUT_BUTTON_BACK:
+//            case RP2040_INPUT_BUTTON_HOME:
+//                quit = true;
+//                break;
+//            case RP2040_INPUT_JOYSTICK_UP:
+//            case RP2040_INPUT_JOYSTICK_RIGHT:
+//                if (state > 255 - 32) {
+//                    state = 255;
+//                } else {
+//                    state += 32;
+//                }
+//                nvs_set_u8(handle, "brightness", state);
+//                nvs_commit(handle);
+//                rp2040_set_lcd_backlight(get_rp2040(), state);
+//                break;
+//            case RP2040_INPUT_JOYSTICK_DOWN:
+//            case RP2040_INPUT_JOYSTICK_LEFT:
+//                if (state <= 32) {
+//                    state = 32;
+//                } else {
+//                    state -= 32;
+//                }
+//                nvs_set_u8(handle, "brightness", state);
+//                nvs_commit(handle);
+//                rp2040_set_lcd_backlight(get_rp2040(), state);
+//                break;
+//            default:
+//                break;
+//        }
     }
     nvs_close(handle);
 }
@@ -182,7 +182,6 @@ void menu_settings(xQueueHandle button_queue) {
     menu_insert_item(menu, "Screen brightness", NULL, (void*) ACTION_BRIGHTNESS, -1);
     menu_insert_item(menu, "Firmware update", NULL, (void*) ACTION_OTA, -1);
     menu_insert_item(menu, "Firmware flashing lock", NULL, (void*) ACTION_LOCK, -1);
-    menu_insert_item(menu, "Flash RP2040 firmware", NULL, (void*) ACTION_RP2040_BL, -1);
     menu_insert_item(menu, "Install experimental firmware", NULL, (void*) ACTION_OTA_NIGHTLY, -1);
     menu_insert_item(menu, "Format internal FAT filesystem", NULL, (void*) ACTION_FORMAT_FAT, -1);
     menu_insert_item(menu, "Format internal AppFS filesystem", NULL, (void*) ACTION_FORMAT_APPFS, -1);
@@ -193,41 +192,42 @@ void menu_settings(xQueueHandle button_queue) {
     render_settings_help(pax_buffer);
 
     while (1) {
-        rp2040_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-            uint8_t pin   = buttonMessage.input;
-            bool    value = buttonMessage.state;
-            switch (pin) {
-                case RP2040_INPUT_JOYSTICK_DOWN:
-                    if (value) {
-                        menu_navigate_next(menu);
-                        render = true;
-                    }
-                    break;
-                case RP2040_INPUT_JOYSTICK_UP:
-                    if (value) {
-                        menu_navigate_previous(menu);
-                        render = true;
-                    }
-                    break;
-                case RP2040_INPUT_BUTTON_HOME:
-                case RP2040_INPUT_BUTTON_BACK:
-                    if (value) {
-                        action = ACTION_BACK;
-                    }
-                    break;
-                case RP2040_INPUT_BUTTON_ACCEPT:
-                case RP2040_INPUT_JOYSTICK_PRESS:
-                case RP2040_INPUT_BUTTON_SELECT:
-                case RP2040_INPUT_BUTTON_START:
-                    if (value) {
-                        action = (menu_settings_action_t) menu_get_callback_args(menu, menu_get_position(menu));
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
+        // TODO: Replace
+//        rp2040_input_message_t buttonMessage = {0};
+//        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+//            uint8_t pin   = buttonMessage.input;
+//            bool    value = buttonMessage.state;
+//            switch (pin) {
+//                case RP2040_INPUT_JOYSTICK_DOWN:
+//                    if (value) {
+//                        menu_navigate_next(menu);
+//                        render = true;
+//                    }
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_UP:
+//                    if (value) {
+//                        menu_navigate_previous(menu);
+//                        render = true;
+//                    }
+//                    break;
+//                case RP2040_INPUT_BUTTON_HOME:
+//                case RP2040_INPUT_BUTTON_BACK:
+//                    if (value) {
+//                        action = ACTION_BACK;
+//                    }
+//                    break;
+//                case RP2040_INPUT_BUTTON_ACCEPT:
+//                case RP2040_INPUT_JOYSTICK_PRESS:
+//                case RP2040_INPUT_BUTTON_SELECT:
+//                case RP2040_INPUT_BUTTON_START:
+//                    if (value) {
+//                        action = (menu_settings_action_t) menu_get_callback_args(menu, menu_get_position(menu));
+//                    }
+//                    break;
+//                default:
+//                    break;
+//            }
+//        }
 
         if (render) {
             menu_render(pax_buffer, menu, 0, 0, 320, 220);
@@ -236,10 +236,7 @@ void menu_settings(xQueueHandle button_queue) {
         }
 
         if (action != ACTION_NONE) {
-            if (action == ACTION_RP2040_BL) {
-                display_boot_screen("Please wait...");
-                rp2040_update_start(get_rp2040());
-            } else if (action == ACTION_OTA) {
+            if (action == ACTION_OTA) {
                 ota_update(false);
             } else if (action == ACTION_OTA_NIGHTLY) {
                 ota_update(true);

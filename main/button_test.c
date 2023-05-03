@@ -6,7 +6,6 @@
 
 #include "hardware.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
 
 void test_buttons(xQueueHandle button_queue) {
     pax_buf_t*        pax_buffer = get_pax_buffer();
@@ -40,59 +39,60 @@ void test_buttons(xQueueHandle button_queue) {
     bool btn_back_green      = false;
 
     while (!quit) {
-        rp2040_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-            uint8_t pin   = buttonMessage.input;
-            bool    value = buttonMessage.state;
-            render        = true;
-            switch (pin) {
-                case RP2040_INPUT_JOYSTICK_DOWN:
-                    btn_joy_down = value;
-                    if (value) btn_joy_down_green = true;
-                    break;
-                case RP2040_INPUT_JOYSTICK_UP:
-                    btn_joy_up = value;
-                    if (value) btn_joy_up_green = true;
-                    break;
-                case RP2040_INPUT_JOYSTICK_LEFT:
-                    btn_joy_left = value;
-                    if (value) btn_joy_left_green = true;
-                    break;
-                case RP2040_INPUT_JOYSTICK_RIGHT:
-                    btn_joy_right = value;
-                    if (value) btn_joy_right_green = true;
-                    break;
-                case RP2040_INPUT_JOYSTICK_PRESS:
-                    btn_joy_press = value;
-                    if (value) btn_joy_press_green = true;
-                    break;
-                case RP2040_INPUT_BUTTON_HOME:
-                    btn_home = value;
-                    if (value) btn_home_green = true;
-                    break;
-                case RP2040_INPUT_BUTTON_MENU:
-                    btn_menu = value;
-                    if (value) btn_menu_green = true;
-                    break;
-                case RP2040_INPUT_BUTTON_SELECT:
-                    btn_select = value;
-                    if (value) btn_select_green = true;
-                    break;
-                case RP2040_INPUT_BUTTON_START:
-                    btn_start = value;
-                    if (value) btn_start_green = true;
-                    break;
-                case RP2040_INPUT_BUTTON_ACCEPT:
-                    btn_accept = value;
-                    if (value) btn_accept_green = true;
-                    break;
-                case RP2040_INPUT_BUTTON_BACK:
-                    btn_back = value;
-                    if (value) btn_back_green = true;
-                default:
-                    break;
-            }
-        }
+        // TODO: Replace
+//        rp2040_input_message_t buttonMessage = {0};
+//        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+//            uint8_t pin   = buttonMessage.input;
+//            bool    value = buttonMessage.state;
+//            render        = true;
+//            switch (pin) {
+//                case RP2040_INPUT_JOYSTICK_DOWN:
+//                    btn_joy_down = value;
+//                    if (value) btn_joy_down_green = true;
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_UP:
+//                    btn_joy_up = value;
+//                    if (value) btn_joy_up_green = true;
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_LEFT:
+//                    btn_joy_left = value;
+//                    if (value) btn_joy_left_green = true;
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_RIGHT:
+//                    btn_joy_right = value;
+//                    if (value) btn_joy_right_green = true;
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_PRESS:
+//                    btn_joy_press = value;
+//                    if (value) btn_joy_press_green = true;
+//                    break;
+//                case RP2040_INPUT_BUTTON_HOME:
+//                    btn_home = value;
+//                    if (value) btn_home_green = true;
+//                    break;
+//                case RP2040_INPUT_BUTTON_MENU:
+//                    btn_menu = value;
+//                    if (value) btn_menu_green = true;
+//                    break;
+//                case RP2040_INPUT_BUTTON_SELECT:
+//                    btn_select = value;
+//                    if (value) btn_select_green = true;
+//                    break;
+//                case RP2040_INPUT_BUTTON_START:
+//                    btn_start = value;
+//                    if (value) btn_start_green = true;
+//                    break;
+//                case RP2040_INPUT_BUTTON_ACCEPT:
+//                    btn_accept = value;
+//                    if (value) btn_accept_green = true;
+//                    break;
+//                case RP2040_INPUT_BUTTON_BACK:
+//                    btn_back = value;
+//                    if (value) btn_back_green = true;
+//                default:
+//                    break;
+//            }
+//        }
 
         if (render) {
             pax_noclip(pax_buffer);

@@ -13,14 +13,10 @@
 #include "bootscreen.h"
 #include "esp_vfs.h"
 #include "esp_vfs_fat.h"
-#include "fpga_download.h"
-#include "fpga_util.h"
 #include "hardware.h"
-#include "ice40.h"
 #include "ili9341.h"
 #include "menu.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
 #include "system_wrapper.h"
 
 static const char* TAG = "file browser";
@@ -125,16 +121,6 @@ static bool is_esp32_binary(FILE* fd) {
     return (magic_value == 0xE9);
 }
 
-static bool is_bitstream(FILE* fd) {
-    const uint8_t expected_value[] = {0xFf, 0x00, 0x00, 0xff, 0x7e, 0xaa, 0x99, 0x7e};
-    if (get_file_size(fd) < sizeof(expected_value)) return false;
-    fseek(fd, 0, SEEK_SET);
-    uint8_t file_contents[sizeof(expected_value)];
-    fread(file_contents, sizeof(expected_value), 1, fd);
-    fseek(fd, 0, SEEK_SET);
-    return (memcmp(expected_value, file_contents, sizeof(expected_value)) == 0);
-}
-
 static void file_browser_open_file(xQueueHandle button_queue, const char* filename, const char* label) {
     pax_buf_t*        pax_buffer = get_pax_buffer();
     const pax_font_t* font       = pax_font_saira_regular;
@@ -181,38 +167,8 @@ static void file_browser_open_file(xQueueHandle button_queue, const char* filena
         }
         free(path);
         return;
-    } else if (is_bitstream(fd)) {
-        pax_draw_text(pax_buffer, 0xFF000000, font, 18, 0, 0, "FPGA bitstream\n\nPress A to run\nPress B to go back");
-        display_flush();
-        if (wait_for_button()) {
-            size_t   bitstream_length = get_file_size(fd);
-            uint8_t* bitstream        = load_file_to_ram(fd);
-            ICE40*   ice40            = get_ice40();
-            ILI9341* ili9341          = get_ili9341();
-            ili9341_deinit(ili9341);
-            ili9341_select(ili9341, false);
-            vTaskDelay(200 / portTICK_PERIOD_MS);
-            ili9341_select(ili9341, true);
-            esp_err_t res = ice40_load_bitstream(ice40, bitstream, bitstream_length);
-            free(bitstream);
-            fclose(fd);
-            if (res == ESP_OK) {
-                fpga_irq_setup(ice40);
-                fpga_host(button_queue, ice40, false, path);
-                fpga_irq_cleanup(ice40);
-                ice40_disable(ice40);
-                ili9341_init(ili9341);
-            } else {
-                ice40_disable(ice40);
-                ili9341_init(ili9341);
-                pax_background(pax_buffer, 0xFFFFFF);
-                pax_draw_text(pax_buffer, 0xFFFF0000, font, 18, 0, 0, "Failed to load bitstream\n\nPress A or B to go back");
-                display_flush();
-                wait_for_button();
-            }
-        } else {
-            fclose(fd);
-        }
+    } else if (false) {
+        // TODO: Open mp3 in media player?
     } else {
         fclose(fd);
         pax_draw_text(pax_buffer, 0xFFFF0000, font, 18, 0, 0, "Unsupported file type\n\nPress A or B to go back");
@@ -271,41 +227,42 @@ void file_browser(xQueueHandle button_queue, const char* initial_path) {
         file_browser_menu_args_t* menuArgs = NULL;
 
         while (1) {
-            rp2040_input_message_t buttonMessage = {0};
-            if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-                uint8_t pin   = buttonMessage.input;
-                bool    value = buttonMessage.state;
-                switch (pin) {
-                    case RP2040_INPUT_JOYSTICK_DOWN:
-                        if (value) {
-                            menu_navigate_next(menu);
-                            render = true;
-                        }
-                        break;
-                    case RP2040_INPUT_JOYSTICK_UP:
-                        if (value) {
-                            menu_navigate_previous(menu);
-                            render = true;
-                        }
-                        break;
-                    case RP2040_INPUT_BUTTON_BACK:
-                        if (value) {
-                            menuArgs = pd_args;
-                        }
-                        break;
-                    case RP2040_INPUT_BUTTON_ACCEPT:
-                    case RP2040_INPUT_JOYSTICK_PRESS:
-                        if (value) {
-                            menuArgs = menu_get_callback_args(menu, menu_get_position(menu));
-                        }
-                        break;
-                    case RP2040_INPUT_BUTTON_HOME:
-                        if (value) exit = true;
-                        break;
-                    default:
-                        break;
-                }
-            }
+            // TODO: Replace
+//            rp2040_input_message_t buttonMessage = {0};
+//            if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+//                uint8_t pin   = buttonMessage.input;
+//                bool    value = buttonMessage.state;
+//                switch (pin) {
+//                    case RP2040_INPUT_JOYSTICK_DOWN:
+//                        if (value) {
+//                            menu_navigate_next(menu);
+//                            render = true;
+//                        }
+//                        break;
+//                    case RP2040_INPUT_JOYSTICK_UP:
+//                        if (value) {
+//                            menu_navigate_previous(menu);
+//                            render = true;
+//                        }
+//                        break;
+//                    case RP2040_INPUT_BUTTON_BACK:
+//                        if (value) {
+//                            menuArgs = pd_args;
+//                        }
+//                        break;
+//                    case RP2040_INPUT_BUTTON_ACCEPT:
+//                    case RP2040_INPUT_JOYSTICK_PRESS:
+//                        if (value) {
+//                            menuArgs = menu_get_callback_args(menu, menu_get_position(menu));
+//                        }
+//                        break;
+//                    case RP2040_INPUT_BUTTON_HOME:
+//                        if (value) exit = true;
+//                        break;
+//                    default:
+//                        break;
+//                }
+//            }
 
             if (renderbg) {
                 pax_background(pax_buffer, 0xFFFFFF);

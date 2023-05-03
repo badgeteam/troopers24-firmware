@@ -10,18 +10,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "adc_test.h"
 #include "appfs.h"
 #include "button_test.h"
 #include "file_browser.h"
-#include "fpga_download.h"
-#include "fpga_test.h"
 #include "hardware.h"
-#include "ir.h"
 #include "menu.h"
 #include "pax_codecs.h"
 #include "pax_gfx.h"
-#include "rp2040.h"
 #include "sao.h"
 #include "settings.h"
 
@@ -31,14 +26,10 @@ extern const uint8_t dev_png_end[] asm("_binary_dev_png_end");
 typedef enum action {
     ACTION_NONE,
     ACTION_BACK,
-    ACTION_FPGA_TEST,
     ACTION_FILE_BROWSER,
     ACTION_FILE_BROWSER_INT,
     ACTION_BUTTON_TEST,
-    ACTION_ADC_TEST,
-    ACTION_SAO,
-    ACTION_IR,
-    ACTION_IR_RENZE
+    ACTION_SAO
 } menu_dev_action_t;
 
 static void render_help(pax_buf_t* pax_buffer) {
@@ -67,14 +58,10 @@ void menu_dev(xQueueHandle button_queue) {
 
     menu_set_icon(menu, &icon_dev);
 
-    menu_insert_item(menu, "Infrared remote (deco lights)", NULL, (void*) ACTION_IR, -1);
-    menu_insert_item(menu, "Infrared remote (badge tent)", NULL, (void*) ACTION_IR_RENZE, -1);
     menu_insert_item(menu, "File browser (SD card)", NULL, (void*) ACTION_FILE_BROWSER, -1);
     menu_insert_item(menu, "File browser (internal)", NULL, (void*) ACTION_FILE_BROWSER_INT, -1);
     menu_insert_item(menu, "Button test", NULL, (void*) ACTION_BUTTON_TEST, -1);
-    menu_insert_item(menu, "Analog inputs", NULL, (void*) ACTION_ADC_TEST, -1);
     menu_insert_item(menu, "SAO EEPROM tool", NULL, (void*) ACTION_SAO, -1);
-    menu_insert_item(menu, "FPGA selftest", NULL, (void*) ACTION_FPGA_TEST, -1);
 
     bool              render = true;
     menu_dev_action_t action = ACTION_NONE;
@@ -82,41 +69,42 @@ void menu_dev(xQueueHandle button_queue) {
     render_help(pax_buffer);
 
     while (1) {
-        rp2040_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-            uint8_t pin   = buttonMessage.input;
-            bool    value = buttonMessage.state;
-            switch (pin) {
-                case RP2040_INPUT_JOYSTICK_DOWN:
-                    if (value) {
-                        menu_navigate_next(menu);
-                        render = true;
-                    }
-                    break;
-                case RP2040_INPUT_JOYSTICK_UP:
-                    if (value) {
-                        menu_navigate_previous(menu);
-                        render = true;
-                    }
-                    break;
-                case RP2040_INPUT_BUTTON_HOME:
-                case RP2040_INPUT_BUTTON_BACK:
-                    if (value) {
-                        action = ACTION_BACK;
-                    }
-                    break;
-                case RP2040_INPUT_BUTTON_ACCEPT:
-                case RP2040_INPUT_JOYSTICK_PRESS:
-                case RP2040_INPUT_BUTTON_SELECT:
-                case RP2040_INPUT_BUTTON_START:
-                    if (value) {
-                        action = (menu_dev_action_t) menu_get_callback_args(menu, menu_get_position(menu));
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
+        // TODO: Replace
+//        rp2040_input_message_t buttonMessage = {0};
+//        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+//            uint8_t pin   = buttonMessage.input;
+//            bool    value = buttonMessage.state;
+//            switch (pin) {
+//                case RP2040_INPUT_JOYSTICK_DOWN:
+//                    if (value) {
+//                        menu_navigate_next(menu);
+//                        render = true;
+//                    }
+//                    break;
+//                case RP2040_INPUT_JOYSTICK_UP:
+//                    if (value) {
+//                        menu_navigate_previous(menu);
+//                        render = true;
+//                    }
+//                    break;
+//                case RP2040_INPUT_BUTTON_HOME:
+//                case RP2040_INPUT_BUTTON_BACK:
+//                    if (value) {
+//                        action = ACTION_BACK;
+//                    }
+//                    break;
+//                case RP2040_INPUT_BUTTON_ACCEPT:
+//                case RP2040_INPUT_JOYSTICK_PRESS:
+//                case RP2040_INPUT_BUTTON_SELECT:
+//                case RP2040_INPUT_BUTTON_START:
+//                    if (value) {
+//                        action = (menu_dev_action_t) menu_get_callback_args(menu, menu_get_position(menu));
+//                    }
+//                    break;
+//                default:
+//                    break;
+//            }
+//        }
 
         if (render) {
             menu_render(pax_buffer, menu, 0, 0, 320, 220);
@@ -125,22 +113,14 @@ void menu_dev(xQueueHandle button_queue) {
         }
 
         if (action != ACTION_NONE) {
-            if (action == ACTION_FPGA_TEST) {
-                fpga_test(button_queue);
-            } else if (action == ACTION_FILE_BROWSER) {
+            if (action == ACTION_FILE_BROWSER) {
                 file_browser(button_queue, "/sd");
             } else if (action == ACTION_FILE_BROWSER_INT) {
                 file_browser(button_queue, "/internal");
             } else if (action == ACTION_BUTTON_TEST) {
                 test_buttons(button_queue);
-            } else if (action == ACTION_ADC_TEST) {
-                test_adc(button_queue);
             } else if (action == ACTION_SAO) {
                 menu_sao(button_queue);
-            } else if (action == ACTION_IR) {
-                menu_ir(button_queue, false);
-            } else if (action == ACTION_IR_RENZE) {
-                menu_ir(button_queue, true);
             } else if (action == ACTION_BACK) {
                 break;
             }
