@@ -125,8 +125,6 @@ void menu_start(xQueueHandle button_queue, const char* version) {
     menu_insert_item_icon(menu, "App update", NULL, (void*) ACTION_UPDATE, -1, &icon_update);
     menu_insert_item_icon(menu, "OS update", NULL, (void*) ACTION_OTA, -1, &icon_update);
 
-    printf("[!!!] 1\n");
-
     SAO sao = {0};
     sao_identify(&sao);
     if (sao.type == SAO_BINARY) {
@@ -140,6 +138,8 @@ void menu_start(xQueueHandle button_queue, const char* version) {
 
     bool full_redraw = true;
     while (1) {
+        // TODO: Remove
+        vTaskDelay(10 / portTICK_PERIOD_MS);
         bool                   user_input    = false;
         // TODO: Use our keyboard module
 //        rp2040_input_message_t buttonMessage = {0};
@@ -182,13 +182,11 @@ void menu_start(xQueueHandle button_queue, const char* version) {
 
         if (render) {
             if (full_redraw) {
-                printf("[!!!] 3\n");
                 char textBuffer[64];
                 snprintf(textBuffer, sizeof(textBuffer), "v%s", version);
                 render_start_help(pax_buffer, textBuffer);
             }
             if (full_redraw || user_input) {
-                printf("[!!!] 4\n");
                 if (full_redraw) {
                     menu_render_grid(pax_buffer, menu, 0, 0, 320, 220);
                     display_flush();

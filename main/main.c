@@ -26,12 +26,10 @@
 #include "graphics_wrapper.h"
 #include "gui_element_header.h"
 #include "hardware.h"
-#include "managed_i2c.h"
-#include "menu.h"
 #include "menus/start.h"
 #include "pax_gfx.h"
+#include "pca9555.h"
 #include "rtc_memory.h"
-#include "sao_eeprom.h"
 #include "settings.h"
 #include "system_wrapper.h"
 #include "wifi_cert.h"
@@ -56,7 +54,6 @@ void display_fatal_error(const char* line0, const char* line1, const char* line2
     if (line3 != NULL) pax_draw_text(pax_buffer, 0xFFFFFFFF, font, 18, 0, 20 * 3, line3);
     display_flush();
 }
-
 
 void stop() {
     ESP_LOGW(TAG, "*** HALTED ***");
@@ -154,8 +151,24 @@ void app_main(void) {
     const uint8_t led_off[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     ws2812_send_data(led_off, sizeof(led_off));
 
+    /* Initialize the PCA9555s */
+    PCA9555 front = {
+        .i2c_bus  = I2C_BUS,
+        .i2c_addr = PCA555A_0_ADDR,
+    };
+    pca9555_init(&front, GPIO_INT_KEY);
+    PCA9555 keyboard1 = {
+        .i2c_bus  = I2C_BUS,
+        .i2c_addr = PCA555A_1_ADDR,
+    };
+    pca9555_init(&keyboard1, GPIO_INT_KEY);
+    PCA9555 keyboard2 = {
+        .i2c_bus  = I2C_BUS,
+        .i2c_addr = PCA555A_2_ADDR,
+    };
+    pca9555_init(&keyboard2, GPIO_INT_KEY);
+
     /* Turning the backlight on */
-//    res = gpio_set_direction(GPIO_LCD_BL, GPIO_MODE_OUTPUT);
     gpio_config_t io_conf = {
         .intr_type    = GPIO_INTR_DISABLE,
         .mode         = GPIO_MODE_OUTPUT,
@@ -176,8 +189,6 @@ void app_main(void) {
         display_fatal_error(fatal_error_str, "Failed to turn on LCD backlight", "Flash may be corrupted", reset_board_str);
         stop();
     }
-
-    stop();
 
     /* Initialize LCD screen */
     pax_buf_t* pax_buffer = get_pax_buffer();
@@ -200,7 +211,6 @@ void app_main(void) {
     }
 
     factory_test();
-
 
     /* Start AppFS */
     res = appfs_init();
@@ -247,7 +257,6 @@ void app_main(void) {
 
     /* Clear RTC memory */
     rtc_memory_clear();
-
 
     /* Crash check */
     appfs_handle_t crashed_app = appfs_detect_crash();

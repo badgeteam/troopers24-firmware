@@ -9,3 +9,4 @@ tools/__pycache__
 esp-idf
 dependencies.lock
 cmake-build-debug/
+cmake-build-debug-esp-idf/
