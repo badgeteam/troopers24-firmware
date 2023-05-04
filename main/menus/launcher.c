@@ -197,32 +197,29 @@ static bool show_app_details(xQueueHandle button_queue, launcher_app_t* app) {
             display_flush();
             render = false;
         }
-        // TODO: Replace
-//        rp2040_input_message_t buttonMessage = {0};
-//        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
-//            if (buttonMessage.state) {
-//                switch (buttonMessage.input) {
-//                    case RP2040_INPUT_BUTTON_HOME:
-//                    case RP2040_INPUT_BUTTON_BACK:
-//                        quit = true;
-//                        break;
-//                    case RP2040_INPUT_JOYSTICK_PRESS:
-//                    case RP2040_INPUT_BUTTON_ACCEPT:
-//                    case RP2040_INPUT_BUTTON_START:
-//                        start_app(button_queue, app);
-//                        render = true;
-//                        break;
-//                    case RP2040_INPUT_BUTTON_SELECT:
-//                        if (uninstall_app(button_queue, app)) {
-//                            return_value = true;
-//                            quit         = true;
-//                        }
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//        }
+        keyboard_input_message_t buttonMessage = {0};
+        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
+            if (buttonMessage.state) {
+                switch (buttonMessage.input) {
+                    case BUTTON_BACK:
+                        quit = true;
+                        break;
+                    case BUTTON_ACCEPT:
+                    case BUTTON_START:
+                        start_app(button_queue, app);
+                        render = true;
+                        break;
+                    case BUTTON_SELECT:
+                        if (uninstall_app(button_queue, app)) {
+                            return_value = true;
+                            quit         = true;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
     return return_value;
 }
@@ -270,48 +267,42 @@ void menu_launcher(xQueueHandle button_queue) {
                 render = false;
             }
 
-            // TODO: Replace
-//            rp2040_input_message_t buttonMessage = {0};
-//            if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-//                if (buttonMessage.state) {
-//                    switch (buttonMessage.input) {
-//                        case RP2040_INPUT_JOYSTICK_DOWN:
-//                            menu_navigate_next(menu);
-//                            render = true;
-//                            break;
-//                        case RP2040_INPUT_JOYSTICK_UP:
-//                            menu_navigate_previous(menu);
-//                            render = true;
-//                            break;
-//                        case RP2040_INPUT_BUTTON_HOME:
-//                        case RP2040_INPUT_BUTTON_BACK:
-//                            quit = true;
-//                            break;
-//                        case RP2040_INPUT_BUTTON_ACCEPT:
-//                        case RP2040_INPUT_JOYSTICK_PRESS:
-//                        case RP2040_INPUT_BUTTON_START:
-//                            app_to_start = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
-//                            break;
-//                        case RP2040_INPUT_BUTTON_MENU:
-//                            {
-//                                launcher_app_t* app = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
-//                                if (app != NULL) {
-//                                    if (show_app_details(button_queue, app)) {
-//                                        reload = true;
-//                                        quit   = true;
-//                                    } else {
-//                                        render = true;
-//                                    }
-//                                }
-//                                break;
-//                            }
-//                        case RP2040_INPUT_BUTTON_SELECT:
-//                            break;
-//                        default:
-//                            break;
-//                    }
-//                }
-//            }
+            keyboard_input_message_t buttonMessage = {0};
+            if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+                if (buttonMessage.state) {
+                    switch (buttonMessage.input) {
+                        case JOYSTICK_DOWN:
+                            menu_navigate_next(menu);
+                            render = true;
+                            break;
+                        case JOYSTICK_UP:
+                            menu_navigate_previous(menu);
+                            render = true;
+                            break;
+                        case BUTTON_BACK:
+                            quit = true;
+                            break;
+                        case BUTTON_ACCEPT:
+                            app_to_start = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
+                            break;
+                        case BUTTON_SELECT:
+                            {
+                                launcher_app_t* app = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
+                                if (app != NULL) {
+                                    if (show_app_details(button_queue, app)) {
+                                        reload = true;
+                                        quit   = true;
+                                    } else {
+                                        render = true;
+                                    }
+                                }
+                                break;
+                            }
+                        default:
+                            break;
+                    }
+                }
+            }
 
             if (app_to_start != NULL) {
                 start_app(button_queue, app_to_start);

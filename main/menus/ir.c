@@ -160,12 +160,12 @@ void menu_ir(xQueueHandle button_queue, bool alternative) {
     bool render = true;
     bool exit   = false;
     while (!exit) {
-        rp2040_input_message_t buttonMessage = {0};
+        keyboard_input_message_t buttonMessage = {0};
         if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             if (buttonMessage.state) {
                 switch (buttonMessage.input) {
-                    case RP2040_INPUT_JOYSTICK_PRESS:
-                    case RP2040_INPUT_BUTTON_ACCEPT:
+                    case JOYSTICK_PRESS:
+                    case BUTTON_ACCEPT:
                         {
                             uint16_t address = alternative ? IR_ADDR_BADGE : IR_ADDR_DECO;
                             uint32_t command = (uint32_t) menu_get_callback_args(menu, menu_get_position(menu));
@@ -177,23 +177,23 @@ void menu_ir(xQueueHandle button_queue, bool alternative) {
                             }
                             break;
                         }
-                    case RP2040_INPUT_BUTTON_BACK:
-                    case RP2040_INPUT_BUTTON_HOME:
+                    case BUTTON_BACK:
+                    case BUTTON_HOME:
                         exit = true;
                         break;
-                    case RP2040_INPUT_JOYSTICK_DOWN:
+                    case JOYSTICK_DOWN:
                         menu_navigate_next_row(menu);
                         render = true;
                         break;
-                    case RP2040_INPUT_JOYSTICK_UP:
+                    case JOYSTICK_UP:
                         menu_navigate_previous_row(menu);
                         render = true;
                         break;
-                    case RP2040_INPUT_JOYSTICK_LEFT:
+                    case JOYSTICK_LEFT:
                         menu_navigate_previous(menu);
                         render = true;
                         break;
-                    case RP2040_INPUT_JOYSTICK_RIGHT:
+                    case JOYSTICK_RIGHT:
                         menu_navigate_next(menu);
                         render = true;
                         break;

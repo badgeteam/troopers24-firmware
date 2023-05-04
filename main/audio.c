@@ -24,8 +24,6 @@ void _audio_init(int i2s_num) {
 
     i2s_driver_install(i2s_num, &i2s_config, 0, NULL);
 
-    // TODO: Remove
-//    i2s_pin_config_t pin_config = {.mck_io_num = 0, .bck_io_num = GPIO_I2S_BCLK, .ws_io_num = GPIO_I2S_WS, .data_out_num = GPIO_I2S_DATA, .data_in_num = I2S_PIN_NO_CHANGE};
     i2s_pin_config_t pin_config = {.bck_io_num = GPIO_I2S_BCLK, .ws_io_num = GPIO_I2S_WS, .data_out_num = GPIO_I2S_DATA, .data_in_num = I2S_PIN_NO_CHANGE};
 
     i2s_set_pin(i2s_num, &pin_config);

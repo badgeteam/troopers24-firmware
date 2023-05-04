@@ -63,14 +63,14 @@ __BEGIN_DECLS
 /* Keys */
 
 enum Key {
-    BTN_ACCEPT = 0,
-    BTN_BACK,
-    BTN_START,
-    BTN_SELECT,
-    BTN_UP,
-    BTN_DOWN,
-    BTN_LEFT,
-    BTN_RIGHT,
+    BUTTON_ACCEPT = 0,
+    BUTTON_BACK,
+    BUTTON_START,
+    BUTTON_SELECT,
+    JOYSTICK_UP,
+    JOYSTICK_DOWN,
+    JOYSTICK_LEFT,
+    JOYSTICK_RIGHT,
     KEY_SHIELD,
     KEY_FN,
     KEY_SPACE,

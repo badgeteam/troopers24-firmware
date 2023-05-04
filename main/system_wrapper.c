@@ -17,25 +17,24 @@ void restart() {
 }
 
 bool wait_for_button() {
-    // TODO: Replace
-//    RP2040* rp2040 = get_rp2040();
-//    if (rp2040 == NULL) return false;
-//    while (1) {
-//        rp2040_input_message_t buttonMessage = {0};
-//        if (xQueueReceive(rp2040->queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
-//            if (buttonMessage.state) {
-//                switch (buttonMessage.input) {
-//                    case RP2040_INPUT_BUTTON_BACK:
-//                    case RP2040_INPUT_BUTTON_HOME:
-//                        return false;
-//                    case RP2040_INPUT_BUTTON_ACCEPT:
-//                        return true;
-//                    default:
-//                        break;
-//                }
-//            }
-//        }
-//    }
+    Keyboard* keyboard = get_keyboard();
+    if (keyboard == NULL) return false;
+    while (1) {
+        keyboard_input_message_t buttonMessage = {0};
+        if (xQueueReceive(keyboard->queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
+            if (buttonMessage.state) {
+                switch (buttonMessage.input) {
+                    case BUTTON_BACK:
+                    case BUTTON_START:
+                        return false;
+                    case BUTTON_ACCEPT:
+                        return true;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
     return true;
 }
 

@@ -20,21 +20,21 @@ PCA9555 keyboard2 = {0};
 int get_front_key(uint8_t pin) {
     switch (pin) {
         case PIN_BTN_DOWN:
-            return BTN_DOWN;
+            return JOYSTICK_DOWN;
         case PIN_BTN_LEFT:
-            return BTN_LEFT;
+            return JOYSTICK_LEFT;
         case PIN_BTN_RIGHT:
-            return BTN_RIGHT;
+            return JOYSTICK_RIGHT;
         case PIN_BTN_UP:
-            return BTN_UP;
+            return JOYSTICK_UP;
         case PIN_BTN_SELECT:
-            return BTN_SELECT;
+            return BUTTON_SELECT;
         case PIN_BTN_A:
-            return BTN_ACCEPT;
+            return BUTTON_ACCEPT;
         case PIN_BTN_B:
-            return BTN_BACK;
+            return BUTTON_BACK;
         case PIN_BTN_START:
-            return BTN_START;
+            return BUTTON_START;
     }
     return -1;
 }
@@ -144,6 +144,7 @@ esp_err_t handle_pca9555_input_change(Keyboard* keyboard, PCA9555* device, send_
             send_fn(keyboard, i, value);
         }
     }
+    device->previous_state = current_state;
     return ESP_OK;
 }
 
@@ -169,6 +170,8 @@ _Noreturn void intr_task(void* arg) {
             if (res != ESP_OK) {
                 ESP_LOGE(TAG, "error while processing keyboard2 pca9555 data");
             }
+
+            vTaskDelay(20 / portTICK_PERIOD_MS);
         }
     }
 }

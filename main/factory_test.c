@@ -28,7 +28,7 @@ bool test_stuck_buttons(uint32_t* rc) {
 //        return false;
 //    }
 
-//    state &= ~(1 << RP2040_INPUT_FPGA_CDONE);  // Ignore FPGA CDONE
+//    state &= ~(1 << FPGA_CDONE);  // Ignore FPGA CDONE
 
     *rc = state;
 
@@ -55,7 +55,7 @@ bool run_basic_tests() {
     /* Run tests */
     RUN_TEST("STUCK BUTTONS", test_stuck_buttons);
 
-    // TODO: Go here is mandatory test fails
+    // TODO: Go here if mandatory test fails
 //error:
     /* Fail result on screen */
     if (!ok) pax_draw_text(pax_buffer, 0xffff0000, font, 36, 0, 20 * line, "FAIL");

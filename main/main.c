@@ -10,6 +10,7 @@
 #include <sdkconfig.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/cdefs.h>
 
 #include "appfs.h"
 #include "appfs_wrapper.h"
@@ -19,6 +20,7 @@
 #include "efuse.h"
 #include "esp32/rom/crc.h"
 #include "esp_ota_ops.h"
+#include "esp_sleep.h"
 #include "esp_vfs.h"
 #include "esp_vfs_fat.h"
 #include "factory_test.h"
@@ -28,7 +30,6 @@
 #include "hardware.h"
 #include "menus/start.h"
 #include "pax_gfx.h"
-#include "pca9555.h"
 #include "rtc_memory.h"
 #include "settings.h"
 #include "system_wrapper.h"
@@ -37,7 +38,6 @@
 #include "wifi_defaults.h"
 #include "wifi_ota.h"
 #include "ws2812.h"
-#include "keyboard.h"
 
 extern const uint8_t logo_screen_png_start[] asm("_binary_logo_screen_png_start");
 extern const uint8_t logo_screen_png_end[] asm("_binary_logo_screen_png_end");
@@ -130,8 +130,11 @@ static void audio_player_task(void* pvParameters) {
     vTaskDelete(NULL);
 }
 
-void app_main(void) {
+_Noreturn void app_main(void) {
     esp_err_t res;
+
+    esp_sleep_wakeup_cause_t wakeup_cause = esp_sleep_get_wakeup_cause();
+    bool wakeup_deepsleep = wakeup_cause == ESP_SLEEP_WAKEUP_EXT0;
 
     audio_init();
 
@@ -262,13 +265,14 @@ void app_main(void) {
         wait_for_button();
     }
 
-    /* Rick that roll */
-    xTaskCreate(audio_player_task, "audio_player_task", 2048, NULL, 12, NULL);
+    if (!wakeup_deepsleep) {
+        /* Rick that roll */
+        xTaskCreate(audio_player_task, "audio_player_task", 2048, NULL, 12, NULL);
+    }
 
     /* Launcher menu */
     while (true) {
-        // TODO: Use the queue of our own keyboard module
-        menu_start(get_keyboard()->queue, app_description->version);
+        menu_start(get_keyboard()->queue, app_description->version, wakeup_deepsleep);
     }
 
     nvs_close(handle);

@@ -69,42 +69,39 @@ void menu_dev(xQueueHandle button_queue) {
     render_help(pax_buffer);
 
     while (1) {
-        // TODO: Replace
-//        rp2040_input_message_t buttonMessage = {0};
-//        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-//            uint8_t pin   = buttonMessage.input;
-//            bool    value = buttonMessage.state;
-//            switch (pin) {
-//                case RP2040_INPUT_JOYSTICK_DOWN:
-//                    if (value) {
-//                        menu_navigate_next(menu);
-//                        render = true;
-//                    }
-//                    break;
-//                case RP2040_INPUT_JOYSTICK_UP:
-//                    if (value) {
-//                        menu_navigate_previous(menu);
-//                        render = true;
-//                    }
-//                    break;
-//                case RP2040_INPUT_BUTTON_HOME:
-//                case RP2040_INPUT_BUTTON_BACK:
-//                    if (value) {
-//                        action = ACTION_BACK;
-//                    }
-//                    break;
-//                case RP2040_INPUT_BUTTON_ACCEPT:
-//                case RP2040_INPUT_JOYSTICK_PRESS:
-//                case RP2040_INPUT_BUTTON_SELECT:
-//                case RP2040_INPUT_BUTTON_START:
-//                    if (value) {
-//                        action = (menu_dev_action_t) menu_get_callback_args(menu, menu_get_position(menu));
-//                    }
-//                    break;
-//                default:
-//                    break;
-//            }
-//        }
+        keyboard_input_message_t buttonMessage = {0};
+        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+            uint8_t pin   = buttonMessage.input;
+            bool    value = buttonMessage.state;
+            switch (pin) {
+                case JOYSTICK_DOWN:
+                    if (value) {
+                        menu_navigate_next(menu);
+                        render = true;
+                    }
+                    break;
+                case JOYSTICK_UP:
+                    if (value) {
+                        menu_navigate_previous(menu);
+                        render = true;
+                    }
+                    break;
+                case BUTTON_BACK:
+                    if (value) {
+                        action = ACTION_BACK;
+                    }
+                    break;
+                case BUTTON_ACCEPT:
+                case BUTTON_SELECT:
+                case BUTTON_START:
+                    if (value) {
+                        action = (menu_dev_action_t) menu_get_callback_args(menu, menu_get_position(menu));
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
 
         if (render) {
             menu_render(pax_buffer, menu, 0, 0, 320, 220);

@@ -48,7 +48,7 @@ void edit_nickname(xQueueHandle button_queue) {
     }
 
     bool accepted =
-        keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "Nickname", "Press 🅷 to cancel", nickname, sizeof(nickname) - 1);
+        keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "Nickname", "Press \xF0\x9F\x86\x82 to cancel", nickname, sizeof(nickname) - 1);
 
     if (accepted) {
         nvs_set_str(handle, "nickname", nickname);
@@ -89,7 +89,7 @@ static void show_name(xQueueHandle button_queue, const char *name, nickname_them
         uint8_t g = (color >> 8) & 0xFF;
         uint8_t b = (color >> 0) & 0xFF;
 
-        uint8_t led_buffer[50 * 3];
+        uint8_t led_buffer[NUM_LEDS * 3];
         for (uint8_t i = 0; i < sizeof(led_buffer); i += 3) {
             led_buffer[i]     = g;
             led_buffer[i + 1] = r;
@@ -109,11 +109,13 @@ static void show_name(xQueueHandle button_queue, const char *name, nickname_them
 }
 
 static void place_in_sleep(xQueueHandle button_queue) {
+    // TODO: make sure backlight stays on
     esp_sleep_enable_ext0_wakeup(GPIO_INT_KEY, false);
     ESP_LOGW(TAG, "Entering deep sleep now!");
     fflush(stdout);
     fflush(stderr);
     vTaskDelay(pdMS_TO_TICKS(100));
+    gpio_hold_en(GPIO_LCD_BL);
     esp_deep_sleep_start();
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(1000));
@@ -131,7 +133,7 @@ char *read_nickname() {
     res             = nvs_get_str(handle, "nickname", NULL, &required);
     if (res) {
         ESP_LOGE(TAG, "Error reading nickname: %s", esp_err_to_name(res));
-        buffer = strdup("BADGE.TEAM");
+        buffer = strdup("Trooper");
     } else {
         buffer           = malloc(required + 1);
         buffer[required] = 0;
@@ -192,37 +194,36 @@ void show_nametag(xQueueHandle button_queue) {
             }
         }
         show_name(button_queue, buffer, theme, true);
-        // TODO: Replace
-//        rp2040_input_message_t msg;
-//        if (xQueueReceive(button_queue, &msg, pdMS_TO_TICKS(SLEEP_DELAY + 10))) {
-//            if (msg.state) {
-//                switch (msg.input) {
-//                    case RP2040_INPUT_JOYSTICK_LEFT:
-//                    case RP2040_INPUT_JOYSTICK_RIGHT:
-//                    case RP2040_INPUT_JOYSTICK_DOWN:
-//                    case RP2040_INPUT_JOYSTICK_UP:
-//                        hue = esp_random() & 255;
-//                        break;
-//                    case RP2040_INPUT_BUTTON_BACK:
-//                    case RP2040_INPUT_BUTTON_HOME:
-//                        quit = true;
-//                        break;
-//                    case RP2040_INPUT_BUTTON_MENU:
-//                        edit_nickname(button_queue);
-//                        free(buffer);
-//                        buffer = read_nickname();
-//                        break;
-//                    case RP2040_INPUT_BUTTON_SELECT:
-//                        theme = (theme + 1) % NICKNAME_THEME_LAST;
-//                        set_theme(theme);
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//            sleep_time = esp_timer_get_time() / 1000 + SLEEP_DELAY;
-//            ESP_LOGI(TAG, "Recheduled sleep in %d millis", SLEEP_DELAY);
-//        }
+        keyboard_input_message_t msg;
+        if (xQueueReceive(button_queue, &msg, pdMS_TO_TICKS(SLEEP_DELAY + 10))) {
+            if (msg.state) {
+                switch (msg.input) {
+                    case JOYSTICK_LEFT:
+                    case JOYSTICK_RIGHT:
+                    case JOYSTICK_DOWN:
+                    case JOYSTICK_UP:
+                        hue = esp_random() & 255;
+                        break;
+                    case BUTTON_BACK:
+                    case BUTTON_START:
+                        quit = true;
+                        break;
+                    case BUTTON_ACCEPT:
+                        edit_nickname(button_queue);
+                        free(buffer);
+                        buffer = read_nickname();
+                        break;
+                    case BUTTON_SELECT:
+                        theme = (theme + 1) % NICKNAME_THEME_LAST;
+                        set_theme(theme);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            sleep_time = esp_timer_get_time() / 1000 + SLEEP_DELAY;
+            ESP_LOGI(TAG, "Recheduled sleep in %d millis", SLEEP_DELAY);
+        }
     }
 
     uint8_t led_buffer[50 * 3] = {0};

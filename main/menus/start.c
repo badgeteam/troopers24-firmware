@@ -85,7 +85,11 @@ void render_start_help(pax_buf_t* pax_buffer, const char* text) {
     pax_draw_text(pax_buffer, 0xffffffff, font, 18, 320 - 5 - version_size.x, 240 - 18, text);
 }
 
-void menu_start(xQueueHandle button_queue, const char* version) {
+void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deepsleep) {
+    if (wakeup_deepsleep) {
+        show_nametag(button_queue);
+    }
+
     pax_buf_t* pax_buffer = get_pax_buffer();
     menu_t*    menu       = menu_alloc("Main menu", 34, 18);
 
@@ -138,38 +142,37 @@ void menu_start(xQueueHandle button_queue, const char* version) {
 
     bool full_redraw = true;
     while (1) {
-        bool                   user_input    = false;
-        // TODO: Use our keyboard module
+        bool                     user_input    = false;
         keyboard_input_message_t buttonMessage = {0};
         if (xQueueReceive(button_queue, &buttonMessage, 100 / portTICK_PERIOD_MS) == pdTRUE) {
             if (buttonMessage.state) {
                 switch (buttonMessage.input) {
-                    case BTN_DOWN:
+                    case JOYSTICK_DOWN:
                         menu_navigate_next_row(menu);
                         user_input  = true;
                         render      = true;
                         full_redraw = true;
                         break;
-                    case BTN_UP:
+                    case JOYSTICK_UP:
                         menu_navigate_previous_row(menu);
                         user_input  = true;
                         render      = true;
                         full_redraw = true;
                         break;
-                    case BTN_LEFT:
+                    case JOYSTICK_LEFT:
                         menu_navigate_previous(menu);
                         user_input = true;
                         render     = true;
                         break;
-                    case BTN_RIGHT:
+                    case JOYSTICK_RIGHT:
                         menu_navigate_next(menu);
                         user_input = true;
                         render     = true;
                         break;
-                    case BTN_ACCEPT:
-                    case BTN_BACK:
-                    case BTN_SELECT:
-                    case BTN_START:
+                    case BUTTON_ACCEPT:
+                    case BUTTON_BACK:
+                    case BUTTON_SELECT:
+                    case BUTTON_START:
                         action = (menu_start_action_t) menu_get_callback_args(menu, menu_get_position(menu));
                         break;
                     default:

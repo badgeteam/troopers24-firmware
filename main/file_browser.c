@@ -227,42 +227,41 @@ void file_browser(xQueueHandle button_queue, const char* initial_path) {
         file_browser_menu_args_t* menuArgs = NULL;
 
         while (1) {
-            // TODO: Replace
-//            rp2040_input_message_t buttonMessage = {0};
-//            if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-//                uint8_t pin   = buttonMessage.input;
-//                bool    value = buttonMessage.state;
-//                switch (pin) {
-//                    case RP2040_INPUT_JOYSTICK_DOWN:
-//                        if (value) {
-//                            menu_navigate_next(menu);
-//                            render = true;
-//                        }
-//                        break;
-//                    case RP2040_INPUT_JOYSTICK_UP:
-//                        if (value) {
-//                            menu_navigate_previous(menu);
-//                            render = true;
-//                        }
-//                        break;
-//                    case RP2040_INPUT_BUTTON_BACK:
-//                        if (value) {
-//                            menuArgs = pd_args;
-//                        }
-//                        break;
-//                    case RP2040_INPUT_BUTTON_ACCEPT:
-//                    case RP2040_INPUT_JOYSTICK_PRESS:
-//                        if (value) {
-//                            menuArgs = menu_get_callback_args(menu, menu_get_position(menu));
-//                        }
-//                        break;
-//                    case RP2040_INPUT_BUTTON_HOME:
-//                        if (value) exit = true;
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
+            keyboard_input_message_t buttonMessage = {0};
+            if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+                uint8_t pin   = buttonMessage.input;
+                bool    value = buttonMessage.state;
+                switch (pin) {
+                    case JOYSTICK_DOWN:
+                        if (value) {
+                            menu_navigate_next(menu);
+                            render = true;
+                        }
+                        break;
+                    case JOYSTICK_UP:
+                        if (value) {
+                            menu_navigate_previous(menu);
+                            render = true;
+                        }
+                        break;
+                    case BUTTON_BACK:
+                        if (value) {
+                            menuArgs = pd_args;
+                        }
+                        break;
+                    case BUTTON_ACCEPT:
+                    case BUTTON_SELECT:
+                        if (value) {
+                            menuArgs = menu_get_callback_args(menu, menu_get_position(menu));
+                        }
+                        break;
+                    case BUTTON_START:
+                        if (value) exit = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
 
             if (renderbg) {
                 pax_background(pax_buffer, 0xFFFFFF);

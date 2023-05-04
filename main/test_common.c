@@ -14,27 +14,26 @@ typedef bool (*test_fn)(uint32_t *rc);
 bool test_wait_for_response(uint32_t *rc) {
     printf("Waiting for button press...\r\n");
 
-    // TODO: Replace
-//    rp2040_input_message_t button_message = {0};
+    keyboard_input_message_t button_message = {0};
+    Keyboard* keyboard = get_keyboard();
 
     if (rc != NULL) *rc = 0;
     while (1) {
-        // TODO: Replace
-//        if (xQueueReceive(rp2040->queue, &button_message, portMAX_DELAY) == pdTRUE) {
-//            if (button_message.state) {
-//                switch (button_message.input) {
-//                    case RP2040_INPUT_BUTTON_HOME:
-//                    case RP2040_INPUT_BUTTON_MENU:
-//                    case RP2040_INPUT_BUTTON_BACK:
-//                        return false;
-//                    case RP2040_INPUT_BUTTON_ACCEPT:
-//                        if (rc != NULL) *rc = 1;
-//                        return true;
-//                    default:
-//                        break;
-//                }
-//            }
-//        }
+        if (xQueueReceive(keyboard->queue, &button_message, portMAX_DELAY) == pdTRUE) {
+            if (button_message.state) {
+                switch (button_message.input) {
+                    case BUTTON_START:
+                    case BUTTON_SELECT:
+                    case BUTTON_BACK:
+                        return false;
+                    case BUTTON_ACCEPT:
+                        if (rc != NULL) *rc = 1;
+                        return true;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 }
 

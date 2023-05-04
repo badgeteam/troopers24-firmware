@@ -77,18 +77,16 @@ void edit_lock(xQueueHandle button_queue) {
 }
 
 uint8_t wait_for_button_adv() {
-    return 0;
-    // TODO: Replace
-//    RP2040* rp2040 = get_rp2040();
-//    if (rp2040 == NULL) return false;
-//    while (1) {
-//        rp2040_input_message_t buttonMessage = {0};
-//        if (xQueueReceive(rp2040->queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
-//            if (buttonMessage.state) {
-//                return buttonMessage.input;
-//            }
-//        }
-//    }
+    Keyboard* keyboard = get_keyboard();
+    if (keyboard == NULL) return false;
+    while (1) {
+        keyboard_input_message_t buttonMessage = {0};
+        if (xQueueReceive(keyboard->queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
+            if (buttonMessage.state) {
+                return buttonMessage.input;
+            }
+        }
+    }
 }
 
 void edit_brightness(xQueueHandle button_queue) {
@@ -116,37 +114,38 @@ void edit_brightness(xQueueHandle button_queue) {
         pax_draw_text(pax_buffer, 0xFF000000, font, 18, 5, 240 - 18, "⤓ modify  🅱 back");
         display_flush();
         uint8_t button = wait_for_button_adv(button_queue);
-        // TODO: Replace
-//        switch (button) {
-//            case RP2040_INPUT_BUTTON_BACK:
-//            case RP2040_INPUT_BUTTON_HOME:
-//                quit = true;
-//                break;
-//            case RP2040_INPUT_JOYSTICK_UP:
-//            case RP2040_INPUT_JOYSTICK_RIGHT:
-//                if (state > 255 - 32) {
-//                    state = 255;
-//                } else {
-//                    state += 32;
-//                }
-//                nvs_set_u8(handle, "brightness", state);
-//                nvs_commit(handle);
+        switch (button) {
+            case BUTTON_BACK:
+            case BUTTON_START:
+                quit = true;
+                break;
+            case JOYSTICK_UP:
+            case JOYSTICK_RIGHT:
+                if (state > 255 - 32) {
+                    state = 255;
+                } else {
+                    state += 32;
+                }
+                nvs_set_u8(handle, "brightness", state);
+                nvs_commit(handle);
+                // TODO: backlight
 //                rp2040_set_lcd_backlight(get_rp2040(), state);
-//                break;
-//            case RP2040_INPUT_JOYSTICK_DOWN:
-//            case RP2040_INPUT_JOYSTICK_LEFT:
-//                if (state <= 32) {
-//                    state = 32;
-//                } else {
-//                    state -= 32;
-//                }
-//                nvs_set_u8(handle, "brightness", state);
-//                nvs_commit(handle);
+                break;
+            case JOYSTICK_DOWN:
+            case JOYSTICK_LEFT:
+                if (state <= 32) {
+                    state = 32;
+                } else {
+                    state -= 32;
+                }
+                nvs_set_u8(handle, "brightness", state);
+                nvs_commit(handle);
+                // TODO: backlight
 //                rp2040_set_lcd_backlight(get_rp2040(), state);
-//                break;
-//            default:
-//                break;
-//        }
+                break;
+            default:
+                break;
+        }
     }
     nvs_close(handle);
 }
@@ -192,42 +191,39 @@ void menu_settings(xQueueHandle button_queue) {
     render_settings_help(pax_buffer);
 
     while (1) {
-        // TODO: Replace
-//        rp2040_input_message_t buttonMessage = {0};
-//        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-//            uint8_t pin   = buttonMessage.input;
-//            bool    value = buttonMessage.state;
-//            switch (pin) {
-//                case RP2040_INPUT_JOYSTICK_DOWN:
-//                    if (value) {
-//                        menu_navigate_next(menu);
-//                        render = true;
-//                    }
-//                    break;
-//                case RP2040_INPUT_JOYSTICK_UP:
-//                    if (value) {
-//                        menu_navigate_previous(menu);
-//                        render = true;
-//                    }
-//                    break;
-//                case RP2040_INPUT_BUTTON_HOME:
-//                case RP2040_INPUT_BUTTON_BACK:
-//                    if (value) {
-//                        action = ACTION_BACK;
-//                    }
-//                    break;
-//                case RP2040_INPUT_BUTTON_ACCEPT:
-//                case RP2040_INPUT_JOYSTICK_PRESS:
-//                case RP2040_INPUT_BUTTON_SELECT:
-//                case RP2040_INPUT_BUTTON_START:
-//                    if (value) {
-//                        action = (menu_settings_action_t) menu_get_callback_args(menu, menu_get_position(menu));
-//                    }
-//                    break;
-//                default:
-//                    break;
-//            }
-//        }
+        keyboard_input_message_t buttonMessage = {0};
+        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+            uint8_t pin   = buttonMessage.input;
+            bool    value = buttonMessage.state;
+            switch (pin) {
+                case JOYSTICK_DOWN:
+                    if (value) {
+                        menu_navigate_next(menu);
+                        render = true;
+                    }
+                    break;
+                case JOYSTICK_UP:
+                    if (value) {
+                        menu_navigate_previous(menu);
+                        render = true;
+                    }
+                    break;
+                case BUTTON_BACK:
+                    if (value) {
+                        action = ACTION_BACK;
+                    }
+                    break;
+                case BUTTON_ACCEPT:
+                case BUTTON_SELECT:
+                case BUTTON_START:
+                    if (value) {
+                        action = (menu_settings_action_t) menu_get_callback_args(menu, menu_get_position(menu));
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
 
         if (render) {
             menu_render(pax_buffer, menu, 0, 0, 320, 220);

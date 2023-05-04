@@ -151,36 +151,33 @@ static void menu_sao_format(xQueueHandle button_queue) {
     menu_dev_action_t action = ACTION_NONE;
 
     while (1) {
-        // TODO: Use our custom module
-//        rp2040_input_message_t buttonMessage = {0};
-//        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
-//            uint8_t pin   = buttonMessage.input;
-//            bool    value = buttonMessage.state;
-//            if (value) {
-//                switch (pin) {
-//                    case RP2040_INPUT_JOYSTICK_DOWN:
-//                        menu_navigate_next(menu);
-//                        render = true;
-//                        break;
-//                    case RP2040_INPUT_JOYSTICK_UP:
-//                        menu_navigate_previous(menu);
-//                        render = true;
-//                        break;
-//                    case RP2040_INPUT_BUTTON_HOME:
-//                    case RP2040_INPUT_BUTTON_BACK:
-//                        action = ACTION_BACK;
-//                        break;
-//                    case RP2040_INPUT_BUTTON_ACCEPT:
-//                    case RP2040_INPUT_JOYSTICK_PRESS:
-//                    case RP2040_INPUT_BUTTON_SELECT:
-//                    case RP2040_INPUT_BUTTON_START:
-//                        action = (menu_dev_action_t) menu_get_callback_args(menu, menu_get_position(menu));
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//        }
+        keyboard_input_message_t buttonMessage = {0};
+        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+            uint8_t pin   = buttonMessage.input;
+            bool    value = buttonMessage.state;
+            if (value) {
+                switch (pin) {
+                    case JOYSTICK_DOWN:
+                        menu_navigate_next(menu);
+                        render = true;
+                        break;
+                    case JOYSTICK_UP:
+                        menu_navigate_previous(menu);
+                        render = true;
+                        break;
+                    case BUTTON_BACK:
+                        action = ACTION_BACK;
+                        break;
+                    case BUTTON_ACCEPT:
+                    case BUTTON_SELECT:
+                    case BUTTON_START:
+                        action = (menu_dev_action_t) menu_get_callback_args(menu, menu_get_position(menu));
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
 
         if (render) {
             menu_render(pax_buffer, menu, 40, 40, 320 - 90, 220 - 90);
@@ -328,11 +325,7 @@ static bool connect_to_wifi() {
 }
 
 void menu_sao(xQueueHandle button_queue) {
-    // TODO: Replace
-//    rp2040_input_message_t buttonMessage = {0};
-//    while (xQueueReceive(button_queue, &buttonMessage, 0) == pdTRUE) {
-//        // Flush!
-//    }
+    clear_keyboard_queue();
 
     pax_buf_t* pax_buffer = get_pax_buffer();
     bool       exit       = false;
@@ -383,47 +376,47 @@ void menu_sao(xQueueHandle button_queue) {
 
         display_flush();
 
-        // TODO: Replace
-//        if (xQueueReceive(button_queue, &buttonMessage, 500 / portTICK_PERIOD_MS) == pdTRUE) {
-//            uint8_t pin   = buttonMessage.input;
-//            bool    value = buttonMessage.state;
-//            if (value) {
-//                switch (pin) {
-//                    case RP2040_INPUT_BUTTON_START:
-//                        menu_sao_format(button_queue);
-//                        break;
-//                    case RP2040_INPUT_BUTTON_HOME:
-//                    case RP2040_INPUT_BUTTON_BACK:
-//                        exit = true;
-//                        break;
-//                    case RP2040_INPUT_BUTTON_SELECT:
-//                        dump_eeprom_contents();
-//                        break;
-//                    case RP2040_INPUT_BUTTON_ACCEPT:
-//                        if ((sao.type == SAO_BINARY) && (strncmp(sao.driver, "badgeteam_app_link", strlen("badgeteam_app_link")) == 0)) {
-//                            if (!sao_is_app_installed((char*) sao.driver_data)) {
-//                                if (connect_to_wifi()) {
-//                                    render_message("Installing app...");
-//                                    display_flush();
-//                                    if (sao_install_app(button_queue, (char*) sao.driver_data)) {
-//                                        sao_start_app((char*) sao.driver_data);
-//                                    } else {
-//                                        render_message("Failed to install app");
-//                                        display_flush();
-//                                        wait_for_button();
-//                                    }
-//                                }
-//                            } else {
-//                                render_message("Starting app...");
-//                                display_flush();
-//                                sao_start_app((char*) sao.driver_data);
-//                            }
-//                        }
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//        }
+        keyboard_input_message_t buttonMessage;
+
+        if (xQueueReceive(button_queue, &buttonMessage, 500 / portTICK_PERIOD_MS) == pdTRUE) {
+            uint8_t pin   = buttonMessage.input;
+            bool    value = buttonMessage.state;
+            if (value) {
+                switch (pin) {
+                    case BUTTON_START:
+                        menu_sao_format(button_queue);
+                        break;
+                    case BUTTON_BACK:
+                        exit = true;
+                        break;
+                    case BUTTON_SELECT:
+                        dump_eeprom_contents();
+                        break;
+                    case BUTTON_ACCEPT:
+                        if ((sao.type == SAO_BINARY) && (strncmp(sao.driver, "badgeteam_app_link", strlen("badgeteam_app_link")) == 0)) {
+                            if (!sao_is_app_installed((char*) sao.driver_data)) {
+                                if (connect_to_wifi()) {
+                                    render_message("Installing app...");
+                                    display_flush();
+                                    if (sao_install_app(button_queue, (char*) sao.driver_data)) {
+                                        sao_start_app((char*) sao.driver_data);
+                                    } else {
+                                        render_message("Failed to install app");
+                                        display_flush();
+                                        wait_for_button();
+                                    }
+                                }
+                            } else {
+                                render_message("Starting app...");
+                                display_flush();
+                                sao_start_app((char*) sao.driver_data);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
 }
