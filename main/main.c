@@ -37,6 +37,7 @@
 #include "wifi_defaults.h"
 #include "wifi_ota.h"
 #include "ws2812.h"
+#include "keyboard.h"
 
 extern const uint8_t logo_screen_png_start[] asm("_binary_logo_screen_png_start");
 extern const uint8_t logo_screen_png_end[] asm("_binary_logo_screen_png_end");
@@ -150,23 +151,6 @@ void app_main(void) {
     ws2812_init(GPIO_LED_DATA, 150);
     const uint8_t led_off[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     ws2812_send_data(led_off, sizeof(led_off));
-
-    /* Initialize the PCA9555s */
-    PCA9555 front = {
-        .i2c_bus  = I2C_BUS,
-        .i2c_addr = PCA555A_0_ADDR,
-    };
-    pca9555_init(&front, GPIO_INT_KEY);
-    PCA9555 keyboard1 = {
-        .i2c_bus  = I2C_BUS,
-        .i2c_addr = PCA555A_1_ADDR,
-    };
-    pca9555_init(&keyboard1, GPIO_INT_KEY);
-    PCA9555 keyboard2 = {
-        .i2c_bus  = I2C_BUS,
-        .i2c_addr = PCA555A_2_ADDR,
-    };
-    pca9555_init(&keyboard2, GPIO_INT_KEY);
 
     /* Turning the backlight on */
     gpio_config_t io_conf = {
@@ -284,7 +268,7 @@ void app_main(void) {
     /* Launcher menu */
     while (true) {
         // TODO: Use the queue of our own keyboard module
-        menu_start(0, app_description->version);
+        menu_start(get_keyboard()->queue, app_description->version);
     }
 
     nvs_close(handle);

@@ -138,47 +138,45 @@ void menu_start(xQueueHandle button_queue, const char* version) {
 
     bool full_redraw = true;
     while (1) {
-        // TODO: Remove
-        vTaskDelay(10 / portTICK_PERIOD_MS);
         bool                   user_input    = false;
         // TODO: Use our keyboard module
-//        rp2040_input_message_t buttonMessage = {0};
-//        if (xQueueReceive(button_queue, &buttonMessage, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-//            if (buttonMessage.state) {
-//                switch (buttonMessage.input) {
-//                    case RP2040_INPUT_JOYSTICK_DOWN:
-//                        menu_navigate_next_row(menu);
-//                        user_input  = true;
-//                        render      = true;
-//                        full_redraw = true;
-//                        break;
-//                    case RP2040_INPUT_JOYSTICK_UP:
-//                        menu_navigate_previous_row(menu);
-//                        user_input  = true;
-//                        render      = true;
-//                        full_redraw = true;
-//                        break;
-//                    case RP2040_INPUT_JOYSTICK_LEFT:
-//                        menu_navigate_previous(menu);
-//                        user_input = true;
-//                        render     = true;
-//                        break;
-//                    case RP2040_INPUT_JOYSTICK_RIGHT:
-//                        menu_navigate_next(menu);
-//                        user_input = true;
-//                        render     = true;
-//                        break;
-//                    case RP2040_INPUT_BUTTON_ACCEPT:
-//                    case RP2040_INPUT_JOYSTICK_PRESS:
-//                    case RP2040_INPUT_BUTTON_SELECT:
-//                    case RP2040_INPUT_BUTTON_START:
-//                        action = (menu_start_action_t) menu_get_callback_args(menu, menu_get_position(menu));
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//        }
+        keyboard_input_message_t buttonMessage = {0};
+        if (xQueueReceive(button_queue, &buttonMessage, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+            if (buttonMessage.state) {
+                switch (buttonMessage.input) {
+                    case BTN_DOWN:
+                        menu_navigate_next_row(menu);
+                        user_input  = true;
+                        render      = true;
+                        full_redraw = true;
+                        break;
+                    case BTN_UP:
+                        menu_navigate_previous_row(menu);
+                        user_input  = true;
+                        render      = true;
+                        full_redraw = true;
+                        break;
+                    case BTN_LEFT:
+                        menu_navigate_previous(menu);
+                        user_input = true;
+                        render     = true;
+                        break;
+                    case BTN_RIGHT:
+                        menu_navigate_next(menu);
+                        user_input = true;
+                        render     = true;
+                        break;
+                    case BTN_ACCEPT:
+                    case BTN_BACK:
+                    case BTN_SELECT:
+                    case BTN_START:
+                        action = (menu_start_action_t) menu_get_callback_args(menu, menu_get_position(menu));
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
 
         if (render) {
             if (full_redraw) {
@@ -218,6 +216,7 @@ void menu_start(xQueueHandle button_queue, const char* version) {
             } else if (action == ACTION_SAO) {
                 menu_sao(button_queue);
             }
+            clear_keyboard_queue();
             action      = ACTION_NONE;
             render      = true;
             full_redraw = true;
