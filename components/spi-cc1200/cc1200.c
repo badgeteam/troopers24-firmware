@@ -286,12 +286,16 @@ esp_err_t cc1200_init(CC1200* device) {
 
     INFOS(CC1200_RF_CFG.cfg_descriptor);
 
-
     if (!(rf_flags & RF_INITIALIZED)) {
+        /* initialize mutex for SPI access */
+        if (device->mutex == NULL) {
+            device->mutex = xSemaphoreCreateMutex();
+            if (device->mutex != NULL) xSemaphoreGive(device->mutex);
+        }
+
         /* Perform low level initialization */
         cc1200_arch_init(device);
 
-        /* initialize mutex for SPI access */
         if (device->spi_semaphore == NULL) {
             device->spi_semaphore = xSemaphoreCreateMutex();
             xSemaphoreGive(device->spi_semaphore);
@@ -328,7 +332,7 @@ esp_err_t cc1200_init(CC1200* device) {
         rf_flags |= (RF_INITIALIZED | RF_ON);
 
         /* Set default channel. This will also force initial calibration! */
-        driver_cc1200_set_frequency(868000000);
+        driver_cc1200_set_frequency(868 * 1000 * 1000);
 
         /*
          * We have to call off() before on() because on() relies on the
@@ -337,9 +341,7 @@ esp_err_t cc1200_init(CC1200* device) {
         cc1200_arch_gpio0_enable_irq(device);
     }
 
-//    return cc1200_troopers_init();
-
-    return ESP_OK;
+    return cc1200_troopers_init();
 }
 
 esp_err_t driver_cc1200_rx_packet(cc1200_message *msg) {

@@ -13,15 +13,10 @@ static const char* TAG = "driver_cc1200";
 //     gpio_set_level(device->pin_dcx, device->dc_level);
 // }
 
-static spi_device_handle_t cc_dev = NULL;
-static spi_host_device_t   host;
-
 esp_err_t cc1200_arch_init(CC1200* device) {
     esp_err_t res;
 
     if (device->pin_cs < 0) return ESP_FAIL;
-
-    if (device->mutex != NULL) xSemaphoreGive(device->mutex);
 
     // Initialize chip select GPIO pin
     res = gpio_set_direction(device->pin_cs, GPIO_MODE_OUTPUT);
@@ -31,13 +26,20 @@ esp_err_t cc1200_arch_init(CC1200* device) {
         spi_device_interface_config_t devcfg = {
             .command_bits   = 0,
             .address_bits   = 0,
+            .dummy_bits   = 0,
             .mode           = 0,  // SPI mode 0
+            .duty_cycle_pos   = 128,
+            .cs_ena_pretrans  = 0,
+            .cs_ena_posttrans = 0,
             .clock_speed_hz = device->spi_speed,
+//            .spics_io_num = device->pin_cs,
+            .spics_io_num = -1,
+            .input_delay_ns   = 0,
             .queue_size     = 1,
             .pre_cb         = NULL,
             .post_cb        = NULL,
         };
-        res = spi_bus_add_device(VSPI_HOST, &devcfg, &device->spi_device);
+        res = spi_bus_add_device(device->spi_bus, &devcfg, &device->spi_device);
         if (res != ESP_OK) return res;
     }
 
@@ -63,6 +65,9 @@ uint8_t cc1200_arch_spi_rw_byte(CC1200* device, uint8_t c) {
         .length    = 8 * 1,
     };
     esp_err_t res = spi_device_transmit(device->spi_device, &t);
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "failed to write spi: %d", res);
+    }
     return rx;
 }
 

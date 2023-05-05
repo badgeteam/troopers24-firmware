@@ -88,7 +88,7 @@ void cc1200_event_task(void *arg) {
         EventBits_t event_bits = xEventGroupWaitBits(
             cc1200_event_group, CC1200_EVENT_CMD | CC1200_EVENT_HANDLE_RX | CC1200_EVENT_RX_DONE | CC1200_EVENT_HANDLE_TX | CC1200_EVENT_TX_DONE, pdFALSE,
             pdFALSE, 1000 / portTICK_PERIOD_MS);
-        if (xSemaphoreTake(device->spi_semaphore, 1000 / portTICK_PERIOD_MS) != pdTRUE) continue;
+        if (xSemaphoreTake(device->mutex, 1000 / portTICK_PERIOD_MS) != pdTRUE) continue;
 
         if (event_bits & CC1200_EVENT_HANDLE_RX) {
             INFOS("CC1200_EVENT_HANDLE_RX");
@@ -146,7 +146,7 @@ void cc1200_event_task(void *arg) {
                 xEventGroupSetBits(cc1200_event_group, CC1200_EVENT_TX_FINISHED);
         }
 
-        xSemaphoreGive(device->spi_semaphore);
+        xSemaphoreGive(device->mutex);
     }
 }
 
@@ -876,7 +876,7 @@ void cc1200_cmd_set_frequency(CC1200* device, cc1200_cmd *cmd) {
 
     if (!(rf_flags & RF_ON)) {
         was_off = 1;
-        // cc1200_cmd_on();
+//         cc1200_cmd_on(device);
     }
 
     enter_idle_state(device);
