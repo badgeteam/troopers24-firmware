@@ -107,11 +107,9 @@ static bool populate_menu(menu_t* menu) {
     bool internal_result_esp32 = populate_menu_from_path(menu, "/internal/apps", "esp32", (void*) apps_png_start, apps_png_end - apps_png_start);
     bool sdcard_result_esp32   = populate_menu_from_path(menu, "/sd/apps", "esp32", (void*) apps_png_start, apps_png_end - apps_png_start);
     bool other_result_esp32    = populate_menu_from_other_appfs_entries(menu);
-    bool internal_result_ice40 = populate_menu_from_path(menu, "/internal/apps", "ice40", (void*) bitstream_png_start, bitstream_png_end - bitstream_png_start);
-    bool sdcard_result_ice40   = populate_menu_from_path(menu, "/sd/apps", "ice40", (void*) bitstream_png_start, bitstream_png_end - bitstream_png_start);
     bool internal_result_python = populate_menu_from_path(menu, "/internal/apps", "python", (void*) python_png_start, python_png_end - python_png_start);
     bool sdcard_result_python   = populate_menu_from_path(menu, "/sd/apps", "python", (void*) python_png_start, python_png_end - python_png_start);
-    return internal_result_esp32 | sdcard_result_esp32 | other_result_esp32 | internal_result_ice40 | sdcard_result_ice40 | internal_result_python |
+    return internal_result_esp32 | sdcard_result_esp32 | other_result_esp32 | internal_result_python |
            sdcard_result_python;
 }
 
@@ -180,40 +178,37 @@ static bool show_app_details(xQueueHandle button_queue, launcher_app_t* app) {
     bool       quit         = false;
     while (!quit) {
         if (render) {
-            pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 20, pax_buffer->width, 20);
-            pax_draw_text(pax_buffer, 0xFF491d88, pax_font_saira_regular, 18, 5, pax_buffer->height - 18, "🅰 start  🅱 back  🅴 uninstall");
-            render_outline(0, 0, pax_buffer->width, pax_buffer->height - 20, 0xFFfa448c, 0xFFFFFFFF);
-            render_header(pax_buffer, 0, 0, pax_buffer->width, 34, 18, 0xFFfec859, 0xFFfa448c, app->icon, app->title);
+            pax_simple_rect(pax_buffer, 0xFF131313, 0, pax_buffer->height - 20, pax_buffer->width, 20);
+            pax_draw_text(pax_buffer, 0xFFFFFFFF, pax_font_saira_regular, 18, 5, pax_buffer->height - 18, "🅰 uninstall  🅱 back");
+            render_outline(0, 0, pax_buffer->width, pax_buffer->height - 20, 0xFF1E1E1E, 0xFFFFFFFF);
+            render_header(pax_buffer, 0, 0, pax_buffer->width, 34, 18, 0xFFF1AA13, 0xFF1E1E1E, app->icon, app->title);
             char buffer[128];
             snprintf(buffer, sizeof(buffer) - 1, "Type: %s", (app->type != NULL) ? app->type : "Unknown");
-            pax_draw_text(pax_buffer, 0xFF491d88, pax_font_saira_regular, 18, 5, 48 + 20 * 0, buffer);
+            pax_draw_text(pax_buffer, 0xFFFFFFFF, pax_font_saira_regular, 18, 5, 48 + 20 * 0, buffer);
             snprintf(buffer, sizeof(buffer) - 1, "Author: %s", (app->author != NULL) ? app->author : "Unknown");
-            pax_draw_text(pax_buffer, 0xFF491d88, pax_font_saira_regular, 18, 5, 48 + 20 * 1, buffer);
+            pax_draw_text(pax_buffer, 0xFFFFFFFF, pax_font_saira_regular, 18, 5, 48 + 20 * 1, buffer);
             snprintf(buffer, sizeof(buffer) - 1, "License: %s", (app->license != NULL) ? app->license : "Unknown");
-            pax_draw_text(pax_buffer, 0xFF491d88, pax_font_saira_regular, 18, 5, 48 + 20 * 2, buffer);
+            pax_draw_text(pax_buffer, 0xFFFFFFFF, pax_font_saira_regular, 18, 5, 48 + 20 * 2, buffer);
             snprintf(buffer, sizeof(buffer) - 1, "Version: %u", app->version);
-            pax_draw_text(pax_buffer, 0xFF491d88, pax_font_saira_regular, 18, 5, 48 + 20 * 3, buffer);
-            pax_draw_text(pax_buffer, 0xFF491d88, pax_font_saira_regular, 18, 5, 48 + 20 * 4, (app->description != NULL) ? app->description : "Unknown");
+            pax_draw_text(pax_buffer, 0xFFFFFFFF, pax_font_saira_regular, 18, 5, 48 + 20 * 3, buffer);
+            pax_draw_text(pax_buffer, 0xFFFFFFFF, pax_font_saira_regular, 18, 5, 48 + 20 * 4, (app->description != NULL) ? app->description : "Unknown");
             display_flush();
             render = false;
         }
+
+        clear_keyboard_queue();
         keyboard_input_message_t buttonMessage = {0};
         if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             if (buttonMessage.state) {
                 switch (buttonMessage.input) {
-                    case BUTTON_BACK:
-                        quit = true;
-                        break;
                     case BUTTON_ACCEPT:
-                    case BUTTON_START:
-                        start_app(button_queue, app);
-                        render = true;
-                        break;
-                    case BUTTON_SELECT:
                         if (uninstall_app(button_queue, app)) {
                             return_value = true;
                             quit         = true;
                         }
+                        break;
+                    case BUTTON_BACK:
+                        quit = true;
                         break;
                     default:
                         break;
@@ -226,7 +221,6 @@ static bool show_app_details(xQueueHandle button_queue, launcher_app_t* app) {
 
 void menu_launcher(xQueueHandle button_queue) {
     pax_buf_t* pax_buffer = get_pax_buffer();
-    // size_t ram_before = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
     bool reload = true;
     while (reload) {
         reload = false;
@@ -236,13 +230,13 @@ void menu_launcher(xQueueHandle button_queue) {
 
         menu_t* menu = menu_alloc("App launcher", 34, 18);
 
-        menu->fgColor           = 0xFF000000;
-        menu->bgColor           = 0xFFFFFFFF;
-        menu->bgTextColor       = 0xFFFFFFFF;
-        menu->selectedItemColor = 0xFF491d88;
-        menu->borderColor       = 0xFF43b5a0;
-        menu->titleColor        = 0xFF491d88;
-        menu->titleBgColor      = 0xFF43b5a0;
+        menu->fgColor           = 0xFFF1AA13;
+        menu->bgColor           = 0xFF131313;
+        menu->bgTextColor       = 0xFF000000;
+        menu->selectedItemColor = 0xFFF1AA13;
+        menu->borderColor       = 0xFF1E1E1E;
+        menu->titleColor        = 0xFFF1AA13;
+        menu->titleBgColor      = 0xFF1E1E1E;
         menu->scrollbarBgColor  = 0xFFCCCCCC;
         menu->scrollbarFgColor  = 0xFF555555;
 
@@ -258,17 +252,18 @@ void menu_launcher(xQueueHandle button_queue) {
         while (!quit) {
             if (render) {
                 const pax_font_t* font = pax_font_saira_regular;
-                pax_background(pax_buffer, 0xFFFFFF);
+                pax_background(pax_buffer, 0x131313);
                 pax_noclip(pax_buffer);
-                pax_draw_text(pax_buffer, 0xFF491d88, font, 18, 5, 240 - 18, "🅰 start  🅱 back  🅼 options");
+                pax_draw_text(pax_buffer, 0xFFFFFFFF, font, 18, 5, 240 - 18, "🅰 run app  🅱 back  🆂 details");
                 menu_render(pax_buffer, menu, 0, 0, 320, 220);
                 if (empty) render_message("No apps installed");
                 display_flush();
                 render = false;
             }
 
+            clear_keyboard_queue();
             keyboard_input_message_t buttonMessage = {0};
-            if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+            if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
                 if (buttonMessage.state) {
                     switch (buttonMessage.input) {
                         case JOYSTICK_DOWN:
@@ -279,25 +274,25 @@ void menu_launcher(xQueueHandle button_queue) {
                             menu_navigate_previous(menu);
                             render = true;
                             break;
+                        case BUTTON_ACCEPT:
+                        case BUTTON_SELECT:
+                            app_to_start = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
+                            break;
                         case BUTTON_BACK:
                             quit = true;
                             break;
-                        case BUTTON_ACCEPT:
-                            app_to_start = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
-                            break;
-                        case BUTTON_SELECT:
-                            {
-                                launcher_app_t* app = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
-                                if (app != NULL) {
-                                    if (show_app_details(button_queue, app)) {
-                                        reload = true;
-                                        quit   = true;
-                                    } else {
-                                        render = true;
-                                    }
+                        case BUTTON_START: {
+                            launcher_app_t* app = (launcher_app_t*) menu_get_callback_args(menu, menu_get_position(menu));
+                            if (app != NULL) {
+                                if (show_app_details(button_queue, app)) {
+                                    reload = true;
+                                    quit   = true;
+                                } else {
+                                    render = true;
                                 }
-                                break;
                             }
+                            break;
+                        }
                         default:
                             break;
                     }
@@ -317,6 +312,4 @@ void menu_launcher(xQueueHandle button_queue) {
         menu_free(menu);
         pax_buf_destroy(&menu_icon);
     }
-    // size_t ram_after = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
-    // printf("Leak in launcher: %d (%u to %u)\r\n", ram_before - ram_after, ram_before, ram_after);
 }

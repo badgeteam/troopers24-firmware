@@ -59,15 +59,15 @@ static void hatchery_menu_destroy(menu_t* menu) {
 
 int wait_for_button_press(xQueueHandle button_queue, TickType_t timeout) {
     return -1;
-    // TODO: Replace
-//    int button = -1;
-//    while (true) {
-//        keyboard_input_message_t message;
-//        xQueueReceive(button_queue, &message, portMAX_DELAY);
-//        button = message.input;
-//        if (message.state) break;
-//    }
-//    return button;
+    int button = -1;
+    while (true) {
+        keyboard_input_message_t message;
+        clear_keyboard_queue();
+        xQueueReceive(button_queue, &message, portMAX_DELAY);
+        button = message.input;
+        if (message.state) break;
+    }
+    return button;
 }
 
 static void* hatchery_menu_show(xQueueHandle button_queue, menu_t* menu, const char* prompt, bool* back_btn, bool* select_btn, bool* menu_btn, bool* home_btn) {
@@ -86,40 +86,30 @@ static void* hatchery_menu_show(xQueueHandle button_queue, menu_t* menu, const c
 
         int button   = wait_for_button_press(button_queue, portMAX_DELAY);
         return_value = menu_get_callback_args(menu, menu_get_position(menu));
-        // TODO: Replace
-//        switch (button) {
-//            case JOYSTICK_DOWN:
-//                menu_navigate_next(menu);
-//                render = true;
-//                break;
-//            case JOYSTICK_UP:
-//                menu_navigate_previous(menu);
-//                render = true;
-//                break;
-//            case BUTTON_ACCEPT:
-//            case JOYSTICK_PRESS:
-//            case BUTTON_START:
-//                quit = true;
-//                break;
-//            case BUTTON_BACK:
-//                quit = true;
-//                if (back_btn) *back_btn = true;
-//                break;
-//            case BUTTON_SELECT:
-//                quit = true;
-//                if (select_btn) *select_btn = true;
-//                break;
-//            case BUTTON_MENU:
-//                quit = true;
-//                if (menu_btn) *menu_btn = true;
-//                break;
-//            case BUTTON_HOME:
-//                quit = true;
-//                if (home_btn) *home_btn = true;
-//                break;
-//            default:
-//                break;
-//        }
+        switch (button) {
+            case JOYSTICK_DOWN:
+                menu_navigate_next(menu);
+                render = true;
+                break;
+            case JOYSTICK_UP:
+                menu_navigate_previous(menu);
+                render = true;
+                break;
+            case BUTTON_ACCEPT:
+            case BUTTON_SELECT:
+                quit = true;
+                break;
+            case BUTTON_BACK:
+                quit = true;
+                if (back_btn) *back_btn = true;
+                break;
+            case BUTTON_START:
+                quit = true;
+                if (menu_btn) *menu_btn = true;
+                break;
+            default:
+                break;
+        }
     }
 
     return return_value;
@@ -347,44 +337,39 @@ bool menu_hatchery_install_app(xQueueHandle button_queue, const char* type_slug)
         }
 
         int button = wait_for_button_press(button_queue, portMAX_DELAY);
-        // TODO: Replace
-//        switch (button) {
-//            case JOYSTICK_DOWN:
-//                menu_navigate_next(menu);
-//                render = true;
-//                break;
-//            case JOYSTICK_UP:
-//                menu_navigate_previous(menu);
-//                render = true;
-//                break;
-//            case BUTTON_ACCEPT:
-//            case JOYSTICK_PRESS:
-//            case BUTTON_START:
-//                {
-//                    int action = (int) menu_get_callback_args(menu, menu_get_position(menu));
-//                    switch (action) {
-//                        case 0:
-//                            result = menu_hatchery_install_app_execute(button_queue, type_slug, false);
-//                            break;
-//                        case 1:
-//                            result = menu_hatchery_install_app_execute(button_queue, type_slug, true);
-//                            break;
-//                        case 2:
-//                        default:
-//                            break;
-//                    }
-//                    quit = true;
-//                    break;
-//                }
-//            case BUTTON_BACK:
-//            case BUTTON_SELECT:
-//            case BUTTON_MENU:
-//            case BUTTON_HOME:
-//                quit = true;
-//                break;
-//            default:
-//                break;
-//        }
+        switch (button) {
+            case JOYSTICK_DOWN:
+                menu_navigate_next(menu);
+                render = true;
+                break;
+            case JOYSTICK_UP:
+                menu_navigate_previous(menu);
+                render = true;
+                break;
+            case BUTTON_ACCEPT:
+            case BUTTON_SELECT:
+                {
+                    int action = (int) menu_get_callback_args(menu, menu_get_position(menu));
+                    switch (action) {
+                        case 0:
+                            result = menu_hatchery_install_app_execute(button_queue, type_slug, false);
+                            break;
+                        case 1:
+                            result = menu_hatchery_install_app_execute(button_queue, type_slug, true);
+                            break;
+                        case 2:
+                        default:
+                            break;
+                    }
+                    quit = true;
+                    break;
+                }
+            case BUTTON_BACK:
+                quit = true;
+                break;
+            default:
+                break;
+        }
     }
 
     menu_free(menu);
@@ -450,35 +435,24 @@ bool menu_hatchery_app_info(xQueueHandle button_queue, const char* type_slug, co
         }
 
         int button = wait_for_button_press(button_queue, portMAX_DELAY);
-        // TODO: Replace
-//        switch (button) {
-//            case JOYSTICK_DOWN:
-//                render = true;
-//                break;
-//            case JOYSTICK_UP:
-//                render = true;
-//                break;
-//            case BUTTON_ACCEPT:
-//            case JOYSTICK_PRESS:
-//            case BUTTON_START:
-//                render = true;
-//                menu_hatchery_install_app(button_queue, type_slug);
-//                break;
-//            case BUTTON_BACK:
-//                quit = true;
-//                break;
-//            case BUTTON_SELECT:
-//                quit = true;
-//                break;
-//            case BUTTON_MENU:
-//                quit = true;
-//                break;
-//            case BUTTON_HOME:
-//                quit = true;
-//                break;
-//            default:
-//                break;
-//        }
+        switch (button) {
+            case JOYSTICK_DOWN:
+                render = true;
+                break;
+            case JOYSTICK_UP:
+                render = true;
+                break;
+            case BUTTON_ACCEPT:
+            case BUTTON_SELECT:
+                render = true;
+                menu_hatchery_install_app(button_queue, type_slug);
+                break;
+            case BUTTON_BACK:
+                quit = true;
+                break;
+            default:
+                break;
+        }
     }
 
     hatchery_free_app_info();

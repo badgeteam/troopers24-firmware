@@ -35,7 +35,7 @@ idf_component_register(
     EMBED_TXTFILES ${project_dir}/resources/isrgrootx1.pem
                    ${project_dir}/resources/custom_ota_cert.pem
     EMBED_FILES ${project_dir}/resources/boot.snd
-                ${project_dir}/resources/mch2022_logo.png
+                ${project_dir}/resources/troopers1.png
                 ${project_dir}/resources/icons/dev.png
                 ${project_dir}/resources/icons/home.png
                 ${project_dir}/resources/icons/settings.png

@@ -81,6 +81,7 @@ uint8_t wait_for_button_adv() {
     if (keyboard == NULL) return false;
     while (1) {
         keyboard_input_message_t buttonMessage = {0};
+        clear_keyboard_queue();
         if (xQueueReceive(keyboard->queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             if (buttonMessage.state) {
                 return buttonMessage.input;
@@ -116,7 +117,6 @@ void edit_brightness(xQueueHandle button_queue) {
         uint8_t button = wait_for_button_adv(button_queue);
         switch (button) {
             case BUTTON_BACK:
-            case BUTTON_START:
                 quit = true;
                 break;
             case JOYSTICK_UP:
@@ -192,7 +192,8 @@ void menu_settings(xQueueHandle button_queue) {
 
     while (1) {
         keyboard_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+        clear_keyboard_queue();
+        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             uint8_t pin   = buttonMessage.input;
             bool    value = buttonMessage.state;
             switch (pin) {

@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "hardware.h"
-#include "pax_keyboard.h"
+#include "physical_keyboard.h"
 
 void render_outline(float position_x, float position_y, float width, float height, pax_col_t border_color, pax_col_t background_color) {
     pax_buf_t* pax_buffer = get_pax_buffer();
