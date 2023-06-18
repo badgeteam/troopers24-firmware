@@ -155,6 +155,23 @@ _Noreturn void app_main(void) {
     const uint8_t led_off[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     ws2812_send_data(led_off, sizeof(led_off));
 
+    /* Enable the amplifier */
+    PCA9555* io_expander = get_io_expander();
+    if (io_expander == NULL) {
+        ESP_LOGE(TAG, "Failed to retrieve the IO expander");
+        esp_restart();
+    }
+    pca9555_set_gpio_direction(io_expander, IO_AMP_ENABLE, PCA_OUTPUT);
+    pca9555_set_gpio_direction(io_expander, IO_AMP_GAIN0, PCA_OUTPUT);
+    pca9555_set_gpio_direction(io_expander, IO_AMP_GAIN1, PCA_OUTPUT);
+
+    pca9555_set_gpio_value(io_expander, IO_AMP_ENABLE, 0);
+    pca9555_set_gpio_value(io_expander, IO_AMP_GAIN0, 0);
+    pca9555_set_gpio_value(io_expander, IO_AMP_GAIN1, 0);
+
+
+    pca9555_set_gpio_direction(io_expander, IO_SAO_GPIO2, PCA_OUTPUT);
+
     /* Turning the backlight on */
     gpio_config_t io_conf = {
         .intr_type    = GPIO_INTR_DISABLE,
@@ -164,7 +181,7 @@ _Noreturn void app_main(void) {
         .pull_up_en   = 0,
     };
     res = gpio_config(&io_conf);
-    printf("set pin direction");
+    printf("set pin direction\n");
     if (res != ESP_OK) {
         ESP_LOGE(TAG, "LCD Backlight set_direction failed: %d", res);
         display_fatal_error(fatal_error_str, "Failed to set LCD backlight pin mode", "Flash may be corrupted", reset_board_str);

@@ -9,5 +9,5 @@ idf_component_register(
         "pax-codecs"
         "pax-keyboard"
         "spi-ili9341"
-        "mch2022-bsp"
+        "troopers23-bsp"
 )

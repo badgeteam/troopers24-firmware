@@ -1,10 +1,14 @@
 #include <driver/gpio.h>
+#include <driver/spi_master.h>
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#include <freertos/task.h>
 #include <freertos/queue.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "filesystems.h"
 
 #include "audio.h"
 #include "hardware.h"
@@ -16,8 +20,119 @@
 
 static const char* TAG = "factory";
 
+bool test_cc1200_init(uint32_t* rc) {
+    CC1200   cc1200       = {0};
+
+    cc1200.spi_bus   = SPI_BUS;
+    cc1200.pin_cs    = GPIO_SPI_CS_RADIO;
+    cc1200.pin_intr  = GPIO_INT_RADIO;
+    cc1200.spi_speed = 20000000;  // 20MHz
+
+    esp_err_t res = cc1200_init(&cc1200);
+    *rc           = (uint32_t) res;
+    return (res == ESP_OK);
+}
+
+bool wait_for_key_pressed(Keyboard* keyboard, Key key) {
+    keyboard_input_message_t buttonMessage = {0};
+    int i = 0;
+
+    while (i < 10) {
+        if (xQueueReceive(keyboard->queue, &buttonMessage, 1000 / portTICK_PERIOD_MS) == pdTRUE) {
+            if (buttonMessage.state && buttonMessage.input == key) {
+                return true;
+            }
+            i--;
+        }
+        i++;
+    }
+
+    return false;
+}
+
+bool test_keyboard_init(uint32_t* rc) {
+    Keyboard* keyboard = get_keyboard();
+    if (keyboard == NULL) {
+        *rc = (uint32_t) 1;
+        return false;
+    }
+
+
+    ESP_LOGI(TAG, "Press START...");
+    if (!wait_for_key_pressed(keyboard, BUTTON_START)) {
+        ESP_LOGE(TAG, "Timeout reached");
+        *rc = (uint32_t) 2;
+        return false;
+    }
+    ESP_LOGI(TAG, "Press SHIFT...");
+    if (!wait_for_key_pressed(keyboard, KEY_SHIFT)) {
+        ESP_LOGE(TAG, "Timeout reached");
+        *rc = (uint32_t) 3;
+        return false;
+    }
+    ESP_LOGI(TAG, "Press Q...");
+    if (!wait_for_key_pressed(keyboard, KEY_Q)) {
+        ESP_LOGE(TAG, "Timeout reached");
+        *rc = (uint32_t) 4;
+        return false;
+    }
+
+    return (keyboard != NULL);
+}
+
+bool test_sdcard_init(uint32_t* rc) {
+    bool sdcard_mounted = (mount_sdcard_filesystem() == ESP_OK);
+    if (!sdcard_mounted) {
+        ESP_LOGI(TAG, "No SD card found");
+        *rc = (uint32_t) 1;
+        return false;
+    }
+
+    ESP_LOGI(TAG, "Trying to create file on SD card...");
+    FILE* test_fd = fopen("/sd/factory_test", "w");
+    if (test_fd == NULL) {
+        ESP_LOGI(TAG, "Unable to open file");
+        *rc = (uint32_t) 2;
+        return false;
+    }
+
+    char* test_str = "TROOPERS23 TEST";
+    int test_str_len = 15;
+
+    fwrite(test_str, 1, test_str_len, test_fd);
+    fclose(test_fd);
+
+    ESP_LOGI(TAG, "Wrote file, trying to read. You should see \"TROOPERS23 TEST\" in the next line");
+
+    test_fd = fopen("/sd/factory_test", "r");
+    if (test_fd == NULL) {
+        ESP_LOGI(TAG, "Unable to open file");
+        *rc = (uint32_t) 3;
+        return false;
+    }
+    char* buf = malloc(test_str_len + 1);
+    fread(buf, 1, test_str_len, test_fd);
+    buf[test_str_len] = 0;
+    fclose(test_fd);
+
+    puts(buf);
+
+    if (strncmp(test_str, buf, test_str_len) != 0) {
+        *rc = (uint32_t) 4;
+        return false;
+    }
+
+    *rc = (uint32_t) 0;
+    return (unmount_sdcard_filesystem() == ESP_OK);
+}
+
 /* Test routines */
 bool test_stuck_buttons(uint32_t* rc) {
+    Keyboard* keyboard = get_keyboard();
+    if (keyboard == NULL) {
+        *rc = (uint32_t) 1;
+        return false;
+    }
 
     // TODO: Replace
 //    RP2040*   rp2040 = get_rp2040();
@@ -50,27 +165,47 @@ bool run_basic_tests() {
 
     /* Run mandatory tests */
     // TODO: Replace
-//    RUN_TEST_MANDATORY("RP2040", test_rp2040_init);
+    RUN_TEST_MANDATORY("KEYBOARD", test_keyboard_init);
+    RUN_TEST_MANDATORY("SD CARD", test_sdcard_init);
+    RUN_TEST_MANDATORY("CC1200", test_cc1200_init);
 
     /* Run tests */
     RUN_TEST("STUCK BUTTONS", test_stuck_buttons);
 
-    // TODO: Go here if mandatory test fails
-//error:
+error:
     /* Fail result on screen */
     if (!ok) pax_draw_text(pax_buffer, 0xffff0000, font, 36, 0, 20 * line, "FAIL");
     display_flush();
     return ok;
 }
 
-const uint8_t led_green[15] = {50, 0, 0, 50, 0, 0, 50, 0, 0, 50, 0, 0, 50, 0, 0};
-const uint8_t led_red[15]   = {0, 50, 0, 0, 50, 0, 0, 50, 0, 0, 50, 0, 0, 50, 0};
-const uint8_t led_blue[15]  = {0, 0, 50, 0, 0, 50, 0, 0, 50, 0, 0, 50, 0, 0, 50};
+uint8_t led_green[NUM_LEDS*3] = {0};
+uint8_t led_red[NUM_LEDS*3]   = {0};
+uint8_t led_blue[NUM_LEDS*3]  = {0};
+uint8_t led_white[NUM_LEDS*3]  = {0};
 
 void factory_test() {
+    for (int i = 0; i < NUM_LEDS; i++) {
+        led_green[3*i] = 50;
+        led_green[3*i+1] = 0;
+        led_green[3*i+2] = 0;
+
+        led_red[3*i] = 0;
+        led_red[3*i+1] = 50;
+        led_red[3*i+2] = 0;
+
+        led_blue[3*i] = 0;
+        led_blue[3*i+1] = 0;
+        led_blue[3*i+2] = 50;
+
+        led_white[3*i] = 50;
+        led_white[3*i+1] = 50;
+        led_white[3*i+2] = 50;
+    }
+
     pax_buf_t* pax_buffer        = get_pax_buffer();
     uint8_t    factory_test_done = nvs_get_u8_default("system", "factory_test", 0);
-    if (!factory_test_done) {
+    if (!factory_test_done || true) {
         bool result;
 
         ESP_LOGI(TAG, "Factory test start");
@@ -104,11 +239,17 @@ void factory_test() {
             pax_background(pax_buffer, 0x00FF00);
             display_flush();
             ws2812_send_data(led_green, sizeof(led_green));
+
+            ESP_LOGI(TAG, "Make sure the speaker is NOT muted and a sound is playing");
+
+            while (true) {
+                if (result) play_bootsound();
+                vTaskDelay(4000 / portTICK_PERIOD_MS);
+            }
         }
 
         while (true) {
-            if (result) play_bootsound();
-            vTaskDelay(3000 / portTICK_PERIOD_MS);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
     }
 }

@@ -26,10 +26,6 @@
 	path = components/mch2022-efuse
 	url = https://github.com/badgeteam/esp32-component-mch2022-efuse.git
 	branch = master
-[submodule "components/mch2022-bsp"]
-	path = components/mch2022-bsp
-	url = https://github.com/badgeteam/esp32-component-mch2022-bsp.git
-	branch = master
 [submodule "components/pax-codecs"]
 	path = components/pax-codecs
 	url = https://github.com/robotman2412/pax-codecs.git
@@ -42,3 +38,12 @@
 	path = components/eeprom
 	url = https://github.com/Nicolai-Electronics/esp32-component-i2c-eeprom.git
 	branch = main
+[submodule "components/troopers23-bsp"]
+	path = components/troopers23-bsp
+	url = git@github.com:badgeteam/esp32-component-troopers23-bsp.git
+[submodule "components/i2c-pca9555"]
+	path = components/i2c-pca9555
+	url = git@github.com:badgeteam/esp32-component-pca9555.git
+[submodule "components/keyboard"]
+	path = components/keyboard
+	url = git@github.com:badgeteam/troopers2023-keyboard.git
