@@ -57,25 +57,46 @@ bool test_keyboard_init(uint32_t* rc) {
         return false;
     }
 
+    pax_buf_t*        pax_buffer = get_pax_buffer();
+    const pax_font_t* font = pax_font_sky_mono;
+
 
     ESP_LOGI(TAG, "Press START...");
+    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+    pax_draw_text(pax_buffer, 0xFF0000FF, font, 36, 0, pax_buffer->height - 36, "Press START");
+    display_flush();
     if (!wait_for_key_pressed(keyboard, BUTTON_START)) {
         ESP_LOGE(TAG, "Timeout reached");
+        pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+        display_flush();
         *rc = (uint32_t) 2;
         return false;
     }
     ESP_LOGI(TAG, "Press SHIFT...");
+    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+    pax_draw_text(pax_buffer, 0xFF0000FF, font, 36, 0, pax_buffer->height - 36, "Press SHIFT");
+    display_flush();
     if (!wait_for_key_pressed(keyboard, KEY_SHIFT)) {
         ESP_LOGE(TAG, "Timeout reached");
+        pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+        display_flush();
         *rc = (uint32_t) 3;
         return false;
     }
     ESP_LOGI(TAG, "Press Q...");
+    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+    pax_draw_text(pax_buffer, 0xFF0000FF, font, 36, 0, pax_buffer->height - 36, "Press Q");
+    display_flush();
     if (!wait_for_key_pressed(keyboard, KEY_Q)) {
         ESP_LOGE(TAG, "Timeout reached");
+        pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+        display_flush();
         *rc = (uint32_t) 4;
         return false;
     }
+
+    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+    display_flush();
 
     return (keyboard != NULL);
 }
