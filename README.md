@@ -1,6 +1,6 @@
-# MCH2022 ESP32 firmware: Launcher
+# TROOPERS23 ESP32 firmware: Launcher
 
-This repository contains the ESP32 part of the firmware for the MCH2022 badge. This firmware allows for device testing, setup, OTA updates and of course launching apps.
+This repository contains the ESP32 part of the firmware for the TROOPERS23 badge. This firmware allows for device testing, setup, OTA updates and of course launching apps.
 
 ## ESP-IDF and submodules
 
@@ -14,20 +14,19 @@ The source code contained in this repository is licensed under terms of the MIT 
 
 Some source code is licensed separately, please check the following table for details.
 
-| Location                    | Version     | License                           | Author                                                                                          |
-|-----------------------------|-------------|-----------------------------------|-------------------------------------------------------------------------------------------------|
-| esp-idf                     | 4.4.4       | Apache License 2.0                | Espressif Systems (Shanghai) CO LTD                                                             |
-| components/appfs            |             | THE BEER-WARE LICENSE Revision 42 | Jeroen Domburg <jeroen@spritesmods.com>                                                         |
-| components/bus-i2c          |             | MIT                               | Nicolai Electronics                                                                             |
-| components/i2c-bno055       |             | MIT                               | Nicolai Electronics                                                                             |
-| components/mch2022-rp2040   |             | MIT                               | Renze Nicolai                                                                                   |
-| components/pax-graphics     |             | MIT                               | Julian Scheffers                                                                                |
-| components/pax-keyboard     |             | MIT                               | Julian Scheffers                                                                                |
-| components/sdcard           |             | MIT                               | Nicolai Electronics                                                                             |
-| components/spi-ice40        |             | MIT                               | Nicolai Electronics                                                                             |
-| components/spi-ili9341      |             | MIT                               | Nicolai Electronics                                                                             |
-| components/ws2812           |             | MIT                               | Unlicense / Public domain                                                                       |
-| tools/[libusb-1.0.dll]      |             | GNU LGPL 2.1                      | See the [AUTHORS](https://github.com/libusb/libusb/blob/master/AUTHORS) document of the project |
+| Location                | Version     | License                           | Author                                                                                          |
+|-------------------------|-------------|-----------------------------------|-------------------------------------------------------------------------------------------------|
+| esp-idf                 | 4.4.4       | Apache License 2.0                | Espressif Systems (Shanghai) CO LTD                                                             |
+| components/appfs        |             | THE BEER-WARE LICENSE Revision 42 | Jeroen Domburg <jeroen@spritesmods.com>                                                         |
+| components/bus-i2c      |             | MIT                               | Nicolai Electronics                                                                             |
+| components/i2c-pca9555  |             | MIT                               | Renze Nicolai and Malte Heinzelmann <malte@cybaer.ninja>                                        |
+| components/keyboard     |             | MIT                               | Malte Heinzelmann <malte@cybaer.ninja>                                        |
+| components/pax-graphics |             | MIT                               | Julian Scheffers                                                                                |
+| components/pax-keyboard |             | MIT                               | Julian Scheffers                                                                                |
+| components/sdcard       |             | MIT                               | Nicolai Electronics                                                                             |
+| components/spi-ili9341  |             | MIT                               | Nicolai Electronics                                                                             |
+| components/ws2812       |             | MIT                               | Unlicense / Public domain                                                                       |
+| tools/[libusb-1.0.dll]  |             | GNU LGPL 2.1                      | See the [AUTHORS](https://github.com/libusb/libusb/blob/master/AUTHORS) document of the project |
 
 [libusb-1.0.dll]: https://libusb.info
 
@@ -54,9 +53,6 @@ Flashing the firmware to a device and starting the debug monitor can be done usi
 make flash
 make monitor
 ```
-
-## USB tools
-In [`mch2022-tools`](https://github.com/badgeteam/mch2022-tools) you will find command line tools to push files and apps to the badge etc., and a short manual on how to use them.
 
 ## Linux permissions
 Create `/etc/udev/rules.d/99-mch2022.rules` with the following contents:
