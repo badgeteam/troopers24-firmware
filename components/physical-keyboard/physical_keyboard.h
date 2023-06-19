@@ -51,6 +51,8 @@ typedef enum {
 	PKB_B,
 	PKB_N,
 	PKB_M,
+	PKB_SPACE,
+	PKB_RETURN
 } pkb_input_t;
 
 // The type of keyboard currently selected.
