@@ -89,36 +89,29 @@ void menu_wifi(xQueueHandle button_queue) {
 
     while (1) {
         keyboard_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+        clear_keyboard_queue();
+        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             uint8_t pin   = buttonMessage.input;
             bool    value = buttonMessage.state;
-            switch (pin) {
-                case JOYSTICK_DOWN:
-                    if (value) {
+            if (value) {
+                switch (pin) {
+                    case JOYSTICK_DOWN:
                         menu_navigate_next(menu);
                         render = true;
-                    }
-                    break;
-                case JOYSTICK_UP:
-                    if (value) {
+                        break;
+                    case JOYSTICK_UP:
                         menu_navigate_previous(menu);
                         render = true;
-                    }
-                    break;
-                case BUTTON_BACK:
-                    if (value) {
+                        break;
+                    case BUTTON_BACK:
                         action = ACTION_BACK;
-                    }
-                    break;
-                case BUTTON_ACCEPT:
-                case BUTTON_SELECT:
-                case BUTTON_START:
-                    if (value) {
+                        break;
+                    case BUTTON_ACCEPT:
                         action = (menu_wifi_action_t) menu_get_callback_args(menu, menu_get_position(menu));
-                    }
-                    break;
-                default:
-                    break;
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
@@ -141,7 +134,7 @@ void menu_wifi(xQueueHandle button_queue) {
             } else if (action == ACTION_DEFAULTS) {
                 // Set network to default settings.
                 wifi_set_defaults();
-                display_boot_screen("WiFi reset to default!");
+                render_message("WiFi reset to default!");
                 vTaskDelay(pdMS_TO_TICKS(750));
             } else if (action == ACTION_BACK) {
                 break;
@@ -171,7 +164,8 @@ wifi_ap_record_t* wifi_scan_results(xQueueHandle button_queue, size_t num_aps, w
     while (1) {
         selection                            = -1;
         keyboard_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+        clear_keyboard_queue();
+        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             uint8_t pin   = buttonMessage.input;
             bool    value = buttonMessage.state;
             switch (pin) {
@@ -256,7 +250,8 @@ int wifi_auth_menu(xQueueHandle button_queue, wifi_auth_mode_t default_mode) {
 
     while (1) {
         keyboard_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+        clear_keyboard_queue();
+        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             uint8_t pin   = buttonMessage.input;
             bool    value = buttonMessage.state;
             switch (pin) {
@@ -337,7 +332,8 @@ int wifi_phase2_menu(xQueueHandle button_queue, esp_eap_ttls_phase2_types defaul
 
     while (1) {
         keyboard_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+        clear_keyboard_queue();
+        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             uint8_t pin   = buttonMessage.input;
             bool    value = buttonMessage.state;
             switch (pin) {
@@ -477,7 +473,7 @@ void wifi_setup(xQueueHandle button_queue, bool scan) {
         }
 
         // Select SSID.
-        accepted = keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "WiFi SSID", "Press 🅷 to cancel", ssid, sizeof(ssid));
+        accepted = keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "WiFi SSID", "🅰 accept  🅱 cancel", ssid, sizeof(ssid));
 
         // Select auth mode.
         if (accepted) {
@@ -499,14 +495,14 @@ void wifi_setup(xQueueHandle button_queue, bool scan) {
         }
         if (accepted) {
             // Username.
-            accepted = keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "WiFi username", "Press 🅷 to cancel", username,
+            accepted = keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "WiFi username", "🅰 accept  🅱 cancel", username,
                                 sizeof(username));
         }
     }
     if (accepted) {
         // Password.
         accepted =
-            keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "WiFi password", "Press 🅷 to cancel", password, sizeof(password));
+            keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "WiFi password", "🅰 accept  🅱 cancel", password, sizeof(password));
     }
     if (accepted) {
         nvs_set_str(handle, "wifi.ssid", ssid);

@@ -196,33 +196,25 @@ void menu_settings(xQueueHandle button_queue) {
         if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             uint8_t pin   = buttonMessage.input;
             bool    value = buttonMessage.state;
-            switch (pin) {
-                case JOYSTICK_DOWN:
-                    if (value) {
+            if (value) {
+                switch (pin) {
+                    case JOYSTICK_DOWN:
                         menu_navigate_next(menu);
                         render = true;
-                    }
-                    break;
-                case JOYSTICK_UP:
-                    if (value) {
+                        break;
+                    case JOYSTICK_UP:
                         menu_navigate_previous(menu);
                         render = true;
-                    }
-                    break;
-                case BUTTON_BACK:
-                    if (value) {
+                        break;
+                    case BUTTON_BACK:
                         action = ACTION_BACK;
-                    }
-                    break;
-                case BUTTON_ACCEPT:
-                case BUTTON_SELECT:
-                case BUTTON_START:
-                    if (value) {
+                        break;
+                    case BUTTON_ACCEPT:
                         action = (menu_settings_action_t) menu_get_callback_args(menu, menu_get_position(menu));
-                    }
-                    break;
-                default:
-                    break;
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 

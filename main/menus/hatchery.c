@@ -58,7 +58,6 @@ static void hatchery_menu_destroy(menu_t* menu) {
 }
 
 int wait_for_button_press(xQueueHandle button_queue, TickType_t timeout) {
-    return -1;
     int button = -1;
     while (true) {
         keyboard_input_message_t message;
@@ -209,7 +208,7 @@ static void show_communication_error(xQueueHandle button_queue) {
 
 static bool load_types() {
     if (data_types == NULL) {
-        bool success = download_ram("https://mch2022.badge.team/v2/mch2022/types", (uint8_t**) &data_types, &size_types);
+        bool success = download_ram("https://mch2022.badge.team/v2/troopers23/types", (uint8_t**) &data_types, &size_types);
         if (!success) return false;
     }
     if (data_types == NULL) return false;
@@ -220,7 +219,7 @@ static bool load_types() {
 
 static bool load_categories(const char* type_slug) {
     char url[128];
-    snprintf(url, sizeof(url) - 1, "https://mch2022.badge.team/v2/mch2022/%s/categories", type_slug);
+    snprintf(url, sizeof(url) - 1, "https://mch2022.badge.team/v2/troopers23/%s/categories", type_slug);
     bool success = download_ram(url, (uint8_t**) &data_categories, &size_categories);
     if (!success) return false;
     if (data_categories == NULL) return false;
@@ -231,7 +230,7 @@ static bool load_categories(const char* type_slug) {
 
 static bool load_apps(const char* type_slug, const char* category_slug) {
     char url[128];
-    snprintf(url, sizeof(url) - 1, "https://mch2022.badge.team/v2/mch2022/%s/%s", type_slug, category_slug);
+    snprintf(url, sizeof(url) - 1, "https://mch2022.badge.team/v2/troopers23/%s/%s", type_slug, category_slug);
     bool success = download_ram(url, (uint8_t**) &data_apps, &size_apps);
     if (!success) return false;
     if (data_apps == NULL) return false;
@@ -242,7 +241,7 @@ static bool load_apps(const char* type_slug, const char* category_slug) {
 
 static bool load_app_info(const char* type_slug, const char* category_slug, const char* app_slug) {
     char url[128];
-    snprintf(url, sizeof(url) - 1, "https://mch2022.badge.team/v2/mch2022/%s/%s/%s", type_slug, category_slug, app_slug);
+    snprintf(url, sizeof(url) - 1, "https://mch2022.badge.team/v2/troopers23/%s/%s/%s", type_slug, category_slug, app_slug);
     bool success = download_ram(url, (uint8_t**) &data_app_info, &size_app_info);
     if (!success) return false;
     if (data_app_info == NULL) return false;
@@ -464,7 +463,7 @@ bool menu_hatchery_app_info(xQueueHandle button_queue, const char* type_slug, co
 
 bool menu_hatchery_apps(xQueueHandle button_queue, const char* type_slug, const char* category_slug) {
     size_t ram_before = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
-    display_busy();
+    display_boot_screen("Loading app list...");
     if (!load_apps(type_slug, category_slug)) {
         show_communication_error(button_queue);
         return false;
@@ -496,7 +495,7 @@ bool menu_hatchery_apps(xQueueHandle button_queue, const char* type_slug, const 
 
 bool menu_hatchery_categories(xQueueHandle button_queue, const char* type_slug) {
     size_t ram_before = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
-    display_busy();
+    display_boot_screen("Loading categories...");
     if (!load_categories(type_slug)) {
         show_communication_error(button_queue);
         return false;
@@ -528,10 +527,9 @@ bool menu_hatchery_categories(xQueueHandle button_queue, const char* type_slug) 
 
 void menu_hatchery(xQueueHandle button_queue) {
     size_t ram_before = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
-    display_busy();
-
+    display_boot_screen("Connecting to WiFi...");
     if (!connect_to_wifi()) return;
-
+    display_boot_screen("Loading app types...");
     if (!load_types()) {
         wifi_disconnect_and_disable();
         hatchery_free();

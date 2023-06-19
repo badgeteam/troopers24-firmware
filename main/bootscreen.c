@@ -18,7 +18,7 @@ void display_boot_screen(const char* text) {
     pax_background(pax_buffer, 0xFFFFFF);
     pax_insert_png_buf(pax_buffer, troopers1_png_start, troopers1_png_end - troopers1_png_start, 0, 0, 0);
     pax_vec1_t size = pax_text_size(font, 18, text);
-    pax_draw_text(pax_buffer, 0xFFFFFFFF, font, 18, 10, 240 - 32, text);
+    pax_draw_text(pax_buffer, 0xFFFFFFFF, font, 18, 0, 240 - 18, text);
     display_flush();
 }
 

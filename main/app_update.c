@@ -52,7 +52,7 @@ static cJSON* json_app_info = NULL;
 
 static bool load_app_info(const char* type_slug, const char* category_slug, const char* app_slug) {
     char url[128];
-    snprintf(url, sizeof(url) - 1, "https://mch2022.badge.team/v2/mch2022/%s/%s/%s", type_slug, category_slug, app_slug);
+    snprintf(url, sizeof(url) - 1, "https://mch2022.badge.team/v2/troopers23/%s/%s/%s", type_slug, category_slug, app_slug);
     bool success = download_ram(url, (uint8_t**) &data_app_info, &size_app_info);
     if (!success) return false;
     if (data_app_info == NULL) return false;
