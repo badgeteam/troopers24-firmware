@@ -49,7 +49,7 @@ void edit_nickname(xQueueHandle button_queue) {
 
     clear_keyboard_queue();
     bool accepted =
-        keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "Nickname", "Press \xF0\x9F\x86\x82 to cancel", nickname, sizeof(nickname) - 1);
+        keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "Nickname", "🅰 accept  🅱 cancel", nickname, sizeof(nickname) - 1);
 
     if (accepted) {
         nvs_set_str(handle, "nickname", nickname);
