@@ -41,10 +41,10 @@ int buttonToKey(uint8_t button) {
         case JOYSTICK_RIGHT: return PKB_RIGHT;
         case KEY_SHIELD:     return PKB_SUPER;
         case KEY_FN:         return PKB_FN;
-        case KEY_SPACE:      return PKB_NO_INPUT;
+        case KEY_SPACE:      return PKB_SPACE;
         case KEY_BACKSPACE:  return PKB_DELETE_BEFORE;
-        case KEY_SHIFT:      return PKB_NO_INPUT;
-        case KEY_RETURN:     return PKB_NO_INPUT;
+        case KEY_SHIFT:      return PKB_SHIFT;
+        case KEY_RETURN:     return PKB_RETURN;
         case KEY_Q:          return PKB_Q;
         case KEY_W:          return PKB_W;
         case KEY_E:          return PKB_E;
