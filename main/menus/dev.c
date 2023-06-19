@@ -70,7 +70,8 @@ void menu_dev(xQueueHandle button_queue) {
 
     while (1) {
         keyboard_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, 16 / portTICK_PERIOD_MS) == pdTRUE) {
+        clear_keyboard_queue();
+        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             uint8_t pin   = buttonMessage.input;
             bool    value = buttonMessage.state;
             switch (pin) {
@@ -93,7 +94,6 @@ void menu_dev(xQueueHandle button_queue) {
                     break;
                 case BUTTON_ACCEPT:
                 case BUTTON_SELECT:
-                case BUTTON_START:
                     if (value) {
                         action = (menu_dev_action_t) menu_get_callback_args(menu, menu_get_position(menu));
                     }

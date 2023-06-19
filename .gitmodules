@@ -30,10 +30,6 @@
 	path = components/pax-codecs
 	url = https://github.com/robotman2412/pax-codecs.git
 	branch = main
-[submodule "main/pax-keyboard"]
-	path = components/pax-keyboard
-	url = https://github.com/robotman2412/pax-keyboard
-	branch = main
 [submodule "components/eeprom"]
 	path = components/eeprom
 	url = https://github.com/Nicolai-Electronics/esp32-component-i2c-eeprom.git

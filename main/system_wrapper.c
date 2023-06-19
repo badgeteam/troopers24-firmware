@@ -17,6 +17,7 @@ void restart() {
 }
 
 bool wait_for_button() {
+    clear_keyboard_queue();
     Keyboard* keyboard = get_keyboard();
     if (keyboard == NULL) return false;
     while (1) {

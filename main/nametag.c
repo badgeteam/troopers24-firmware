@@ -47,6 +47,7 @@ void edit_nickname(xQueueHandle button_queue) {
         }
     }
 
+    clear_keyboard_queue();
     bool accepted =
         keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "Nickname", "Press \xF0\x9F\x86\x82 to cancel", nickname, sizeof(nickname) - 1);
 
@@ -102,7 +103,7 @@ static void show_name(xQueueHandle button_queue, const char *name, nickname_them
     }
 
     if (instructions) {
-        pax_draw_text(pax_buffer, 0xFFFFFFFF, instructions_font, 14, 5, pax_buffer->height - 17, "🅱 exit 🅼 name 🅴 theme");
+        pax_draw_text(pax_buffer, 0xFFFFFFFF, instructions_font, 14, 5, pax_buffer->height - 17, "🅱 back 🅰 change name 🆂 theme");
     }
 
     display_flush();
@@ -195,6 +196,7 @@ void show_nametag(xQueueHandle button_queue) {
         }
         show_name(button_queue, buffer, theme, true);
         keyboard_input_message_t msg;
+        clear_keyboard_queue();
         if (xQueueReceive(button_queue, &msg, pdMS_TO_TICKS(SLEEP_DELAY + 10))) {
             if (msg.state) {
                 switch (msg.input) {
@@ -205,7 +207,6 @@ void show_nametag(xQueueHandle button_queue) {
                         hue = esp_random() & 255;
                         break;
                     case BUTTON_BACK:
-                    case BUTTON_START:
                         quit = true;
                         break;
                     case BUTTON_ACCEPT:
@@ -213,7 +214,7 @@ void show_nametag(xQueueHandle button_queue) {
                         free(buffer);
                         buffer = read_nickname();
                         break;
-                    case BUTTON_SELECT:
+                    case BUTTON_START:
                         theme = (theme + 1) % NICKNAME_THEME_LAST;
                         set_theme(theme);
                         break;

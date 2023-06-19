@@ -226,7 +226,7 @@ void factory_test() {
 
     pax_buf_t* pax_buffer        = get_pax_buffer();
     uint8_t    factory_test_done = nvs_get_u8_default("system", "factory_test", 0);
-    if (!factory_test_done || true) {
+    if (!factory_test_done) {
         bool result;
 
         ESP_LOGI(TAG, "Factory test start");
