@@ -297,82 +297,123 @@ void pkb_loop(pkb_ctx_t *ctx) {
 	}
 }
 
+const char uppercase_board[] = "QWERTYUIOPASDFGHJKLZXCVBNM";
+const char lowercase_board[] = "qwertyuiopasdfghjklzxcvbnm";
+const char number_board[]    = "1234567890....;'[]\\..-=,./";
+const char symbols_board[]   = "!@#$%^&*()....:\"{}|.?—+<>?";
+
+const char* boards[] = {
+	lowercase_board,
+	uppercase_board,
+	number_board,
+	symbols_board,
+};
+
 // A pressing of the input.
 void pkb_press(pkb_ctx_t *ctx, pkb_input_t input) {
-/*	const char **board = boards[ctx->board_sel];
 	ctx->last_press = esp_timer_get_time();
 	switch (input) {
-		case PKB_CHARSELECT:
-			ctx->sel_dirty |= ctx->held != PKB_CHARSELECT;
-			if (ctx->key_y == 3) {
-				switch (ctx->key_x) {
-					case 0:
-						// Board selector.
-						if (ctx->board_sel == PKB_NUMBERS) ctx->board_sel = PKB_SYMBOLS;
-						else if (ctx->board_sel == PKB_SYMBOLS) ctx->board_sel = PKB_LOWERCASE;
-						else ctx->board_sel = PKB_NUMBERS;
-						ctx->kb_dirty = true;
-						break;
-					case 1:
-						// Magic.
-						pkb_append(ctx, *board[4]);
-						break;
-					default:
-						// Spacebar.
-						pkb_append(ctx, ' ');
-						break;
-					case 7:
-						// mAGIC.
-						pkb_append(ctx, *board[5]);
-						break;
-					case 8:
-						// Enter idk.
-						ctx->input_accepted = true;
-						break;
-				}
-			} else if (ctx->key_y == 2) {
-				if (ctx->key_x == 0) {
-					// cAPS LOCK KEY.
-					if (ctx->held == PKB_CHARSELECT) ctx->held = PKB_NO_INPUT;
-					ctx->board_sel ^= 1;
-					ctx->kb_dirty   = true;
-				} else if (ctx->key_x == strlen(board[2])-1) {
-					// Backspace.
-					pkb_delete(ctx, true);
-				} else {
-					// nORMAL CHAR.
-					pkb_append(ctx, board[2][ctx->key_x]);
-				}
-			} else if (ctx->key_y != -1) {
-				// Normal char.
-				pkb_append(ctx, board[ctx->key_y][ctx->key_x]);
-			}
+		case PKB_ACCEPT:
+			ctx->input_accepted = true;
 			break;
-			
-			// Shift key, the pressening.
 		case PKB_SHIFT:
-			ctx->board_sel |= 1;
-			ctx->kb_dirty = true;
+			ctx->board_sel = PBK_UPPERCASE;
 			break;
-			
-			// Next keyboard.
-		case PKB_MODESELECT:
-			ctx->board_sel ++;
-			ctx->board_sel %= 4;
-			rowlen = strlen(board[ctx->key_y]);
-			if (ctx->key_x >= rowlen) ctx->key_x = rowlen - 1;
-			ctx->kb_dirty = true;
+		case PKB_SUPER:
+			ctx->board_sel = PKB_NUMBERS;
 			break;
-			
-			// Backspace.
+		case PKB_FN:
+			ctx->board_sel = PKB_SYMBOLS;
+			break;
+		case PKB_Q:
+			pkb_append(ctx, boards[ctx->board_sel][0]);
+			break;
+		case PKB_W:
+			pkb_append(ctx, boards[ctx->board_sel][1]);
+			break;
+		case PKB_E:
+			pkb_append(ctx, boards[ctx->board_sel][2]);
+			break;
+		case PKB_R:
+			pkb_append(ctx, boards[ctx->board_sel][3]);
+			break;
+		case PKB_T:
+			pkb_append(ctx, boards[ctx->board_sel][4]);
+			break;
+		case PKB_Y:
+			pkb_append(ctx, boards[ctx->board_sel][5]);
+			break;
+		case PKB_U:
+			pkb_append(ctx, boards[ctx->board_sel][6]);
+			break;
+		case PKB_I:
+			pkb_append(ctx, boards[ctx->board_sel][7]);
+			break;
+		case PKB_O:
+			pkb_append(ctx, boards[ctx->board_sel][8]);
+			break;
+		case PKB_P:
+			pkb_append(ctx, boards[ctx->board_sel][9]);
+			break;
+		case PKB_A:
+			pkb_append(ctx, boards[ctx->board_sel][10]);
+			break;
+		case PKB_S:
+			pkb_append(ctx, boards[ctx->board_sel][11]);
+			break;
+		case PKB_D:
+			pkb_append(ctx, boards[ctx->board_sel][12]);
+			break;
+		case PKB_F:
+			pkb_append(ctx, boards[ctx->board_sel][13]);
+			break;
+		case PKB_G:
+			pkb_append(ctx, boards[ctx->board_sel][14]);
+			break;
+		case PKB_H:
+			pkb_append(ctx, boards[ctx->board_sel][15]);
+			break;
+		case PKB_J:
+			pkb_append(ctx, boards[ctx->board_sel][16]);
+			break;
+		case PKB_K:
+			pkb_append(ctx, boards[ctx->board_sel][17]);
+			break;
+		case PKB_L:
+			pkb_append(ctx, boards[ctx->board_sel][18]);
+			break;
+		case PKB_Z:
+			pkb_append(ctx, boards[ctx->board_sel][19]);
+			break;
+		case PKB_X:
+			pkb_append(ctx, boards[ctx->board_sel][20]);
+			break;
+		case PKB_C:
+			pkb_append(ctx, boards[ctx->board_sel][21]);
+			break;
+		case PKB_V:
+			pkb_append(ctx, boards[ctx->board_sel][22]);
+			break;
+		case PKB_B:
+			pkb_append(ctx, boards[ctx->board_sel][23]);
+			break;
+		case PKB_N:
+			pkb_append(ctx, boards[ctx->board_sel][24]);
+			break;
+		case PKB_M:
+			pkb_append(ctx, boards[ctx->board_sel][25]);
+			break;
+		case PKB_SPACE:
+			pkb_append(ctx, ' ');
+			break;
 		case PKB_DELETE_BEFORE:
 			pkb_delete(ctx, true);
 			break;
-			
-			// Delete.
 		case PKB_DELETE_AFTER:
 			pkb_delete(ctx, false);
 			break;
+		case PKB_RETURN:
+			pkb_append(ctx, '\n');
 		default:
 			break;
 	}
@@ -380,7 +421,7 @@ void pkb_press(pkb_ctx_t *ctx, pkb_input_t input) {
 		ctx->held = input;
 		ctx->hold_start = esp_timer_get_time();
 	}
-	ctx->dirty = true;*/
+	ctx->dirty = true;
 }
 
 // A relealing of the input.
@@ -388,16 +429,14 @@ void pkb_release(pkb_ctx_t *ctx, pkb_input_t input) {
 	switch (input) {
 			// Shift key, the releasening.
 		case PKB_SHIFT:
-			ctx->dirty = true;
-			ctx->board_sel &= ~1;
-			ctx->kb_dirty = true;
+			ctx->board_sel = PKB_LOWERCASE;
 			break;
-			
-			// Unpress them char.
-		case PKB_CHARSELECT:
-			ctx->sel_dirty = true;
+		case PKB_SUPER:
+			ctx->board_sel = PKB_LOWERCASE;
 			break;
-			
+		case PKB_FN:
+			ctx->board_sel = PKB_LOWERCASE;
+			break;
 		default:
 			break;
 	}
