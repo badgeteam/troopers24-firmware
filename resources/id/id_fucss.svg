@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="101"
+   height="101"
+   viewBox="0 0 101 101"
+   version="1.1"
+   id="svg99"
+   sodipodi:docname="id_fucss.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   inkscape:export-filename="id_fucss.png"
+   inkscape:export-xdpi="76.039604"
+   inkscape:export-ydpi="76.039604"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+  <metadata
+     id="metadata103">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>logo</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#152139"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1060"
+     id="namedview101"
+     showgrid="false"
+     inkscape:zoom="5.5319894"
+     inkscape:cx="38.503328"
+     inkscape:cy="57.754991"
+     inkscape:window-x="0"
+     inkscape:window-y="20"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g1212"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
+  <!-- Generator: Sketch 3.5.2 (25235) - http://www.bohemiancoding.com/sketch -->
+  <title
+     id="title2">logo</title>
+  <desc
+     id="desc4">Created with Sketch.</desc>
+  <defs
+     id="defs24">
+    <radialGradient
+       cx="0.5"
+       cy="0"
+       fx="0.5"
+       fy="0"
+       r="1"
+       id="radialGradient-1">
+      <stop
+         stop-color="#0074FF"
+         offset="0%"
+         id="stop6" />
+      <stop
+         stop-color="#00FAFF"
+         offset="100%"
+         id="stop8" />
+    </radialGradient>
+    <path
+       id="path-2"
+       d="M 22.2999,12.560545 11.83056,10.677972 2.883405,5.1803876 0.03675,0.29438202 9.39036,2.9408764 Z" />
+    <path
+       id="path-4"
+       d="M 0.171255,12.560545 10.640595,10.677972 19.587015,5.1803876 22.43367,0.29438202 13.080795,2.9408764 Z" />
+    <linearGradient
+       x1="17.386896"
+       y1="9.4036188"
+       x2="12.352511"
+       y2="27.270468"
+       id="linearGradient-6"
+       gradientTransform="scale(1.3701806,0.72983082)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#00FF9E"
+         stop-opacity="0.2"
+         offset="0%"
+         id="stop13" />
+      <stop
+         stop-color="#00FFB9"
+         offset="90.369898%"
+         id="stop15" />
+      <stop
+         stop-color="#00FFB7"
+         stop-opacity="0.7"
+         offset="100%"
+         id="stop17" />
+    </linearGradient>
+    <path
+       id="path-7"
+       d="M 4.725315,0.1670618 35.37555,9.1258427 47.33106,22.291343 4.725315,25.21014 v -6.31155 l -4.41,-3.868916 V 9.1258427 l 4.41,-3.0542135 V 0.1670618 Z" />
+    <linearGradient
+       x1="0"
+       y1="0"
+       x2="0"
+       y2="0"
+       id="linearGradient-9" />
+    <path
+       id="path-10"
+       d="M 19.60245,0.17442135 0.6468,1.3975786 c -0.088935,0.00515 -0.15582,0.081691 -0.14994,0.1707416 v 0 l 0.002205,0.03459 c 0.005145,0.088315 0.08232,0.1552865 0.17052,0.1501348 v 0 L 19.62597,0.5306236 c 0.0882,-0.005888 0.155085,-0.082427 0.14994,-0.17147753 v 0 l -0.0029,-0.0338539 c -0.0044,-0.0861067 -0.0757,-0.15087078 -0.16023,-0.15087078 v 0 h -0.01029" />
+    <path
+       id="path-12"
+       d="M 9.349935,0.66235955 0.729855,1.2187416 c -0.0882,0.00589 -0.15582,0.081691 -0.14994,0.1707415 v 0 L 0.58212,1.4233371 C 0.588,1.5123876 0.66444,1.5800955 0.753375,1.5742079 v 0 l 8.62008,-0.5556461 c 0.0882,-0.00589 0.155085,-0.082427 0.14994,-0.17074158 v 0 L 9.520455,0.81323034 C 9.516045,0.72785955 9.44475,0.66235955 9.36096,0.66235955 v 0 H 9.349935" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#radialGradient-1"
+       id="radialGradient936"
+       cx="8.289896"
+       cy="0.39659774"
+       fx="8.289896"
+       fy="0.39659774"
+       r="16.525236"
+       gradientTransform="scale(1.3472213,0.74226855)"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#radialGradient-1"
+       id="radialGradient938"
+       cx="8.3896008"
+       cy="0.39659119"
+       fx="8.3896008"
+       fy="0.39659119"
+       r="16.524963"
+       gradientTransform="scale(1.3471991,0.7422808)"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     id="g1212"
+     transform="translate(-27.193359,-122.88348)">
+    <g
+       style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
+       transform="matrix(0.57719237,0,0,0.57719237,35.351938,135.78977)"
+       id="Fox">
+      <path
+         style="fill:#baf6fc"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-1"
+         d="M 139.69094,-2.2078652e-4 110.50776,19.229549 75.630544,34.590403 H 73.81583 71.055904 L 36.186034,19.229549 7.0102095,-2.2078652e-4 -2.205e-4,5.4973635 l 8.347395,50.1869835 11.9143495,22.29355 6.893565,27.447443 21.119491,10.57494 25.12671,10.37181 24.088155,-8.43551 23.027545,-13.24719 6.02553,-26.711493 11.85555,-22.29355 8.31726,-50.1869835 z" />
+      <path
+         style="fill:#9ce3e5"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-2"
+         d="m 98.125881,79.505372 -24.31086,1.120123 -24.75333,-1.120123 -21.906675,-6.006129 22.081605,22.905129 11.528475,15.371158 5.87559,2.95265 7.174335,0.50855 6.7032,-0.50855 5.63892,-2.95265 11.37192,-15.371158 22.118359,-22.905129 z" />
+      <path
+         style="fill:#ebd7cc"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-3"
+         d="m 97.489224,96.404225 -11.43807,15.383665 -5.507355,2.94677 -6.72819,0.50265 -7.200795,-0.50265 -5.980695,-2.94677 -11.437335,-15.383665 -22.061025,-22.90513 -6.91341,4.490798 0.20286,19.861955 -1.423695,12.239672 18.300765,9.00367 27.042855,7.52367 3.45744,3.64518 h 6.013035 5.06856 l 3.456705,-3.64518 27.043586,-7.52367 18.2993,-9.00367 -1.42296,-12.239672 0.20359,-19.861955 -6.8377,-4.490798 z" />
+      <path
+         style="fill:#d3b9ab"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-4"
+         d="m 20.62851,97.882023 h 27.65364 l 7.218435,21.809297 8.84499,6.68026 -27.04359,-7.39929 -18.30003,-9.06918 z" />
+      <path
+         style="fill:#c4957f"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-5"
+         d="m 64.505511,126.61908 3.29721,3.64519 h 6.013035 v -9.42832 z" />
+      <path
+         style="fill:#d3b9ab"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-6"
+         d="M 126.0575,97.882023 H 98.403858 l -7.218435,21.809297 -8.84499,6.68026 27.043587,-7.39929 18.30003,-9.06918 z" />
+      <path
+         style="fill:#c4957f"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-7"
+         d="m 73.815462,130.26404 h 5.06856 l 3.76908,-3.64518 -8.83764,-5.78314 z" />
+      <g
+         style="fill:#90d4d6"
+         sketch:type="MSShapeGroup"
+         transform="translate(36.015,19.134831)"
+         id="Group-14">
+        <path
+           inkscape:connector-curvature="0"
+           id="Fill-8"
+           d="m 37.800241,42.930687 -22.686509,3.900562 14.536094,14.30255 z" />
+        <path
+           inkscape:connector-curvature="0"
+           id="Fill-10"
+           d="M 24.670422,92.640918 29.650047,61.133947 13.182372,77.269025 Z" />
+        <path
+           inkscape:connector-curvature="0"
+           id="Fill-12"
+           d="M 35.040464,15.476988 17.350483,17.512639 0.1683885,0.10509438 Z" />
+      </g>
+      <path
+         style="fill:#00d2d2"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-15"
+         d="M 73.815241,62.065519 69.160487,44.335625 53.365336,36.647839 Z" />
+      <path
+         style="fill:#6e3321"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-16"
+         d="m 73.815241,120.83595 -7.17507,-4.68289 1.300216,-4.47902 5.874854,-0.50928 z" />
+      <g
+         style="fill:#90d4d6"
+         sketch:type="MSShapeGroup"
+         transform="translate(73.5,19.134831)"
+         id="Group-23">
+        <path
+           inkscape:connector-curvature="0"
+           id="Fill-17"
+           d="M 0.3152415,42.930687 22.057276,46.831249 7.5211815,61.133799 Z" />
+        <path
+           inkscape:connector-curvature="0"
+           id="Fill-19"
+           d="M 12.805611,92.030149 7.520961,61.13402 23.989371,77.269099 Z" />
+        <path
+           inkscape:connector-curvature="0"
+           id="Fill-21"
+           d="M 2.1305445,15.476988 19.820524,17.512639 37.00262,0.10509438 Z" />
+      </g>
+      <path
+         style="fill:#00d2d2"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-24"
+         d="m 73.815241,62.065519 3.87933,-17.907995 15.626101,-7.509685 z" />
+      <path
+         style="fill:#6e3321"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-25"
+         d="m 73.815241,120.83595 6.702466,-4.68289 -1.063546,-4.47902 -5.63892,-0.50928 z" />
+      <path
+         style="fill:#ecd2c3"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-26"
+         d="M 20.221834,77.978339 24.89864,64.845957 23.577109,53.037558 4.3620045,7.2280354 8.3265945,55.684052 Z" />
+      <path
+         style="fill:#ffffff"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-27"
+         d="M 23.576815,53.037484 41.063935,54.564591 30.795251,26.468035 4.3617105,7.2279618 Z" />
+      <path
+         style="fill:#526c6f"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-28"
+         d="M 7.005285,-2.2078652e-4 30.795765,26.467667 l 10.26795,28.096556 4.27035,-11.299854 -9.15075,-24.024517 z" />
+      <path
+         style="fill:#ecd2c3"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-29"
+         d="M 126.46417,77.978339 121.78737,64.845957 123.1089,53.037558 142.324,7.2280354 138.35941,55.684052 Z" />
+      <path
+         style="fill:#ffffff"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-30"
+         d="M 123.10912,53.037484 105.622,54.564591 115.89068,26.468035 142.32422,7.2279618 Z" />
+      <path
+         style="fill:#526c6f"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-31"
+         d="M 139.68102,-2.2078652e-4 110.50225,19.239852 l -9.15001,24.024517 4.27035,11.299854 10.26795,-28.096556 z" />
+      <path
+         style="fill:#303030"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-32"
+         d="M 37.301912,63.726422 54.306871,69.093006 65.664827,80.268484 54.979396,79.782753 45.333992,74.516995 Z" />
+      <g
+         transform="translate(43.365,67.707865)"
+         id="Group-35">
+        <mask
+           fill="#ffffff"
+           sketch:name="Clip 34"
+           id="mask-3">
+          <use
+             height="100%"
+             width="100%"
+             y="0"
+             x="0"
+             id="use53"
+             xlink:href="#path-2" />
+        </mask>
+        <use
+           height="100%"
+           width="100%"
+           y="0"
+           x="0"
+           style="fill:url(#radialGradient936)"
+           xlink:href="#path-2"
+           sketch:type="MSShapeGroup"
+           id="Clip-34" />
+        <path
+           inkscape:connector-curvature="0"
+           mask="url(#mask-3)"
+           sketch:type="MSShapeGroup"
+           id="Fill-33"
+           d="M 22.2999,12.560545 11.83056,10.677972 2.883405,5.1803876 0.03675,0.29438202 9.39036,2.9408764 Z" />
+      </g>
+      <path
+         style="fill:#303030"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-36"
+         d="m 109.3841,63.726422 -17.004963,5.366584 -11.357956,11.175478 10.68543,-0.485731 9.645409,-5.265758 z" />
+      <g
+         transform="translate(80.85,67.707865)"
+         id="Group-39">
+        <mask
+           fill="#ffffff"
+           sketch:name="Clip 38"
+           id="mask-5">
+          <use
+             height="100%"
+             width="100%"
+             y="0"
+             x="0"
+             id="use60"
+             xlink:href="#path-4" />
+        </mask>
+        <use
+           height="100%"
+           width="100%"
+           y="0"
+           x="0"
+           style="fill:url(#radialGradient938)"
+           xlink:href="#path-4"
+           sketch:type="MSShapeGroup"
+           id="Clip-38" />
+        <path
+           inkscape:connector-curvature="0"
+           mask="url(#mask-5)"
+           sketch:type="MSShapeGroup"
+           id="Fill-37"
+           d="M 0.171255,12.560545 10.640595,10.677972 19.587015,5.1803876 22.43367,0.29438202 13.080795,2.9408764 Z" />
+      </g>
+      <g
+         transform="translate(22.05,58.876404)"
+         id="Group-45">
+        <path
+           style="fill:#262626;fill-opacity:0.2"
+           inkscape:connector-curvature="0"
+           sketch:type="MSShapeGroup"
+           id="Fill-40"
+           d="M 4.7252415,0.16728258 35.545262,8.9222039 49.211852,23.196788 4.7252415,25.209625 v -6.31155 l -4.41,-3.86818 V 9.1253275 l 4.41,-3.0534775 z" />
+        <g
+           id="Group-44">
+          <mask
+             fill="#ffffff"
+             sketch:name="Clip 43"
+             id="mask-8">
+            <use
+               height="100%"
+               width="100%"
+               y="0"
+               x="0"
+               id="use67"
+               xlink:href="#path-7" />
+          </mask>
+          <use
+             height="100%"
+             width="100%"
+             y="0"
+             x="0"
+             style="fill:url(#linearGradient-6)"
+             xlink:href="#path-7"
+             sketch:type="MSShapeGroup"
+             id="Clip-43" />
+          <path
+             inkscape:connector-curvature="0"
+             mask="url(#mask-8)"
+             sketch:type="MSShapeGroup"
+             id="Fill-42"
+             d="M 4.725315,0.1670618 35.37555,9.1258427 47.33106,22.291343 4.725315,25.21014 v -6.31155 l -4.41,-3.868916 V 9.1258427 l 4.41,-3.0542135 z" />
+        </g>
+      </g>
+      <path
+         style="fill:#474747"
+         inkscape:connector-curvature="0"
+         sketch:type="MSShapeGroup"
+         id="Fill-46"
+         d="m 17.955241,65.966007 5.494125,-7.089455 h 3.325875 v 6.071629 l -4.41,3.053477 v 5.904568 l 4.41,3.86818 v 6.51541 l -3.139185,-0.20386 -5.680815,-7.278595 z" />
+      <g
+         transform="translate(28.665,79.483146)"
+         id="Group-49">
+        <mask
+           fill="#ffffff"
+           sketch:name="Clip 48"
+           id="mask-11">
+          <use
+             height="100%"
+             width="100%"
+             y="0"
+             x="0"
+             id="use75"
+             xlink:href="#path-10" />
+        </mask>
+        <g
+           id="Clip-48" />
+        <path
+           inkscape:connector-curvature="0"
+           mask="url(#mask-11)"
+           sketch:type="MSShapeGroup"
+           id="Fill-47"
+           d="M 19.60245,0.17442135 0.6468,1.3975786 c -0.088935,0.00515 -0.15582,0.081691 -0.14994,0.1707416 v 0 l 0.002205,0.03459 c 0.005145,0.088315 0.08232,0.1552865 0.17052,0.1501348 v 0 L 19.62597,0.5306236 c 0.0882,-0.005888 0.155085,-0.082427 0.14994,-0.17147753 v 0 l -0.0029,-0.0338539 c -0.0044,-0.0861067 -0.0757,-0.15087078 -0.16023,-0.15087078 v 0 h -0.01029" />
+      </g>
+      <g
+         transform="translate(28.665,80.955056)"
+         id="Group-52">
+        <mask
+           fill="#ffffff"
+           sketch:name="Clip 51"
+           id="mask-13">
+          <use
+             height="100%"
+             width="100%"
+             y="0"
+             x="0"
+             id="use81"
+             xlink:href="#path-12" />
+        </mask>
+        <g
+           id="Clip-51" />
+        <path
+           inkscape:connector-curvature="0"
+           mask="url(#mask-13)"
+           sketch:type="MSShapeGroup"
+           id="Fill-50"
+           d="M 9.349935,0.66235955 0.729855,1.2187416 c -0.0882,0.00589 -0.15582,0.081691 -0.14994,0.1707415 v 0 L 0.58212,1.4233371 C 0.588,1.5123876 0.66444,1.5800955 0.753375,1.5742079 v 0 l 8.62008,-0.5556461 c 0.0882,-0.00589 0.155085,-0.082427 0.14994,-0.17074158 v 0 L 9.520455,0.81323034 C 9.516045,0.72785955 9.44475,0.66235955 9.36096,0.66235955 v 0 H 9.349935" />
+      </g>
+      <g
+         sketch:type="MSShapeGroup"
+         transform="translate(17.64,75.803371)"
+         id="Group-57">
+        <path
+           style="stroke:#474747"
+           inkscape:connector-curvature="0"
+           id="Stroke-53"
+           d="m 0.6827415,0 v 19.073747 l 21.5244745,21.44573 34.581016,9.126579" />
+        <path
+           style="fill:#474747"
+           inkscape:connector-curvature="0"
+           id="Fill-55"
+           d="m 55.314262,51.342433 -5.871915,-1.416714 c -0.933449,-0.225202 -1.513365,-1.173848 -1.288455,-2.108511 l 0.08747,-0.36209 c 0.22491,-0.934663 1.172325,-1.515332 2.105775,-1.290129 l 5.871916,1.416713 c 0.93345,0.225203 1.513365,1.173849 1.288454,2.108511 l -0.08747,0.36209 c -0.22491,0.934663 -1.172325,1.515332 -2.105775,1.29013" />
+      </g>
+    </g>
+  </g>
+</svg>

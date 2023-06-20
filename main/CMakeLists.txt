@@ -13,6 +13,7 @@ idf_component_register(
          "menus/wifi.c"
          "menus/sao.c"
          "menus/launcher.c"
+         "menus/id.c"
          "nametag.c"
          "file_browser.c"
          "test_common.c"
@@ -34,7 +35,14 @@ idf_component_register(
                  "menus"
     EMBED_TXTFILES ${project_dir}/resources/isrgrootx1.pem
                    ${project_dir}/resources/custom_ota_cert.pem
-    EMBED_FILES ${project_dir}/resources/boot.snd
+    EMBED_FILES ${project_dir}/resources/boot.pcm
+                ${project_dir}/resources/boot0.png
+                ${project_dir}/resources/boot1.png
+                ${project_dir}/resources/boot2.png
+                ${project_dir}/resources/boot3.png
+                ${project_dir}/resources/boot4.png
+                ${project_dir}/resources/boot5.png
+                ${project_dir}/resources/boot6.png
                 ${project_dir}/resources/troopers1.png
                 ${project_dir}/resources/icons/dev.png
                 ${project_dir}/resources/icons/home.png
@@ -47,4 +55,8 @@ idf_component_register(
                 ${project_dir}/resources/icons/hourglass.png
                 ${project_dir}/resources/icons/update.png
                 ${project_dir}/resources/icons/sao.png
+                ${project_dir}/resources/id/id_shield.png
+                ${project_dir}/resources/id/id_ernw.png
+                ${project_dir}/resources/id/id_fucss.png
+                ${project_dir}/resources/id/id_fishbowl.png
 )

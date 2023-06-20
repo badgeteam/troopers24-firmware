@@ -206,6 +206,7 @@ uint8_t led_blue[NUM_LEDS*3]  = {0};
 uint8_t led_white[NUM_LEDS*3]  = {0};
 
 void factory_test() {
+    return;
     for (int i = 0; i < NUM_LEDS; i++) {
         led_green[3*i] = 50;
         led_green[3*i+1] = 0;

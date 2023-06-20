@@ -74,7 +74,15 @@ void stop() {
 const char* fatal_error_str = "A fatal error occured";
 const char* reset_board_str = "Reset the board to try again";
 
+static xSemaphoreHandle boot_mutex;
+
 #define AMOUNT_OF_LEDS 9
+
+static void boot_animation_task(void* pvParameters) {
+    display_boot_animation();
+    if (boot_mutex != NULL) xSemaphoreGive(boot_mutex);
+    vTaskDelete(NULL);
+}
 
 static void audio_player_task(void* pvParameters) {
     vTaskDelay(pdMS_TO_TICKS(500));
@@ -101,8 +109,23 @@ static void audio_player_task(void* pvParameters) {
     vTaskDelete(NULL);
 }
 
+void wait_for_boot_anim() {
+    ESP_LOGI(TAG, "Waiting for boot animation");
+    if (boot_mutex != NULL) {
+        xSemaphoreTake(boot_mutex, portMAX_DELAY);
+        ESP_LOGI(TAG, "Semaphore done");
+    }
+    boot_mutex = NULL;
+}
+
 _Noreturn void app_main(void) {
     esp_err_t res;
+
+    boot_mutex = xSemaphoreCreateBinary();
+    if (boot_mutex == NULL) {
+        ESP_LOGE(TAG, "Failed to create boot mutex");
+        esp_restart();
+    }
 
     esp_sleep_wakeup_cause_t wakeup_cause = esp_sleep_get_wakeup_cause();
     bool wakeup_deepsleep = wakeup_cause == ESP_SLEEP_WAKEUP_EXT0;
@@ -136,9 +159,9 @@ _Noreturn void app_main(void) {
     pca9555_set_gpio_direction(io_expander, IO_AMP_GAIN0, PCA_OUTPUT);
     pca9555_set_gpio_direction(io_expander, IO_AMP_GAIN1, PCA_OUTPUT);
 
-    pca9555_set_gpio_value(io_expander, IO_AMP_ENABLE, 0);
-    pca9555_set_gpio_value(io_expander, IO_AMP_GAIN0, 0);
-    pca9555_set_gpio_value(io_expander, IO_AMP_GAIN1, 0);
+    pca9555_set_gpio_value(io_expander, IO_AMP_ENABLE, 1);
+    pca9555_set_gpio_value(io_expander, IO_AMP_GAIN0, 1);
+    pca9555_set_gpio_value(io_expander, IO_AMP_GAIN1, 1);
 
 
     pca9555_set_gpio_direction(io_expander, IO_SAO_GPIO2, PCA_OUTPUT);
@@ -167,12 +190,18 @@ _Noreturn void app_main(void) {
 
     /* Initialize LCD screen */
     pax_buf_t* pax_buffer = get_pax_buffer();
-    display_boot_screen("Starting...");
+    xTaskCreate(boot_animation_task, "boot_anim_task", 2048, NULL, 12, NULL);
+
+    if (!wakeup_deepsleep) {
+        /* Rick that roll */
+        xTaskCreate(audio_player_task, "audio_player_task", 2048, NULL, 12, NULL);
+    }
 
     /* Start NVS */
     res = nvs_init();
     if (res != ESP_OK) {
         ESP_LOGE(TAG, "NVS init failed: %d", res);
+        wait_for_boot_anim();
         display_fatal_error(fatal_error_str, "NVS failed to initialize", "Flash may be corrupted", NULL);
         stop();
     }
@@ -181,6 +210,7 @@ _Noreturn void app_main(void) {
     res = nvs_open("system", NVS_READWRITE, &handle);
     if (res != ESP_OK) {
         ESP_LOGE(TAG, "NVS open failed: %d", res);
+        wait_for_boot_anim();
         display_fatal_error(fatal_error_str, "Failed to open NVS namespace", "Flash may be corrupted", reset_board_str);
         stop();
     }
@@ -191,12 +221,14 @@ _Noreturn void app_main(void) {
     res = appfs_init();
     if (res != ESP_OK) {
         ESP_LOGE(TAG, "AppFS init failed: %d", res);
+        wait_for_boot_anim();
         display_fatal_error(fatal_error_str, "Failed to initialize AppFS", "Flash may be corrupted", reset_board_str);
         stop();
     }
 
     /* Start internal filesystem */
     if (mount_internal_filesystem() != ESP_OK) {
+        wait_for_boot_anim();
         display_fatal_error(fatal_error_str, "Failed to initialize flash FS", "Flash may be corrupted", reset_board_str);
         stop();
     }
@@ -212,6 +244,7 @@ _Noreturn void app_main(void) {
 
     if (!wifi_check_configured()) {
         if (wifi_set_defaults()) {
+            wait_for_boot_anim();
             const pax_font_t* font = pax_font_saira_regular;
             pax_background(pax_buffer, 0xFFFFFF);
             pax_draw_text(pax_buffer, 0xFF000000, font, 18, 5, 240 - 18, "🅰 continue");
@@ -219,6 +252,7 @@ _Noreturn void app_main(void) {
             display_flush();
             wait_for_button();
         } else {
+            wait_for_boot_anim();
             display_fatal_error(fatal_error_str, "Failed to configure WiFi", "Flash may be corrupted", reset_board_str);
             stop();
         }
@@ -226,12 +260,18 @@ _Noreturn void app_main(void) {
 
     res = init_ca_store();
     if (res != ESP_OK) {
+        wait_for_boot_anim();
         display_fatal_error(fatal_error_str, "Failed to initialize", "TLS certificate storage", reset_board_str);
         stop();
     }
 
     /* Clear RTC memory */
     rtc_memory_clear();
+
+    /* Wait for boot animation to complete */
+    wait_for_boot_anim();
+
+    ESP_LOGW(TAG, "done");
 
     /* Crash check */
     appfs_handle_t crashed_app = appfs_detect_crash();
@@ -251,11 +291,6 @@ _Noreturn void app_main(void) {
         pax_draw_text(pax_buffer, 0xFF491d88, pax_font_saira_regular, 18, 5, pax_buffer->height - 18, "🅰 continue");
         display_flush();
         wait_for_button();
-    }
-
-    if (!wakeup_deepsleep) {
-        /* Rick that roll */
-        xTaskCreate(audio_player_task, "audio_player_task", 2048, NULL, 12, NULL);
     }
 
     /* Launcher menu */

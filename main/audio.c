@@ -12,7 +12,7 @@
 
 void _audio_init(int i2s_num) {
     i2s_config_t i2s_config = {.mode                 = I2S_MODE_MASTER | I2S_MODE_TX,
-                               .sample_rate          = 8000,
+                               .sample_rate          = 44100,
                                .bits_per_sample      = I2S_BITS_PER_SAMPLE_16BIT,
                                .channel_format       = I2S_CHANNEL_FMT_RIGHT_LEFT,
                                .communication_format = I2S_COMM_FORMAT_STAND_I2S,
@@ -67,8 +67,8 @@ void audio_player_task(void* arg) {
 
 void audio_init() { _audio_init(0); }
 
-extern const uint8_t boot_snd_start[] asm("_binary_boot_snd_start");
-extern const uint8_t boot_snd_end[] asm("_binary_boot_snd_end");
+extern const uint8_t boot_snd_start[] asm("_binary_boot_pcm_start");
+extern const uint8_t boot_snd_end[] asm("_binary_boot_pcm_end");
 
 audio_player_cfg_t bootsound;
 

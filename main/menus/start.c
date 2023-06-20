@@ -13,6 +13,7 @@
 #include "dev.h"
 #include "hardware.h"
 #include "hatchery.h"
+#include "id.h"
 #include "launcher.h"
 #include "math.h"
 #include "menu.h"
@@ -48,6 +49,9 @@ extern const uint8_t update_png_end[] asm("_binary_update_png_end");
 extern const uint8_t sao_png_start[] asm("_binary_sao_png_start");
 extern const uint8_t sao_png_end[] asm("_binary_sao_png_end");
 
+extern const uint8_t id_png_start[] asm("_binary_sao_png_start");
+extern const uint8_t id_png_end[] asm("_binary_sao_png_end");
+
 typedef enum action {
     ACTION_NONE,
     ACTION_APPS,
@@ -58,7 +62,8 @@ typedef enum action {
     ACTION_SETTINGS,
     ACTION_UPDATE,
     ACTION_OTA,
-    ACTION_SAO
+    ACTION_SAO,
+    ACTION_ID
 } menu_start_action_t;
 
 void render_background(pax_buf_t* pax_buffer, const char* text) {
@@ -105,9 +110,12 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
     pax_decode_png_buf(&icon_update, (void*) update_png_start, update_png_end - update_png_start, PAX_BUF_32_8888ARGB, 0);
     pax_buf_t icon_hardware;
     pax_decode_png_buf(&icon_hardware, (void*) sao_png_start, sao_png_end - sao_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_id;
+    pax_decode_png_buf(&icon_id, (void*) id_png_start, id_png_end - id_png_start, PAX_BUF_32_8888ARGB, 0);
 
     menu_set_icon(menu, &icon_home);
     menu_insert_item_icon(menu, "Name tag", NULL, (void*) ACTION_NAMETAG, -1, &icon_tag);
+    menu_insert_item_icon(menu, "ID", NULL, (void*) ACTION_ID, -1, &icon_tag);
     menu_insert_item_icon(menu, "Apps", NULL, (void*) ACTION_LAUNCHER, -1, &icon_apps);
     menu_insert_item_icon(menu, "Hatchery", NULL, (void*) ACTION_HATCHERY, -1, &icon_hatchery);
     menu_insert_item_icon(menu, "Tools", NULL, (void*) ACTION_DEV, -1, &icon_dev);
@@ -189,6 +197,8 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
                 ota_update(false);
             } else if (action == ACTION_SAO) {
                 menu_sao(button_queue);
+            } else if (action == ACTION_ID) {
+                menu_id(button_queue);
             }
             action      = ACTION_NONE;
             render      = true;
@@ -204,4 +214,5 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
     pax_buf_destroy(&icon_dev);
     pax_buf_destroy(&icon_settings);
     pax_buf_destroy(&icon_update);
+    pax_buf_destroy(&icon_id);
 }
