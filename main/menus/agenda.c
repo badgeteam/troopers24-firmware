@@ -354,14 +354,14 @@ bool load_file(const char* filename, char** buf, size_t* len) {
 bool load_data() {
     if (!load_file(day1_path, &data_day1, &size_day1)) {
         ESP_LOGE(TAG, "Failed to read agenda file: %s", day1_path);
-        render_message("Failed to read agenda");
+        render_message("Failed to read agenda. 🅰 to retry.");
         display_flush();
         return false;
     }
 
     if (!load_file(day2_path, &data_day2, &size_day2)) {
         ESP_LOGE(TAG, "Failed to read agenda file: %s", day2_path);
-        render_message("Failed to read agenda");
+        render_message("Failed to read agenda. 🅰 to retry.");
         display_flush();
         return false;
     }
@@ -369,7 +369,7 @@ bool load_data() {
     json_day1 = cJSON_ParseWithLength(data_day1, size_day1);
     if (json_day1 == NULL) {
         ESP_LOGE(TAG, "Failed to parse agenda file: %s", day1_path);
-        render_message("Failed to parse agenda");
+        render_message("Failed to parse agenda. 🅰 to retry.");
         display_flush();
         return false;
     }
@@ -377,7 +377,7 @@ bool load_data() {
     json_day2 = cJSON_ParseWithLength(data_day2, size_day2);
     if (json_day2 == NULL) {
         ESP_LOGE(TAG, "Failed to parse agenda file: %s", day2_path);
-        render_message("Failed to parse agenda");
+        render_message("Failed to parse agenda. 🅰 to retry.");
         display_flush();
         return false;
     }
@@ -410,8 +410,7 @@ bool menu_agenda(xQueueHandle button_queue) {
 
     if (!load_data()) {
         clear_keyboard_queue();
-        wait_for_button();
-        return true;
+        return wait_for_button();
     }
 
     menu_t*    menu       = menu_alloc("Troopers 2023 - Agenda", 34, 18);
