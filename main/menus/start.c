@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "agenda.h"
 #include "app_update.h"
 #include "bootscreen.h"
 #include "dev.h"
@@ -46,8 +47,11 @@ extern const uint8_t settings_png_end[] asm("_binary_settings_png_end");
 extern const uint8_t update_png_start[] asm("_binary_update_png_start");
 extern const uint8_t update_png_end[] asm("_binary_update_png_end");
 
-extern const uint8_t sao_png_start[] asm("_binary_sao_png_start");
-extern const uint8_t sao_png_end[] asm("_binary_sao_png_end");
+//extern const uint8_t sao_png_start[] asm("_binary_sao_png_start");
+//extern const uint8_t sao_png_end[] asm("_binary_sao_png_end");
+
+extern const uint8_t agenda_png_start[] asm("_binary_calendar_png_start");
+extern const uint8_t agenda_png_end[] asm("_binary_calendar_png_end");
 
 extern const uint8_t id_png_start[] asm("_binary_sao_png_start");
 extern const uint8_t id_png_end[] asm("_binary_sao_png_end");
@@ -63,7 +67,8 @@ typedef enum action {
     ACTION_UPDATE,
     ACTION_OTA,
     ACTION_SAO,
-    ACTION_ID
+    ACTION_ID,
+    ACTION_AGENDA
 } menu_start_action_t;
 
 void render_background(pax_buf_t* pax_buffer, const char* text) {
@@ -108,18 +113,21 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
     pax_decode_png_buf(&icon_settings, (void*) settings_png_start, settings_png_end - settings_png_start, PAX_BUF_32_8888ARGB, 0);
     pax_buf_t icon_update;
     pax_decode_png_buf(&icon_update, (void*) update_png_start, update_png_end - update_png_start, PAX_BUF_32_8888ARGB, 0);
-    pax_buf_t icon_hardware;
-    pax_decode_png_buf(&icon_hardware, (void*) sao_png_start, sao_png_end - sao_png_start, PAX_BUF_32_8888ARGB, 0);
+//    pax_buf_t icon_hardware;
+//    pax_decode_png_buf(&icon_hardware, (void*) sao_png_start, sao_png_end - sao_png_start, PAX_BUF_32_8888ARGB, 0);
     pax_buf_t icon_id;
     pax_decode_png_buf(&icon_id, (void*) id_png_start, id_png_end - id_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_agenda;
+    pax_decode_png_buf(&icon_agenda, (void*) agenda_png_start, agenda_png_end - agenda_png_start, PAX_BUF_32_8888ARGB, 0);
 
     menu_set_icon(menu, &icon_home);
     menu_insert_item_icon(menu, "Name tag", NULL, (void*) ACTION_NAMETAG, -1, &icon_tag);
     menu_insert_item_icon(menu, "ID", NULL, (void*) ACTION_ID, -1, &icon_tag);
+    menu_insert_item_icon(menu, "Agenda", NULL, (void*) ACTION_AGENDA, -1, &icon_agenda);
     menu_insert_item_icon(menu, "Apps", NULL, (void*) ACTION_LAUNCHER, -1, &icon_apps);
     menu_insert_item_icon(menu, "Hatchery", NULL, (void*) ACTION_HATCHERY, -1, &icon_hatchery);
     menu_insert_item_icon(menu, "Tools", NULL, (void*) ACTION_DEV, -1, &icon_dev);
-    menu_insert_item_icon(menu, "SAO", NULL, (void*) ACTION_SAO, -1, &icon_hardware);
+//    menu_insert_item_icon(menu, "SAO", NULL, (void*) ACTION_SAO, -1, &icon_hardware);
     menu_insert_item_icon(menu, "Settings", NULL, (void*) ACTION_SETTINGS, -1, &icon_settings);
     menu_insert_item_icon(menu, "App update", NULL, (void*) ACTION_UPDATE, -1, &icon_update);
     menu_insert_item_icon(menu, "OS update", NULL, (void*) ACTION_OTA, -1, &icon_update);
@@ -199,6 +207,8 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
                 menu_sao(button_queue);
             } else if (action == ACTION_ID) {
                 menu_id(button_queue);
+            } else if (action == ACTION_AGENDA) {
+                while (menu_agenda(button_queue)) {}
             }
             action      = ACTION_NONE;
             render      = true;

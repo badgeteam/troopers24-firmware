@@ -185,13 +185,12 @@ bool run_basic_tests() {
     display_flush();
 
     /* Run mandatory tests */
-    // TODO: Replace
     RUN_TEST_MANDATORY("KEYBOARD", test_keyboard_init);
-    RUN_TEST_MANDATORY("SD CARD", test_sdcard_init);
     RUN_TEST_MANDATORY("CC1200", test_cc1200_init);
 
     /* Run tests */
     RUN_TEST("STUCK BUTTONS", test_stuck_buttons);
+    RUN_TEST("SD CARD", test_sdcard_init);
 
 error:
     /* Fail result on screen */
@@ -206,7 +205,6 @@ uint8_t led_blue[NUM_LEDS*3]  = {0};
 uint8_t led_white[NUM_LEDS*3]  = {0};
 
 void factory_test() {
-    return;
     for (int i = 0; i < NUM_LEDS; i++) {
         led_green[3*i] = 50;
         led_green[3*i+1] = 0;

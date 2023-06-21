@@ -6,6 +6,7 @@ idf_component_register(
          "wifi_ota.c"
          "audio.c"
          "bootscreen.c"
+         "ntp_helper.c"
          "menus/hatchery.c"
          "menus/settings.c"
          "menus/start.c"
@@ -14,6 +15,7 @@ idf_component_register(
          "menus/sao.c"
          "menus/launcher.c"
          "menus/id.c"
+         "menus/agenda.c"
          "nametag.c"
          "file_browser.c"
          "test_common.c"
@@ -55,6 +57,8 @@ idf_component_register(
                 ${project_dir}/resources/icons/hourglass.png
                 ${project_dir}/resources/icons/update.png
                 ${project_dir}/resources/icons/sao.png
+                ${project_dir}/resources/icons/calendar.png
+                ${project_dir}/resources/icons/clock.png
                 ${project_dir}/resources/id/id_shield.png
                 ${project_dir}/resources/id/id_ernw.png
                 ${project_dir}/resources/id/id_fucss.png

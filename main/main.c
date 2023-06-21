@@ -1,6 +1,7 @@
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_system.h>
+#include <sys/time.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
@@ -38,6 +39,8 @@
 #include "wifi_defaults.h"
 #include "wifi_ota.h"
 #include "ws2812.h"
+#include "wifi_connect.h"
+#include "ntp_helper.h"
 
 extern const uint8_t logo_screen_png_start[] asm("_binary_logo_screen_png_start");
 extern const uint8_t logo_screen_png_end[] asm("_binary_logo_screen_png_end");
@@ -75,12 +78,20 @@ const char* fatal_error_str = "A fatal error occured";
 const char* reset_board_str = "Reset the board to try again";
 
 static xSemaphoreHandle boot_mutex;
+static xSemaphoreHandle ntp_mutex;
 
 #define AMOUNT_OF_LEDS 9
 
 static void boot_animation_task(void* pvParameters) {
     display_boot_animation();
+    if (ntp_mutex != NULL) xSemaphoreTake(ntp_mutex, portMAX_DELAY);
     if (boot_mutex != NULL) xSemaphoreGive(boot_mutex);
+    vTaskDelete(NULL);
+}
+
+static void ntp_sync_task(void* pvParameters) {
+    ntp_synced = sync_ntp();
+    xSemaphoreGive(ntp_mutex);
     vTaskDelete(NULL);
 }
 
@@ -124,6 +135,12 @@ _Noreturn void app_main(void) {
     boot_mutex = xSemaphoreCreateBinary();
     if (boot_mutex == NULL) {
         ESP_LOGE(TAG, "Failed to create boot mutex");
+        esp_restart();
+    }
+
+    ntp_mutex = xSemaphoreCreateBinary();
+    if (ntp_mutex == NULL) {
+        ESP_LOGE(TAG, "Failed to create NTP mutex");
         esp_restart();
     }
 
@@ -190,7 +207,7 @@ _Noreturn void app_main(void) {
 
     /* Initialize LCD screen */
     pax_buf_t* pax_buffer = get_pax_buffer();
-    xTaskCreate(boot_animation_task, "boot_anim_task", 2048, NULL, 12, NULL);
+    xTaskCreate(boot_animation_task, "boot_anim_task", 4096, NULL, 12, NULL);
 
     if (!wakeup_deepsleep) {
         /* Rick that roll */
@@ -267,6 +284,9 @@ _Noreturn void app_main(void) {
 
     /* Clear RTC memory */
     rtc_memory_clear();
+
+    /* Try to update the RTC */
+    xTaskCreate(ntp_sync_task, "ntp_sync_task", 4096, NULL, 12, NULL);
 
     /* Wait for boot animation to complete */
     wait_for_boot_anim();
