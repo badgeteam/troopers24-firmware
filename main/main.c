@@ -84,6 +84,7 @@ static xSemaphoreHandle ntp_mutex;
 
 static void boot_animation_task(void* pvParameters) {
     display_boot_animation();
+    display_story_splash();
     if (ntp_mutex != NULL) xSemaphoreTake(ntp_mutex, portMAX_DELAY);
     if (boot_mutex != NULL) xSemaphoreGive(boot_mutex);
     vTaskDelete(NULL);
@@ -232,7 +233,8 @@ _Noreturn void app_main(void) {
         stop();
     }
 
-    factory_test();
+    // TODO: do we still need this?
+    // factory_test();
 
     /* Start AppFS */
     res = appfs_init();

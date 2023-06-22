@@ -208,7 +208,7 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
             } else if (action == ACTION_ID) {
                 menu_id(button_queue);
             } else if (action == ACTION_AGENDA) {
-                while (menu_agenda(button_queue)) {}
+                menu_agenda(button_queue);
             }
             action      = ACTION_NONE;
             render      = true;

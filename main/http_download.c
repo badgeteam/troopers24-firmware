@@ -15,6 +15,7 @@
 #include "soc/rtc_cntl_reg.h"
 #include "wifi_connect.h"
 #include "wifi_connection.h"
+#include "http_download.h"
 
 static const char* TAG = "HTTP download";
 
@@ -116,11 +117,15 @@ static bool _download_file(const char* url, const char* path) {
 }
 
 bool download_file(const char* url, const char* path) {
-    int retry = 3;
+    return download_file_retries(url, path, 3);
+}
+
+bool download_file_retries(const char* url, const char* path, int retries) {
+    int retry = retries;
     while (retry--) {
         if (_download_file(url, path)) return true;
         printf("DL waiting to retry ...");
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
     return false;
 }
@@ -140,11 +145,15 @@ static bool _download_ram(const char* url, uint8_t** ptr, size_t* size) {
 }
 
 bool download_ram(const char* url, uint8_t** ptr, size_t* size) {
-    int retry = 3;
+    return download_ram_retries(url, ptr, size, 3);
+}
+
+bool download_ram_retries(const char* url, uint8_t** ptr, size_t* size, int reties) {
+    int retry = reties;
     while (retry--) {
         if (_download_ram(url, ptr, size)) return true;
         printf("DL waiting to retry ...");
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
     return false;
 }

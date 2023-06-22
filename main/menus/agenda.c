@@ -19,7 +19,9 @@ static const char* TAG = "agenda";
 
 static const char* last_update_path = "/internal/apps/agenda/last_update";
 static const char* day1_path        = "/internal/apps/agenda/0.json";
+static const char* day1_path_tmp    = "/internal/apps/agenda/0.json.tmp";
 static const char* day2_path        = "/internal/apps/agenda/1.json";
+static const char* day2_path_tmp    = "/internal/apps/agenda/1.json.tmp";
 
 #if DEBUG_INFRA
 static const char* last_update_url  = "http://con.troopers.de/agenda/last_update";
@@ -62,12 +64,16 @@ void agenda_render_background(pax_buf_t* pax_buffer) {
     pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, "🅰 accept 🅱 back");
 }
 
-void details_render_background(pax_buf_t* pax_buffer) {
+void details_render_background(pax_buf_t* pax_buffer, bool tracks) {
     const pax_font_t* font = pax_font_saira_regular;
     pax_background(pax_buffer, 0xFF1E1E1E);
     pax_noclip(pax_buffer);
     pax_simple_rect(pax_buffer, 0xff131313, 0, 220, 320, 20);
-    pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, "🅱 back ⮈ ⮊ change track");
+    if (tracks) {
+        pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, "🅱 back  ← → change track");
+    } else {
+        pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, "🅱 back");
+    }
 }
 
 void render_topbar(pax_buf_t* pax_buffer, pax_buf_t* icon, const char* text) {
@@ -75,6 +81,74 @@ void render_topbar(pax_buf_t* pax_buffer, pax_buf_t* icon, const char* text) {
     pax_simple_rect(pax_buffer, 0xff131313, 0, 0, 320, 34);
     pax_draw_image(pax_buffer, icon, 1, 1);
     pax_draw_text(pax_buffer, 0xFFF1AA13, font, 18, 34, 8, text);
+}
+
+int render_track(pax_buf_t* pax_buffer, pax_buf_t* icon, cJSON* tracks, int track, int talk, int render_talks, int slot_height) {
+    const pax_font_t* font = pax_font_saira_regular;
+
+    cJSON* track_data = cJSON_GetArrayItem(tracks, track);
+    cJSON* title = cJSON_GetObjectItem(track_data, "title");
+    cJSON* talks = cJSON_GetObjectItem(track_data, "talks");
+
+    int talk_count = cJSON_GetArraySize(talks);
+    if (talk >= talk_count) {
+        talk = talk_count - 1;
+    }
+
+    details_render_background(pax_buffer, true);
+    render_topbar(pax_buffer, icon, title->valuestring);
+
+    // First talk
+    int start_talk = talk;
+    int end_talk = talk + render_talks - 1;
+    if (end_talk >= talk_count) {
+        start_talk -= end_talk - talk_count + 1;
+        end_talk = talk_count - 1;
+    }
+    if (start_talk < 0) {
+        start_talk = 0;
+    }
+
+    for (int current = start_talk; current <= end_talk; current++) {
+        int i = current - start_talk;
+        int y = i * slot_height + 34;
+        pax_col_t bg_color = (current == talk) ? 0xFFF1AA13 : 0xFF131313;
+        pax_col_t fg_color = (current == talk) ? 0xFF131313 : 0xFFF1AA13;
+        pax_simple_rect(pax_buffer, bg_color, 0, y, 320, slot_height);
+
+        cJSON* talk_data = cJSON_GetArrayItem(talks, current);
+        cJSON* time = cJSON_GetObjectItem(talk_data, "time");
+        cJSON* talk_title = cJSON_GetObjectItem(talk_data, "title");
+        cJSON* speakers = cJSON_GetObjectItem(talk_data, "speakers");
+
+        pax_vec1_t size = pax_text_size(font, 14, time->valuestring);
+        pax_draw_text(pax_buffer, fg_color, font, 14, 5, y + 2, time->valuestring);
+
+        pax_draw_text(pax_buffer, fg_color, font, 18, 5, y + 2 + 18, talk_title->valuestring);
+
+        int max_len = 255;
+        char speaker_str[max_len];
+        speaker_str[max_len-1] = 0;
+        uint offset = 1;
+        for (int a = 0; a < cJSON_GetArraySize(speakers); a++) {
+            cJSON* speaker = cJSON_GetArrayItem(speakers, a);
+            uint len = strlen(speaker->valuestring);
+            strncat(speaker_str, speaker->valuestring, max_len - 1 - offset);
+            offset += len;
+            if (a < cJSON_GetArraySize(speakers) - 1) {
+                strncat(speaker_str, ", ", max_len - 1 - offset);
+                offset += 2;
+            }
+            if (offset >= max_len - 2) {
+                break;
+            }
+        }
+
+        pax_draw_text(pax_buffer, fg_color, font, 14, 15, y + 2 + 18 + 20, speaker_str);
+    }
+
+    display_flush();
+    return talk_count;
 }
 
 void details_day(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* data, pax_buf_t* icon) {
@@ -91,28 +165,40 @@ void details_day(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* data, 
     bool render = true;
     bool exit = false;
 
+    int    talk         = 0;
+    int    render_talks = 3;
+    int slot_height = 62;
+    int talk_count;
+    keyboard_input_message_t buttonMessage = {0};
+
     while(!exit) {
-        cJSON* track_data = cJSON_GetArrayItem(tracks, track);
-        cJSON* title = cJSON_GetObjectItem(track_data, "title");
-        cJSON* talks = cJSON_GetObjectItem(track_data, "talks");
+        if (render) {
+            talk_count = render_track(pax_buffer, icon, tracks, track, talk, render_talks, slot_height);
+            render = false;
+        }
 
         clear_keyboard_queue();
-        keyboard_input_message_t buttonMessage = {0};
         if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             if (buttonMessage.state) {
                 switch (buttonMessage.input) {
                     case JOYSTICK_DOWN:
+                        talk = (talk + 1) % talk_count;
                         render = true;
                         break;
                     case JOYSTICK_UP:
+                        talk = (talk - 1 + talk_count) % talk_count;
                         render = true;
                         break;
                     case JOYSTICK_LEFT:
-                        if (track > 0) track--;
+                        track = (track - 1 + track_count) % track_count;
+                        // TODO: Do we need to reset the talk?
+                        // talk = 0;
                         render = true;
                         break;
                     case JOYSTICK_RIGHT:
                         track = (track + 1) % track_count;
+                        // TODO: Do we need to reset the talk?
+                        // talk = 0;
                         render = true;
                         break;
                     case BUTTON_BACK:
@@ -122,13 +208,6 @@ void details_day(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* data, 
                         break;
                 }
             }
-        }
-
-        if (render) {
-            details_render_background(pax_buffer);
-            render_topbar(pax_buffer, icon, title->valuestring);
-            display_flush();
-            render = false;
         }
     }
 }
@@ -157,7 +236,7 @@ void details_upcoming(pax_buf_t* pax_buffer, cJSON* data, pax_buf_t* icon) {
     time(&now);
     localtime_r(&now, &timeinfo);
 
-    details_render_background(pax_buffer);
+    details_render_background(pax_buffer, false);
     render_topbar(pax_buffer, icon, "Upcoming talks");
 
     // Remaining vertical space is 186px -> 62px per track
@@ -172,7 +251,7 @@ void details_upcoming(pax_buf_t* pax_buffer, cJSON* data, pax_buf_t* icon) {
         for (int talk = 0; talk < talk_count; talk++) {
             cJSON* talk_data = cJSON_GetArrayItem(talks, talk);
             cJSON* start = cJSON_GetObjectItem(talk_data, "ts");
-            long ts = (long) start->valuedouble;
+            long ts = (long) cJSON_GetNumberValue(start);
             if (ts > now) {
                 talk2 = talk;
                 break;
@@ -189,31 +268,32 @@ void details_upcoming(pax_buf_t* pax_buffer, cJSON* data, pax_buf_t* icon) {
             talk1 = talk2 - 1;
         }
 
-
         // Draw track title
         pax_simple_rect(pax_buffer, 0xFFF1AA13, 0, 34 + 62 * track, 320, 22);
         pax_draw_text(pax_buffer, 0xff131313, font, 18, 5, 34 + 62 * track + 2, title->valuestring);
 
         // First talk
-        pax_simple_rect(pax_buffer, 0xFFF1AA13, 0, 34 + 62 * track + 22, 320, 20);
+        pax_simple_rect(pax_buffer, 0xff131313, 0, 34 + 62 * track + 22, 320, 20);
         if (talk1 >= 0) {
             cJSON* talk1_data = cJSON_GetArrayItem(talks, talk1);
             cJSON* talk1_title = cJSON_GetObjectItem(talk1_data, "title");
-            cJSON* talk1_start = cJSON_GetObjectItem(talk1_data, "start");
+            cJSON* talk1_start = cJSON_GetObjectItem(talk1_data, "time");
+
             pax_vec1_t talk1_start_size = pax_text_size(font, 18, talk1_start->valuestring);
-            pax_draw_text(pax_buffer, 0xff131313, font, 18, 5, 34 + 62 * track + 22 + 2, talk1_start->valuestring);
-            pax_draw_text(pax_buffer, 0xff131313, font, 18, 5 + talk1_start_size.x + 5, 34 + 62 * track + 22 + 2, talk1_title->valuestring);
+            pax_draw_text(pax_buffer, 0xFFF1AA13, font, 18, 5, 34 + 62 * track + 22 + 2, talk1_start->valuestring);
+            pax_draw_text(pax_buffer, 0xFFF1AA13, font, 18, 5 + talk1_start_size.x + 5, 34 + 62 * track + 22 + 2, talk1_title->valuestring);
         }
 
         // Second talk
-        pax_simple_rect(pax_buffer, 0xFFF1AA13, 0, 34 + 62 * track + 22 + 20, 320, 20);
+        pax_simple_rect(pax_buffer, 0xff131313, 0, 34 + 62 * track + 22 + 20, 320, 20);
         if (talk2 >= 0) {
             cJSON* talk2_data = cJSON_GetArrayItem(talks, talk2);
             cJSON* talk2_title = cJSON_GetObjectItem(talk2_data, "title");
-            cJSON* talk2_start = cJSON_GetObjectItem(talk2_data, "start");
+            cJSON* talk2_start = cJSON_GetObjectItem(talk2_data, "time");
+
             pax_vec1_t talk2_start_size = pax_text_size(font, 18, talk2_start->valuestring);
-            pax_draw_text(pax_buffer, 0xff131313, font, 18, 5, 34 + 62 * track + 22 + 20 + 2, talk2_start->valuestring);
-            pax_draw_text(pax_buffer, 0xff131313, font, 18, 5 + talk2_start_size.x + 5, 34 + 62 * track + 22 + 20 + 2, talk2_title->valuestring);
+            pax_draw_text(pax_buffer, 0xFFF1AA13, font, 18, 5, 34 + 62 * track + 22 + 20 + 2, talk2_start->valuestring);
+            pax_draw_text(pax_buffer, 0xFFF1AA13, font, 18, 5 + talk2_start_size.x + 5, 34 + 62 * track + 22 + 20 + 2, talk2_title->valuestring);
         }
     }
     display_flush();
@@ -236,7 +316,7 @@ bool need_update(unsigned long *remote_last_update) {
     static char*  remote_buf = NULL;
     static size_t remote_buf_len = 0;
     bool success = download_ram(last_update_url, (uint8_t**) &remote_buf, &remote_buf_len);
-    if (!success) return true;
+    if (!success) return false; // Do not try to update if the first requests didn't work
     if (remote_buf_len > 10) return true;
 
     char* buf2 = malloc(11);
@@ -250,67 +330,6 @@ bool need_update(unsigned long *remote_last_update) {
     return *remote_last_update > local_last_update;
 }
 
-void update_agenda(xQueueHandle button_queue, bool force) {
-    render_message("Updating agenda...");
-    display_flush();
-
-    // Ensure directory exists
-    if (!create_dir("/internal/apps/agenda")) {
-        ESP_LOGE(TAG, "Failed to create directory in internal storage");
-        render_message("Failed to create data dir");
-        display_flush();
-        return;
-    }
-
-    if (!wifi_connect_to_stored()) {
-        ESP_LOGE(TAG, "Failed to connect to WiFi");
-        render_message("Failed to connect to WiFi");
-        display_flush();
-        return;
-    }
-
-    unsigned long last_update;
-    if (!need_update(&last_update) && !force) {
-        ESP_LOGI(TAG, "No update needed");
-        wifi_disconnect_and_disable();
-        return;
-    }
-
-    ESP_LOGI(TAG, "Updating agenda");
-
-    if (!download_file(day1_url, day1_path)) {
-        ESP_LOGE(TAG, "Failed to download %s to %s", day1_url, day1_path);
-        render_message("Failed to download file");
-        display_flush();
-        wifi_disconnect_and_disable();
-        if (button_queue != NULL) wait_for_button();
-        return;
-    }
-
-    if (!download_file(day2_url, day2_path)) {
-        ESP_LOGE(TAG, "Failed to download %s to %s", day2_url, day2_path);
-        render_message("Failed to download file");
-        display_flush();
-        wifi_disconnect_and_disable();
-        if (button_queue != NULL) wait_for_button();
-        return;
-    }
-
-    // Remember that we updated
-    FILE* last_update_fd = fopen(last_update_path, "w");
-    if (last_update_fd == NULL) {
-        ESP_LOGE(TAG, "Unable to persist last update timestamp");
-        wifi_disconnect_and_disable();
-        return;
-    }
-
-    char str[11];
-    sprintf(str, "%lu", last_update);
-    fwrite(str, 1, 10, last_update_fd);
-    fclose(last_update_fd);
-    wifi_disconnect_and_disable();
-}
-
 bool load_file(const char* filename, char** buf, size_t* len) {
     FILE* fd = fopen(filename, "r");
     if (fd == NULL) {
@@ -322,6 +341,10 @@ bool load_file(const char* filename, char** buf, size_t* len) {
     if (fseek(fd, 0L, SEEK_END) == 0) {
         /* Get the size of the file. */
         *len = ftell(fd);
+
+        if (*buf != NULL) {
+            free(*buf);
+        }
 
         /* Allocate our buffer to that size. */
         *buf = malloc(*len);
@@ -348,6 +371,24 @@ bool load_file(const char* filename, char** buf, size_t* len) {
         return false;
     }
     fclose(fd);
+    return true;
+}
+
+bool test_load_data() {
+    if (!load_file(day1_path_tmp, &data_day1, &size_day1)) return false;
+
+    if (!load_file(day2_path_tmp, &data_day2, &size_day2)) return false;
+
+    json_day1 = cJSON_ParseWithLength(data_day1, size_day1);
+    if (json_day1 == NULL) {
+        return false;
+    }
+
+    json_day2 = cJSON_ParseWithLength(data_day2, size_day2);
+    if (json_day2 == NULL) {
+        return false;
+    }
+
     return true;
 }
 
@@ -385,6 +426,107 @@ bool load_data() {
     return true;
 }
 
+bool rename_or_replace(const char* old, const char* new) {
+    if (access(new, F_OK) == 0) {
+        ESP_LOGD(TAG, "Destination file exists, deleting...");
+        // File exists, try to delete
+        if (remove(new) != 0) {
+            ESP_LOGD(TAG, "Destination file could not be deleted");
+            // Deleting failed
+            return false;
+        }
+    }
+
+    return rename(old, new) != 0;
+}
+
+bool update_agenda(xQueueHandle button_queue, bool force) {
+    render_message("Updating agenda...");
+    display_flush();
+
+    // Ensure directory exists
+    if (!create_dir("/internal/apps/agenda")) {
+        ESP_LOGE(TAG, "Failed to create directory in internal storage");
+        render_message("Failed to create data dir");
+        display_flush();
+        return false;
+    }
+
+    if (!wifi_connect_to_stored()) {
+        ESP_LOGE(TAG, "Failed to connect to WiFi");
+        render_message("Failed to connect to WiFi");
+        display_flush();
+        return false;
+    }
+
+    unsigned long last_update;
+    if (!need_update(&last_update) && !force) {
+        ESP_LOGI(TAG, "No update needed");
+        wifi_disconnect_and_disable();
+        return false;
+    }
+
+    ESP_LOGI(TAG, "Updating agenda");
+
+    if (!download_file(day1_url, day1_path_tmp)) {
+        ESP_LOGE(TAG, "Failed to download %s to %s", day1_url, day1_path);
+        render_message("Failed to download file");
+        display_flush();
+        wifi_disconnect_and_disable();
+        if (button_queue != NULL) wait_for_button();
+        return false;
+    }
+
+    if (!download_file(day2_url, day2_path_tmp)) {
+        ESP_LOGE(TAG, "Failed to download %s to %s", day2_url, day2_path);
+        render_message("Failed to download file");
+        display_flush();
+        wifi_disconnect_and_disable();
+        if (button_queue != NULL) wait_for_button();
+        return false;
+    }
+
+    if (!test_load_data()) {
+        ESP_LOGE(TAG, "Failed to load updated data, not replacing old");
+        return false;
+    }
+
+
+
+    if (rename_or_replace(day1_path_tmp,day1_path)) {
+        ESP_LOGE(TAG, "Failed to rename %s to %s", day1_path_tmp, day1_path);
+        render_message("Failed to store file");
+        display_flush();
+        wifi_disconnect_and_disable();
+        if (button_queue != NULL) wait_for_button();
+        return true;
+    }
+
+    if (rename_or_replace(day2_path_tmp, day2_path)) {
+        ESP_LOGE(TAG, "Failed to rename %s to %s", day2_path_tmp, day2_path);
+        render_message("Failed to store file");
+        display_flush();
+        wifi_disconnect_and_disable();
+        if (button_queue != NULL) wait_for_button();
+        return true;
+    }
+
+    // Remember that we updated
+    FILE* last_update_fd = fopen(last_update_path, "w");
+    if (last_update_fd == NULL) {
+        ESP_LOGE(TAG, "Unable to persist last update timestamp");
+        wifi_disconnect_and_disable();
+        return true;
+    }
+
+    char str[11];
+    sprintf(str, "%lu", last_update);
+    fwrite(str, 1, 10, last_update_fd);
+    fclose(last_update_fd);
+    wifi_disconnect_and_disable();
+    return true;
+}
+
 cJSON* get_current_day() {
     time_t now;
     struct tm timeinfo;
@@ -397,21 +539,40 @@ cJSON* get_current_day() {
 
     if (timeinfo.tm_mday == 28) return json_day1;
     if (timeinfo.tm_mday == 29) return json_day2;
-    return NULL;
+    // TODO: remove after testing
+    return json_day1;
+//    return NULL;
 }
 
-bool menu_agenda(xQueueHandle button_queue) {
+bool try_update_or_load(xQueueHandle button_queue, bool first_attempt) {
+    if (update_agenda(button_queue, !first_attempt)) {
+        return true;
+    }
+    if (load_data()) {
+        return true;
+    }
+
+    return false;
+}
+
+void menu_agenda(xQueueHandle button_queue) {
     pax_buf_t* pax_buffer = get_pax_buffer();
 
     pax_noclip(pax_buffer);
     pax_background(pax_buffer, 0xFF131313);
 
-    update_agenda(button_queue, false);
-
-    if (!load_data()) {
+    bool first_attempt = true;
+    do {
+        // Try to update and load data
+        if (try_update_or_load(button_queue, first_attempt)) break;
+        // Only force download after the first attempt failed
+        first_attempt = false;
+        // If there was an error the user is asked if the processes should be retried
         clear_keyboard_queue();
-        return wait_for_button();
-    }
+        if (!wait_for_button()) {
+            return;
+        }
+    } while (1);
 
     menu_t*    menu       = menu_alloc("Troopers 2023 - Agenda", 34, 18);
 
@@ -500,9 +661,9 @@ bool menu_agenda(xQueueHandle button_queue) {
             if (action == ACTION_NEXT_UP) {
                 details_upcoming(pax_buffer, get_current_day(), &icon_clock);
             } else if (action == ACTION_WEDNESDAY) {
-//                show_nametag(button_queue);
+                details_day(pax_buffer, button_queue, json_day1, &icon_agenda);
             } else if (action == ACTION_THURSDAY) {
-//                menu_settings(button_queue);
+                details_day(pax_buffer, button_queue, json_day2, &icon_agenda);
             }
             action      = ACTION_NONE;
             render      = true;
@@ -513,5 +674,4 @@ bool menu_agenda(xQueueHandle button_queue) {
     menu_free(menu);
     pax_buf_destroy(&icon_agenda);
     pax_buf_destroy(&icon_clock);
-    return false;
 }

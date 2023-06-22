@@ -34,7 +34,7 @@ bool sync_ntp() {
     sntp_init();
 
     int retry = 0;
-    const int retry_count = 5;
+    const int retry_count = 7;
     sntp_sync_status_t sync_status;
     while ((sync_status = sntp_get_sync_status()) == SNTP_SYNC_STATUS_RESET && ++retry < retry_count) {
         ESP_LOGD(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
