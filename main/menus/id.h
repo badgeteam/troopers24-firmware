@@ -3,4 +3,4 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
-void menu_id(xQueueHandle button_queue);
+void menu_id();

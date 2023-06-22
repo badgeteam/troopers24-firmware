@@ -121,7 +121,6 @@ int render_track(pax_buf_t* pax_buffer, pax_buf_t* icon, cJSON* tracks, int trac
         cJSON* talk_title = cJSON_GetObjectItem(talk_data, "title");
         cJSON* speakers = cJSON_GetObjectItem(talk_data, "speakers");
 
-        pax_vec1_t size = pax_text_size(font, 14, time->valuestring);
         pax_draw_text(pax_buffer, fg_color, font, 14, 5, y + 2, time->valuestring);
 
         pax_draw_text(pax_buffer, fg_color, font, 18, 5, y + 2 + 18, talk_title->valuestring);

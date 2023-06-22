@@ -1,10 +1,12 @@
+#include "id.h"
+
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
+#include "efuse.h"
 #include "hardware.h"
 #include "pax_codecs.h"
 #include "pax_gfx.h"
-#include "id.h"
 
 extern const uint8_t shield_png_start[] asm("_binary_id_shield_png_start");
 extern const uint8_t shield_png_end[] asm("_binary_id_shield_png_end");
@@ -75,26 +77,7 @@ void render_icons(pax_buf_t* pax_buffer, uint16_t id) {
     display_flush();
 }
 
-void menu_id(xQueueHandle button_queue) {
+void menu_id() {
     pax_buf_t* pax_buffer = get_pax_buffer();
-    int i = 0;
-    render_icons(pax_buffer, i);
-
-    while (1) {
-        clear_keyboard_queue();
-        keyboard_input_message_t buttonMessage = {0};
-        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
-            if (buttonMessage.state) {
-                if (buttonMessage.input == BUTTON_BACK) {
-                    break;
-                } else if (buttonMessage.input == JOYSTICK_UP) {
-                    i = (i + 1) % 625;
-                } else if (buttonMessage.input == JOYSTICK_DOWN && i > 0) {
-                    i--;
-                }
-            }
-        }
-        render_icons(pax_buffer, i);
-    }
-
+    render_icons(pax_buffer, badge_id());
 }

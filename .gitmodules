@@ -22,10 +22,6 @@
 	path = components/ws2812
 	url = https://github.com/badgeteam/esp32-component-ws2812.git
 	branch = master
-[submodule "components/mch2022-efuse"]
-	path = components/mch2022-efuse
-	url = https://github.com/badgeteam/esp32-component-mch2022-efuse.git
-	branch = master
 [submodule "components/pax-codecs"]
 	path = components/pax-codecs
 	url = https://github.com/robotman2412/pax-codecs.git
@@ -43,3 +39,6 @@
 [submodule "components/keyboard"]
 	path = components/keyboard
 	url = git@github.com:badgeteam/troopers2023-keyboard.git
+[submodule "components/troopers23-efuse"]
+	path = components/troopers23-efuse
+	url = git@github.com:badgeteam/troopers23-efuse.git
