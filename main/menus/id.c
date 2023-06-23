@@ -7,6 +7,7 @@
 #include "hardware.h"
 #include "pax_codecs.h"
 #include "pax_gfx.h"
+#include "system_wrapper.h"
 
 extern const uint8_t shield_png_start[] asm("_binary_id_shield_png_start");
 extern const uint8_t shield_png_end[] asm("_binary_id_shield_png_end");
@@ -80,4 +81,5 @@ void render_icons(pax_buf_t* pax_buffer, uint16_t id) {
 void menu_id() {
     pax_buf_t* pax_buffer = get_pax_buffer();
     render_icons(pax_buffer, badge_id());
+    wait_for_button();
 }

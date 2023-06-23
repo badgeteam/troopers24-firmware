@@ -157,9 +157,6 @@ _Noreturn void app_main(void) {
 
     efuse_protect();
     ESP_LOGI(TAG, "badge id = %d", badge_id());
-    while(1) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
 
     if (bsp_init() != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize basic board support functions");
