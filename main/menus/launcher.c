@@ -117,7 +117,7 @@ static void start_app(xQueueHandle button_queue, launcher_app_t* app_to_start) {
     display_boot_screen("Starting app...");
     if ((strlen(app_to_start->type) == strlen("python")) && (strncmp(app_to_start->type, "python", strlen(app_to_start->type)) == 0)) {
         if (python_not_installed) {
-            render_message("Python is not installed\n\nPlease install 'Python'\nusing the Hatchery under\n'ESP32 native binaries\\Utility'");
+            render_message("Python is not installed\n\nPlease install 'python_tr23'\nusing the Hatchery under\n'ESP32 native binaries\\Utility'");
             display_flush();
             wait_for_button();
         } else {
@@ -225,7 +225,7 @@ void menu_launcher(xQueueHandle button_queue) {
     while (reload) {
         reload = false;
         display_busy();
-        python_appfs_fd      = appfsOpen("python");
+        python_appfs_fd      = appfsOpen("python_tr23");
         python_not_installed = (python_appfs_fd == APPFS_INVALID_FD);
 
         menu_t* menu = menu_alloc("App launcher", 34, 18);

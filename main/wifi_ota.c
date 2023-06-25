@@ -128,7 +128,7 @@ void display_ota_state(const char *text, bool nightly) {
 void ota_update(bool nightly) {
     display_ota_state("Connecting to WiFi...", nightly);
 
-    char *ota_url = nightly ? "https://mch2022.ota.bodge.team/TROOPERS23_dev.bin" : "https://mch2022.ota.bodge.team/TROOPERS23.bin";
+    char *ota_url = nightly ? "https://mch2022.ota.bodge.team/troopers23_dev.bin" : "https://mch2022.ota.bodge.team/troopers23.bin";
 
     if (!wifi_connect_to_stored()) {
         display_ota_state("Failed to connect to WiFi", nightly);

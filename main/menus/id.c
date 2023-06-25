@@ -47,7 +47,6 @@ void render_icon_id(pax_buf_t* pax_buffer, int pos, int index) {
             render_icon(pax_buffer, pos, ernw_png_start, ernw_png_end);
             break;
         case 4:
-        case 10:
             render_icon(pax_buffer, pos, badgeteam_png_start, badgeteam_png_end);
             break;
     }
@@ -79,13 +78,10 @@ void render_icons(pax_buf_t* pax_buffer, uint16_t id) {
 
     // Flush the display
     display_flush();
-
-    while (wait_for_button()) {
-        // Do nothing
-    }
 }
 
 void menu_id() {
     pax_buf_t* pax_buffer = get_pax_buffer();
     render_icons(pax_buffer, badge_id());
+    wait_for_button();
 }

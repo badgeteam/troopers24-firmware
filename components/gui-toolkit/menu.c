@@ -321,6 +321,7 @@ void menu_render(pax_buf_t* pax_buffer, menu_t* menu, float position_x, float po
                     scrollbarEnd - scrollbarStart);
 
     pax_noclip(pax_buffer);
+    pax_mark_dirty0(pax_buffer);
 }
 
 void menu_render_grid(pax_buf_t* pax_buffer, menu_t* menu, float position_x, float position_y, float width, float height) {
@@ -389,6 +390,7 @@ void menu_render_grid(pax_buf_t* pax_buffer, menu_t* menu, float position_x, flo
     }
 
     pax_noclip(pax_buffer);
+    pax_mark_dirty0(pax_buffer);
 }
 
 void menu_render_grid_changes(pax_buf_t* pax_buffer, menu_t* menu, float position_x, float position_y, float width, float height) {
