@@ -2,7 +2,9 @@ build
 main/build
 sdkconfig.old
 *.bak
+*.bck
 *.old
+id.bin
 .vscode
 tools/__pycache__
 .cache

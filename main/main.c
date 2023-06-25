@@ -1,7 +1,6 @@
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_system.h>
-#include <sys/time.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
@@ -12,11 +11,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/cdefs.h>
+#include <sys/time.h>
 
 #include "appfs.h"
 #include "appfs_wrapper.h"
 #include "audio.h"
 #include "bootscreen.h"
+#include "controller.h"
 #include "driver/uart.h"
 #include "efuse.h"
 #include "esp32/rom/crc.h"
@@ -30,17 +31,17 @@
 #include "gui_element_header.h"
 #include "hardware.h"
 #include "menus/start.h"
+#include "ntp_helper.h"
 #include "pax_gfx.h"
 #include "rtc_memory.h"
 #include "settings.h"
 #include "system_wrapper.h"
 #include "wifi_cert.h"
+#include "wifi_connect.h"
 #include "wifi_connection.h"
 #include "wifi_defaults.h"
 #include "wifi_ota.h"
 #include "ws2812.h"
-#include "wifi_connect.h"
-#include "ntp_helper.h"
 
 extern const uint8_t logo_screen_png_start[] asm("_binary_logo_screen_png_start");
 extern const uint8_t logo_screen_png_end[] asm("_binary_logo_screen_png_end");
@@ -157,9 +158,6 @@ _Noreturn void app_main(void) {
 
     efuse_protect();
     ESP_LOGI(TAG, "badge id = %d", badge_id());
-    while(1) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
 
     if (bsp_init() != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize basic board support functions");
@@ -215,7 +213,7 @@ _Noreturn void app_main(void) {
     xTaskCreate(boot_animation_task, "boot_anim_task", 4096, NULL, 12, NULL);
 
     if (!wakeup_deepsleep) {
-        /* Rick that roll */
+        /* TROOPERS */
         xTaskCreate(audio_player_task, "audio_player_task", 2048, NULL, 12, NULL);
     }
 
@@ -261,6 +259,11 @@ _Noreturn void app_main(void) {
     if (sdcard_mounted) {
         ESP_LOGI(TAG, "SD card filesystem mounted");
     }
+
+    /* Enable the controller */
+    // TODO: Remove this
+    Controller *controller = get_controller();
+    controller_enable(controller);
 
     /* Start WiFi */
     wifi_init();

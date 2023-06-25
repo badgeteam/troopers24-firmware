@@ -42,3 +42,6 @@
 [submodule "components/troopers23-efuse"]
 	path = components/troopers23-efuse
 	url = git@github.com:badgeteam/troopers23-efuse.git
+[submodule "components/i2c-controller"]
+	path = components/i2c-controller
+	url = git@github.com:hnzlmnn/esp32-component-controller.git

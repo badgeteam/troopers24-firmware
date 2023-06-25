@@ -7,6 +7,9 @@
 #include "hardware.h"
 #include "pax_codecs.h"
 #include "pax_gfx.h"
+#include "system_wrapper.h"
+
+static const char* TAG = "id";
 
 extern const uint8_t shield_png_start[] asm("_binary_id_shield_png_start");
 extern const uint8_t shield_png_end[] asm("_binary_id_shield_png_end");
@@ -20,8 +23,8 @@ extern const uint8_t fucss_png_end[] asm("_binary_id_fucss_png_end");
 extern const uint8_t fishbowl_png_start[] asm("_binary_id_fishbowl_png_start");
 extern const uint8_t fishbowl_png_end[] asm("_binary_id_fishbowl_png_end");
 
-extern const uint8_t badgeteam_png_start[] asm("_binary_dev_png_start");
-extern const uint8_t badgeteam_png_end[] asm("_binary_dev_png_end");
+extern const uint8_t badgeteam_png_start[] asm("_binary_id_badgeteam_png_start");
+extern const uint8_t badgeteam_png_end[] asm("_binary_id_badgeteam_png_end");
 
 void render_icon(pax_buf_t* pax_buffer, int pos, const uint8_t start[], const uint8_t end[]) {
     // Place 4 icons on a horizontal line, each icon is 80x80 pixels
@@ -44,6 +47,7 @@ void render_icon_id(pax_buf_t* pax_buffer, int pos, int index) {
             render_icon(pax_buffer, pos, ernw_png_start, ernw_png_end);
             break;
         case 4:
+        case 10:
             render_icon(pax_buffer, pos, badgeteam_png_start, badgeteam_png_end);
             break;
     }
@@ -75,6 +79,10 @@ void render_icons(pax_buf_t* pax_buffer, uint16_t id) {
 
     // Flush the display
     display_flush();
+
+    while (wait_for_button()) {
+        // Do nothing
+    }
 }
 
 void menu_id() {
