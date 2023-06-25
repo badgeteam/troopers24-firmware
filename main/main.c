@@ -183,9 +183,6 @@ _Noreturn void app_main(void) {
     pca9555_set_gpio_value(io_expander, IO_AMP_GAIN0, 1);
     pca9555_set_gpio_value(io_expander, IO_AMP_GAIN1, 1);
 
-
-    pca9555_set_gpio_direction(io_expander, IO_SAO_GPIO2, PCA_OUTPUT);
-
     /* Turning the backlight on */
     gpio_config_t io_conf = {
         .intr_type    = GPIO_INTR_DISABLE,

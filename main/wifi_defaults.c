@@ -21,12 +21,9 @@ bool wifi_set_defaults() {
         ESP_LOGE(TAG, "Can't set WiFi to default: %s", esp_err_to_name(res));
         return false;
     }
-    nvs_set_u8(handle, "wifi.authmode", WIFI_MCH2022_AUTH);
-    nvs_set_u8(handle, "wifi.phase2", WIFI_MCH2022_PHASE2);
-    nvs_set_str(handle, "wifi.ssid", WIFI_MCH2022_SSID);
-    nvs_set_str(handle, "wifi.username", WIFI_MCH2022_USER);
-    nvs_set_str(handle, "wifi.anon_ident", WIFI_MCH2022_IDENT);
-    nvs_set_str(handle, "wifi.password", WIFI_MCH2022_PASSWORD);
+    nvs_set_u8(handle, "wifi.authmode", WIFI_TROOPERS_AUTH);
+    nvs_set_str(handle, "wifi.ssid", WIFI_TROOPERS_SSID);
+    nvs_set_str(handle, "wifi.password", WIFI_TROOPERS_PASSWORD);
 
     res = nvs_commit(handle);
     if (res != ESP_OK) {

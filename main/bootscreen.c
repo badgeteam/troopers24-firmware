@@ -66,7 +66,7 @@ void display_boot_animation() {
 void display_story_splash() {
     pax_buf_t*        pax_buffer = get_pax_buffer();
     const pax_font_t* font       = pax_font_saira_regular;
-    const char* text = "You enter a forest\nclearing, and find\nan old shield\nresting on the\nground.\n\nMaybe this will\nprotect you on the\njourney ahead...";
+    const char* text = "You enter a forest\nclearing, and find\nan old shield\nresting on the\nground.\n\nMaybe this can\nprotect you on the\njourney ahead...";
     pax_noclip(pax_buffer);
     pax_background(pax_buffer, 0x131313);
     pax_vec1_t size = pax_text_size(font, 22, text);
