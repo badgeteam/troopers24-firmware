@@ -11,6 +11,12 @@ if [ -f "id.bck" ]; then
 fi
 
 while :; do
+    verify=`espefuse.py dump | grep BLOCK2 | cut -c 56-60 | python -c 'import sys,struct; print(struct.unpack("<H", bytes.fromhex(sys.stdin.read()))[0])'`
+    if [ "$verify" != 00 ]; then
+        echo "Badge already contains an ID: $verify"
+        continue
+    fi
+
     read -p "Ready to burn $i. Press any key to continue..."
     
     # Write binary

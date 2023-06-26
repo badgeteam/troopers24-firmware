@@ -146,17 +146,18 @@
     <mapping directory="$PROJECT_DIR$/components/appfs/Apps/badgePython/python_modules/micropython-lib" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/bus-i2c" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/eeprom" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/i2c-controller" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/i2c-ktd2052" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/i2c-pca9555" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/keyboard" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/components/mch2022-efuse" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/pax-codecs" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/pax-codecs/libspng" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/pax-graphics" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/pax-graphics/src/pthreadqueue" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/components/pax-keyboard" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/sdcard" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/spi-ili9341" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/troopers23-bsp" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/troopers23-efuse" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/ws2812" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/esp-idf" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/esp-idf/components/asio/asio" vcs="Git" />
