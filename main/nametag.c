@@ -18,6 +18,7 @@
 #include "hardware.h"
 #include "nvs.h"
 #include "pax_gfx.h"
+#include "pax_codecs.h"
 #include "sdkconfig.h"
 #include "soc/rtc.h"
 #include "wifi_connect.h"
@@ -26,7 +27,10 @@
 #define SLEEP_DELAY 10000
 static const char *TAG = "nametag";
 
-typedef enum { NICKNAME_THEME_HELLO = 0, NICKNAME_THEME_SIMPLE, NICKNAME_THEME_GAMER, NICKNAME_THEME_LAST } nickname_theme_t;
+extern const uint8_t troopers_png_start[] asm("_binary_nametag_png_start");
+extern const uint8_t troopers_png_end[] asm("_binary_nametag_png_end");
+
+typedef enum { NICKNAME_THEME_HELLO = 0, NICKNAME_THEME_SIMPLE, NICKNAME_THEME_GAMER, NICKNAME_THEME_TROOPERS, NICKNAME_THEME_LAST } nickname_theme_t;
 
 static int hue = 0;
 
@@ -61,7 +65,15 @@ static void show_name(xQueueHandle button_queue, const char *name, nickname_them
     pax_buf_t        *pax_buffer        = get_pax_buffer();
     const pax_font_t *title_font        = pax_font_saira_condensed;
     const pax_font_t *instructions_font = pax_font_saira_regular;
-    const pax_font_t *name_font         = ((theme == NICKNAME_THEME_HELLO) || (theme == NICKNAME_THEME_GAMER)) ? pax_font_marker : pax_font_saira_condensed;
+
+    const pax_font_t *name_font;
+    if (theme == NICKNAME_THEME_HELLO || theme == NICKNAME_THEME_GAMER) {
+        name_font = pax_font_marker;
+    } else if (theme == NICKNAME_THEME_TROOPERS) {
+        name_font = pax_font_sky_mono;
+    } else {
+        name_font = pax_font_saira_condensed;
+    };
 
     float      scale = (theme == NICKNAME_THEME_HELLO) ? 60 : name_font->default_size;
     pax_vec1_t dims  = pax_text_size(name_font, scale, name);
@@ -97,6 +109,9 @@ static void show_name(xQueueHandle button_queue, const char *name, nickname_them
             led_buffer[i + 2] = b;
         }
         ws2812_send_data(led_buffer, sizeof(led_buffer));
+    } else if (theme == NICKNAME_THEME_TROOPERS) {
+        pax_insert_png_buf(pax_buffer, troopers_png_start, troopers_png_end - troopers_png_start, 0, 0, 0);
+        pax_center_text(pax_buffer, 0xFFF1AA13, name_font, 24, pax_buffer->width / 2, 140, name);
     } else {
         pax_background(pax_buffer, 0x000000);
         pax_center_text(pax_buffer, 0xFFFFFFFF, name_font, scale, pax_buffer->width / 2, (pax_buffer->height - dims.y) / 2, name);
@@ -154,11 +169,11 @@ char *read_nickname() {
 static nickname_theme_t get_theme() {
     nvs_handle_t handle;
     if (nvs_open("owner", NVS_READWRITE, &handle) != ESP_OK) {
-        return 0;
+        return NICKNAME_THEME_TROOPERS;
     }
     uint8_t result;
     if (nvs_get_u8(handle, "theme", &result) != ESP_OK) {
-        result = 0;
+        result = NICKNAME_THEME_TROOPERS;
     }
     nvs_close(handle);
 

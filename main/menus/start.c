@@ -87,7 +87,7 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
     }
 
     pax_buf_t* pax_buffer = get_pax_buffer();
-    menu_t*    menu       = menu_alloc("Troopers 2023", 34, 18);
+    menu_t*    menu       = menu_alloc("TROOPERS23", 34, 18);
 
     menu->fgColor           = 0xFFF1AA13;
     menu->bgColor           = 0xFF131313;

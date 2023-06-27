@@ -64,4 +64,5 @@ idf_component_register(
                 ${project_dir}/resources/id/id_fucss.png
                 ${project_dir}/resources/id/id_fishbowl.png
                 ${project_dir}/resources/id/id_badgeteam.png
+                ${project_dir}/resources/nametag.png
 )

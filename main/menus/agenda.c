@@ -15,7 +15,7 @@
 
 static const char* TAG = "agenda";
 
-#define DEBUG_INFRA 1
+#define DEBUG_INFRA 0
 
 static const char* last_update_path = "/internal/apps/agenda/last_update";
 static const char* day1_path        = "/internal/apps/agenda/0.json";
@@ -32,6 +32,10 @@ static const char* last_update_url  = "https://con.troopers.de/agenda/last_updat
 static const char* day1_url         = "https://con.troopers.de/agenda/0.json";
 static const char* day2_url         = "https://con.troopers.de/agenda/1.json";
 #endif
+
+static const char* DEFAULT_DAY1 = "{\"tracks\": [{\"title\": \"Attack & Research\", \"talks\": [{\"title\": \"Keynote\", \"time\": \"09:00\", \"ts\": 1687942800, \"speakers\": []}, {\"title\": \"Coffee Break\", \"time\": \"10:00\", \"ts\": 1687946400, \"speakers\": []}, {\"title\": \"OopsSec - The bad, the worst and the ugly  of APT\u2019s operations security\", \"time\": \"10:30\", \"ts\": 1687948200, \"speakers\": [\"Tomer Bar\"]}, {\"title\": \"Spooky authentication at a distance\", \"time\": \"11:30\", \"ts\": 1687951800, \"speakers\": [\"Tamas Jos\"]}, {\"title\": \"Lunch Break\", \"time\": \"12:30\", \"ts\": 1687955400, \"speakers\": []}, {\"title\": \"Attacking Ultra-Wideband: Security Analysis of UWB Applications in Smartphones\", \"time\": \"13:30\", \"ts\": 1687959000, \"speakers\": [\"Alexander Heinrich\", \"Jiska Classen\"]}, {\"title\": \"Fact Based Post Exploitation - Office365 Edition\", \"time\": \"14:30\", \"ts\": 1687962600, \"speakers\": [\"Melvin Langvik\"]}, {\"title\": \"Coffee Break\", \"time\": \"15:30\", \"ts\": 1687966200, \"speakers\": []}, {\"title\": \"Forensic Examination of Ceph\", \"time\": \"16:00\", \"ts\": 1687968000, \"speakers\": [\"Florian Bausch\"]}, {\"title\": \"All your parcel are belong to us\", \"time\": \"17:00\", \"ts\": 1687971600, \"speakers\": [\"Dennis Kniel\"]}, {\"title\": \"Stay fit: Hack a Jump Rope\", \"time\": \"17:30\", \"ts\": 1687973400, \"speakers\": [\"Axelle Apvrille\"]}]}, {\"title\": \"Defense & Management\", \"talks\": [{\"title\": \"Coffee Break\", \"time\": \"10:00\", \"ts\": 1687946400, \"speakers\": []}, {\"title\": \"Das IT-Security-Lagebild aus Heise-Sicht\", \"time\": \"10:30\", \"ts\": 1687948200, \"speakers\": [\"J\u00fcrgen Schmidt aka ju\"]}, {\"title\": \"Cat & Mouse - or chess?\", \"time\": \"11:30\", \"ts\": 1687951800, \"speakers\": [\"Fabian Mosch\"]}, {\"title\": \"Lunch Break\", \"time\": \"12:30\", \"ts\": 1687955400, \"speakers\": []}, {\"title\": \"Real world detection engineering in a multi-cloud environment\", \"time\": \"13:30\", \"ts\": 1687959000, \"speakers\": [\"Aaron Jewitt\"]}, {\"title\": \"Security Heroes versus the Power of Privacy\", \"time\": \"14:30\", \"ts\": 1687962600, \"speakers\": [\"Avi D\", \"Kim Wuyts\"]}, {\"title\": \"Coffee Break\", \"time\": \"15:30\", \"ts\": 1687966200, \"speakers\": []}, {\"title\": \"SAP (Anti-)Forensics: Detecting White-Collar Cyber-Crime\", \"time\": \"16:00\", \"ts\": 1687968000, \"speakers\": [\"Yvan Genuer\"]}, {\"title\": \"Jupysec: Auditing Jupyter to Improve AI Security\", \"time\": \"17:00\", \"ts\": 1687971600, \"speakers\": [\"Joe Lucas\"]}]}, {\"title\": \"Active Directory & Azure Security\", \"talks\": [{\"title\": \"Coffee Break\", \"time\": \"10:00\", \"ts\": 1687946400, \"speakers\": []}, {\"title\": \"Dumping NTHashes from Azure AD\", \"time\": \"10:30\", \"ts\": 1687948200, \"speakers\": [\"Nestori Syynimaa\"]}, {\"title\": \"Hidden Pathways: Exploring the Anatomy of ACL-Based Active Directory Attacks and Building Strong Defenses\", \"time\": \"11:30\", \"ts\": 1687951800, \"speakers\": [\"Jonas B\u00fclow Knudsen\", \"Alexander Schmitt\"]}, {\"title\": \"Lunch Break\", \"time\": \"12:30\", \"ts\": 1687955400, \"speakers\": []}, {\"title\": \"Priority for Effective Action - A Practical Model for quantifying the Risk of Active Directory Attacks\", \"time\": \"13:30\", \"ts\": 1687959000, \"speakers\": [\"Mars Cheng\", \"Dexter Chen\"]}, {\"title\": \"(Windows) Hello from the other side\", \"time\": \"14:30\", \"ts\": 1687962600, \"speakers\": [\"Dirk-jan Mollema\"]}, {\"title\": \"Coffee Break\", \"time\": \"15:30\", \"ts\": 1687966200, \"speakers\": []}, {\"title\": \"The Power of Coercion Techniques in Windows Environments\", \"time\": \"16:00\", \"ts\": 1687968000, \"speakers\": [\"Martin Grottenthaler\"]}, {\"title\": \"So You Performed A Forest Recovery. How Do You Reconnect Your AD Again With Azure AD?\", \"time\": \"17:00\", \"ts\": 1687971600, \"speakers\": [\"Jorge de Almeida Pinto\"]}]}]}";
+static const char* DEFAULT_DAY2 = "{\"tracks\": [{\"title\": \"Attack & Research\", \"talks\": [{\"title\": \"Testing and Fuzzing the Kubernetes Admission Configuration\", \"time\": \"10:30\", \"ts\": 1688034600, \"speakers\": [\"Benjamin Koltermann\", \"Maximilian Rademacher\"]}, {\"title\": \"Internal Server Error: Exploiting Inter-Process Communication in SAP\u2019s HTTP Server\", \"time\": \"11:30\", \"ts\": 1688038200, \"speakers\": [\"Martin Doyhenard\"]}, {\"title\": \"Lunch Break\", \"time\": \"12:30\", \"ts\": 1688041800, \"speakers\": []}, {\"title\": \"Monitoring Solutions: Attacking IT Infrastructure at its Core\", \"time\": \"13:30\", \"ts\": 1688045400, \"speakers\": [\"Stefan Schiller\"]}, {\"title\": \"The Anatomy of Windows Telemetry Part 2\", \"time\": \"14:30\", \"ts\": 1688049000, \"speakers\": [\"Tillmann O\u00dfwald\", \"Dominik Phillips\", \"Maximilian Winkler\"]}, {\"title\": \"Coffee Break\", \"time\": \"15:30\", \"ts\": 1688052600, \"speakers\": []}, {\"title\": \"Everyone knows SAP, everyone uses SAP, everyone uses RFC, no one knows RFC: From RFC to RCE 16 years later\", \"time\": \"16:00\", \"ts\": 1688054400, \"speakers\": [\"Fabian Hagg\"]}, {\"title\": \"Closing\", \"time\": \"17:00\", \"ts\": 1688058000, \"speakers\": []}]}, {\"title\": \"Defense & Management\", \"talks\": [{\"title\": \"OAuth and Proof of Possession - The long way round\", \"time\": \"10:30\", \"ts\": 1688034600, \"speakers\": [\"Dominick Baier\"]}, {\"title\": \"Detection And Blocking With BPF Via YAML\", \"time\": \"11:30\", \"ts\": 1688038200, \"speakers\": [\"Kev Sheldrake\"]}, {\"title\": \"Lunch Break\", \"time\": \"12:30\", \"ts\": 1688041800, \"speakers\": []}, {\"title\": \"GPT-like Pre-Training on Unlabeled System Logs for Malware Detection\", \"time\": \"13:30\", \"ts\": 1688045400, \"speakers\": [\"Dmitrijs Trizna\", \"Luca Demetrio\"]}, {\"title\": \"Forensic analysis on real incidents inside Microsoft Remote Desktop Services\", \"time\": \"14:30\", \"ts\": 1688049000, \"speakers\": [\"Catarina de Faria Cristas\"]}, {\"title\": \"Coffee Break\", \"time\": \"15:30\", \"ts\": 1688052600, \"speakers\": []}, {\"title\": \"Reportly - keep your head in the clouds. A new Azure visualization tool for analyzing user activities.\", \"time\": \"16:00\", \"ts\": 1688054400, \"speakers\": [\"Sapir Federovsky\"]}, {\"title\": \"Homophonic Collisions: Hold me closer Tony Danza\", \"time\": \"16:30\", \"ts\": 1688056200, \"speakers\": [\"Justin Ibarra\", \"Reagan Short\"]}]}, {\"title\": \"Track 3\", \"talks\": [{\"title\": \"Horror Stories from the Automotive Industry\", \"time\": \"10:30\", \"ts\": 1688034600, \"speakers\": [\"Thomas Sermpinis\"]}, {\"title\": \"The Wire on Fire: The Spies Who Loved Telcos\", \"time\": \"11:30\", \"ts\": 1688038200, \"speakers\": [\"Aleksandar Milenkoski\"]}, {\"title\": \"Lunch Break\", \"time\": \"12:30\", \"ts\": 1688041800, \"speakers\": []}, {\"title\": \"Fault Injection Attacks on Secure Automotive Bootloaders\", \"time\": \"13:30\", \"ts\": 1688045400, \"speakers\": [\"Nils Weiss\", \"Enrico Pozzobon\"]}, {\"title\": \"Vulnerabilities in the TPM 2.0 reference implementation code\", \"time\": \"14:30\", \"ts\": 1688049000, \"speakers\": [\"Francisco Falcon\"]}, {\"title\": \"Coffee Break\", \"time\": \"15:30\", \"ts\": 1688052600, \"speakers\": []}, {\"title\": \"Beyond Java: Obfuscating Android Apps with Purely Native Code\", \"time\": \"16:00\", \"ts\": 1688054400, \"speakers\": [\"Laurie Kirk\"]}]}]}";
+static const char* DEFAULT_LAST_UPDATE = "1687853280";
 
 
 extern const uint8_t agenda_png_start[] asm("_binary_calendar_png_start");
@@ -55,6 +59,39 @@ static cJSON* json_day1 = NULL;
 static char*  data_day2 = NULL;
 static size_t size_day2 = 0;
 static cJSON* json_day2 = NULL;
+
+static inline void do_init() {
+    FILE* last_update_fd = fopen(last_update_path, "r");
+    if (last_update_fd != NULL) {
+        return;
+    }
+    // No last update -> init default data
+
+    FILE* day1_fd = fopen(day1_path, "w");
+    if (day1_fd == NULL) {
+        ESP_LOGE(TAG, "Cannot init agenda data for day 1.");
+        return;
+    }
+    fwrite(DEFAULT_DAY1, 1, strlen(DEFAULT_DAY1), day1_fd);
+    fclose(day1_fd);
+
+    FILE* day2_fd = fopen(day2_path, "w");
+    if (day2_fd == NULL) {
+        ESP_LOGE(TAG, "Cannot init agenda data for day 2.");
+        return;
+    }
+    fwrite(DEFAULT_DAY2, 1, strlen(DEFAULT_DAY2), day2_fd);
+    fclose(day2_fd);
+
+    FILE* new_last_update_fd = fopen(last_update_path, "w");
+    if (new_last_update_fd == NULL) {
+        ESP_LOGE(TAG, "Cannot init agenda last_updated.");
+        return;
+    }
+    fwrite(DEFAULT_LAST_UPDATE, 1, strlen(DEFAULT_LAST_UPDATE), new_last_update_fd);
+    fclose(new_last_update_fd);
+    ESP_LOGI(TAG, "Successfully written initial agenda data");
+}
 
 void agenda_render_background(pax_buf_t* pax_buffer) {
     const pax_font_t* font = pax_font_saira_regular;
@@ -443,14 +480,6 @@ bool update_agenda(xQueueHandle button_queue, bool force) {
     render_message("Updating agenda...");
     display_flush();
 
-    // Ensure directory exists
-    if (!create_dir("/internal/apps/agenda")) {
-        ESP_LOGE(TAG, "Failed to create directory in internal storage");
-        render_message("Failed to create data dir");
-        display_flush();
-        return false;
-    }
-
     if (!wifi_connect_to_stored()) {
         ESP_LOGE(TAG, "Failed to connect to WiFi");
         render_message("Failed to connect to WiFi");
@@ -560,6 +589,24 @@ void menu_agenda(xQueueHandle button_queue) {
     pax_noclip(pax_buffer);
     pax_background(pax_buffer, 0xFF131313);
 
+    // Ensure directory exists
+    if (!create_dir("/internal/apps")) {
+        ESP_LOGE(TAG, "Failed to create directory in internal storage");
+        render_message("Failed to create data dir");
+        display_flush();
+        wait_for_button();
+        return;
+    }
+    if (!create_dir("/internal/apps/agenda")) {
+        ESP_LOGE(TAG, "Failed to create directory in internal storage");
+        render_message("Failed to create data dir");
+        display_flush();
+        wait_for_button();
+        return;
+    }
+
+    do_init();
+
     bool first_attempt = true;
     do {
         // Try to update and load data
@@ -573,7 +620,7 @@ void menu_agenda(xQueueHandle button_queue) {
         }
     } while (1);
 
-    menu_t*    menu       = menu_alloc("Troopers 2023 - Agenda", 34, 18);
+    menu_t*    menu       = menu_alloc("TROOPERS23 - Agenda", 34, 18);
 
     menu->fgColor           = 0xFFF1AA13;
     menu->bgColor           = 0xFF131313;

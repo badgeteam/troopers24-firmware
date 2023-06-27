@@ -102,9 +102,9 @@ static void audio_player_task(void* pvParameters) {
     play_bootsound();
     uint8_t leds[AMOUNT_OF_LEDS * 3] = {0};
     for (uint8_t led = 0; led < AMOUNT_OF_LEDS; led++) {
-        for (uint8_t part = 0; part < 50; part++) {
-            leds[3 * led + 0] = part;
-            leds[3 * led + 1] = part;
+        for (uint8_t part = 0; part <= 50; part++) {
+            leds[3 * led + 0] = 0x95 * (float) part/50. * .7;
+            leds[3 * led + 1] = 0xf1 * (float) part/50. * .7;
             ws2812_send_data(leds, sizeof(leds));
             vTaskDelay(pdMS_TO_TICKS(10));
         }
@@ -112,8 +112,8 @@ static void audio_player_task(void* pvParameters) {
 
     for (uint8_t part = 0; part < 50; part++) {
         for (uint8_t led = 0; led < AMOUNT_OF_LEDS; led++) {
-            leds[3 * led + 0] = 49 - part;
-            leds[3 * led + 1] = 49 - part;
+            leds[3 * led + 0] = 0x95 * (float) (49-part)/50. * .7;
+            leds[3 * led + 1] = 0xf1 * (float) (49-part)/50. * .7;
         }
         ws2812_send_data(leds, sizeof(leds));
         vTaskDelay(pdMS_TO_TICKS(10));

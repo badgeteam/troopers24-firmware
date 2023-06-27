@@ -149,6 +149,7 @@ static void pkb_render_text(pax_buf_t *buf, pkb_ctx_t *ctx, bool do_bg) {
 	float x = ctx->x + 2;
 	float y = ctx->y + 2;
 	char tmp[2] = {0, 0};
+        int cursor_line = 0;
 	
 	// Draw everything.
 	for (int i = 0; i < strlen(ctx->content); i++) {
@@ -160,6 +161,12 @@ static void pkb_render_text(pax_buf_t *buf, pkb_ctx_t *ctx, bool do_bg) {
 		// The character of the input.
 		tmp[0] = ctx->content[i];
 		pax_vec1_t dims = pax_text_size(ctx->text_font, ctx->text_font_size, tmp);
+
+                if (tmp[0] == '\n') {
+                        y += dims.y/2;
+                        x = ctx->x + 2;
+                        continue;
+                }
 		
 		if (x + dims.x > ctx->width - 2) {
 			// Word wrap.
@@ -414,6 +421,17 @@ void pkb_press(pkb_ctx_t *ctx, pkb_input_t input) {
 			break;
 		case PKB_RETURN:
 			pkb_append(ctx, '\n');
+                        break;
+                case PKB_LEFT:
+                        if (ctx->cursor < strlen(ctx->content)) {
+                            ctx->cursor++;
+                        }
+                        break;
+                case PKB_RIGHT:
+                        if (ctx->cursor > 0) {
+                            ctx->cursor--;
+                        }
+                        break;
 		default:
 			break;
 	}
