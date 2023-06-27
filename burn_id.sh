@@ -8,16 +8,17 @@ i=1
 if [ -f "id.bck" ]; then
     i=`python -c 'import struct; f=open("id.bck", "rb"); print(struct.unpack(">H", f.read(2))[0]); f.close()'`
     read -p "Restored last written id $i. Press any key to continue..."
+    ((i=i+1))
 fi
 
 while :; do
+    read -p "Ready to burn $i. Press any key to continue..."
+
     verify=`espefuse.py dump | grep BLOCK2 | cut -c 56-60 | python -c 'import sys,struct; print(struct.unpack("<H", bytes.fromhex(sys.stdin.read()))[0])'`
     if [ "$verify" != "0" ]; then
         read -p "Badge already contains an ID: $verify"
         continue
     fi
-
-    read -p "Ready to burn $i. Press any key to continue..."
     
     # Write binary
     python -c 'import sys, struct; f=open("id.bin", "wb+"); f.write(struct.pack(">H", int(sys.argv[1])) + bytes([0]*30)); f.close()' $i
