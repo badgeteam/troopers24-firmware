@@ -24,7 +24,7 @@ while :; do
     python -c 'import sys, struct; f=open("id.bin", "wb+"); f.write(struct.pack(">H", int(sys.argv[1])) + bytes([0]*30)); f.close()' $i
 
     # Burn fuses
-    espefuse.py burn_block_data BLOCK2 id.bin > /dev/null
+    espefuse.py burn_block_data BLOCK2 id.bin --do-not-confirm > /dev/null
 
     # Verify fuses
     verify=`espefuse.py dump | grep BLOCK2 | cut -c 56-60 | python -c 'import sys,struct; print(struct.unpack("<H", bytes.fromhex(sys.stdin.read()))[0])'`

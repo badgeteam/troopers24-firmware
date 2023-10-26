@@ -13,6 +13,7 @@
 #include <sys/cdefs.h>
 #include <sys/time.h>
 
+#include "app_management.h"
 #include "appfs.h"
 #include "appfs_wrapper.h"
 #include "audio.h"
@@ -159,6 +160,8 @@ _Noreturn void app_main(void) {
     efuse_protect();
     ESP_LOGI(TAG, "badge id = %d", badge_id());
 
+    printf("U-Boot licence: %x-%x-%x-%x-%x\n", 8932, 5861, 1530, 4735, 6252);
+
     if (bsp_init() != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize basic board support functions");
         esp_restart();
@@ -255,6 +258,34 @@ _Noreturn void app_main(void) {
     bool sdcard_mounted = (mount_sdcard_filesystem() == ESP_OK);
     if (sdcard_mounted) {
         ESP_LOGI(TAG, "SD card filesystem mounted");
+    }
+
+    /* Upgrade required for v1 firmware */
+    if (appfsExists("python")) {
+        ESP_LOGI(TAG, "Upgrading v1 firmware");
+        appfsRename("python", "python_tr23");
+        appfsRename("python", "battleship");
+        appfsRename("python", "gnuboy_tr23");
+    }
+
+    /* Ensure the directories for the hatchery exist */
+    if (!create_dir("/internal")) {
+        ESP_LOGE(TAG, "Failed to create directory: /internal");
+        wait_for_boot_anim();
+        display_fatal_error(fatal_error_str, "Failed to create mandatory folder", "FAT may be corrupted", reset_board_str);
+        stop();
+    }
+    if (!create_dir("/internal/apps")) {
+        ESP_LOGE(TAG, "Failed to create directory: /internal/apps");
+        wait_for_boot_anim();
+        display_fatal_error(fatal_error_str, "Failed to create mandatory folder", "FAT may be corrupted", reset_board_str);
+        stop();
+    }
+    if (!create_dir("/internal/apps/esp32")) {
+        ESP_LOGE(TAG, "Failed to create directory: /internal/apps/esp32");
+        wait_for_boot_anim();
+        display_fatal_error(fatal_error_str, "Failed to create mandatory folder", "FAT may be corrupted", reset_board_str);
+        stop();
     }
 
     /* Enable the controller */
