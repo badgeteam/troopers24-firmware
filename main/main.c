@@ -265,7 +265,7 @@ _Noreturn void app_main(void) {
         ESP_LOGI(TAG, "Upgrading v1 firmware");
         appfsRename("python", "python_tr23");
         appfsRename("python", "battleship");
-        appfsRename("python", "gnuboy_tr23");
+        appfsRename("python", "gnuboy_troopers23");
     }
 
     /* Ensure the directories for the hatchery exist */
