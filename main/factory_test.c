@@ -20,18 +20,6 @@
 
 static const char* TAG = "factory";
 
-bool test_cc1200_init(uint32_t* rc) {
-    CC1200   cc1200       = {0};
-
-    cc1200.spi_bus   = SPI_BUS;
-    cc1200.pin_cs    = GPIO_SPI_CS_RADIO;
-    cc1200.pin_intr  = GPIO_INT_RADIO;
-    cc1200.spi_speed = 20000000;  // 20MHz
-
-    esp_err_t res = cc1200_init(&cc1200);
-    *rc           = (uint32_t) res;
-    return (res == ESP_OK);
-}
 
 bool wait_for_key_pressed(Keyboard* keyboard, Key key) {
     keyboard_input_message_t buttonMessage = {0};
@@ -70,28 +58,6 @@ bool test_keyboard_init(uint32_t* rc) {
         pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
         display_flush();
         *rc = (uint32_t) 2;
-        return false;
-    }
-    ESP_LOGI(TAG, "Press SHIFT...");
-    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
-    pax_draw_text(pax_buffer, 0xFF0000FF, font, 36, 0, pax_buffer->height - 36, "Press SHIFT");
-    display_flush();
-    if (!wait_for_key_pressed(keyboard, KEY_SHIFT)) {
-        ESP_LOGE(TAG, "Timeout reached");
-        pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
-        display_flush();
-        *rc = (uint32_t) 3;
-        return false;
-    }
-    ESP_LOGI(TAG, "Press Q...");
-    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
-    pax_draw_text(pax_buffer, 0xFF0000FF, font, 36, 0, pax_buffer->height - 36, "Press Q");
-    display_flush();
-    if (!wait_for_key_pressed(keyboard, KEY_Q)) {
-        ESP_LOGE(TAG, "Timeout reached");
-        pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
-        display_flush();
-        *rc = (uint32_t) 4;
         return false;
     }
 
@@ -186,7 +152,6 @@ bool run_basic_tests() {
 
     /* Run mandatory tests */
     RUN_TEST_MANDATORY("KEYBOARD", test_keyboard_init);
-    RUN_TEST_MANDATORY("CC1200", test_cc1200_init);
 
     /* Run tests */
     RUN_TEST("STUCK BUTTONS", test_stuck_buttons);

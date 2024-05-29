@@ -7,7 +7,7 @@ idf_component_register(
     REQUIRES
         "pax-graphics"
         "pax-codecs"
-        "physical-keyboard"
+        "pax-keyboard"
         "spi-ili9341"
-        "troopers23-bsp"
+        "troopers24-bsp"
 )

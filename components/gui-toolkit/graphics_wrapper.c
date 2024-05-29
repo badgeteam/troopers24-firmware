@@ -2,8 +2,11 @@
 
 #include <string.h>
 
+#include "esp_log.h"
 #include "hardware.h"
-#include "physical_keyboard.h"
+#include "pax_keyboard.h"
+
+static const char* TAG = "graphic_wrapper";
 
 void render_outline(float position_x, float position_y, float width, float height, pax_col_t border_color, pax_col_t background_color) {
     pax_buf_t* pax_buffer = get_pax_buffer();
@@ -29,54 +32,6 @@ void render_message(char* message) {
     pax_noclip(pax_buffer);
 }
 
-int buttonToKey(uint8_t button) {
-    switch (button) {
-        case BUTTON_ACCEPT:  return PKB_ACCEPT;
-        case BUTTON_BACK:    return -1;
-        case BUTTON_START:   return PKB_NO_INPUT;
-        case BUTTON_SELECT:  return PKB_NO_INPUT;
-        case JOYSTICK_UP:    return PKB_UP;
-        case JOYSTICK_DOWN:  return PKB_DOWN;
-        case JOYSTICK_LEFT:  return PKB_LEFT;
-        case JOYSTICK_RIGHT: return PKB_RIGHT;
-        case KEY_SHIELD:     return PKB_SUPER;
-        case KEY_FN:         return PKB_FN;
-        case KEY_SPACE:      return PKB_SPACE;
-        case KEY_BACKSPACE:  return PKB_DELETE_BEFORE;
-        case KEY_SHIFT:      return PKB_SHIFT;
-        case KEY_RETURN:     return PKB_RETURN;
-        case KEY_Q:          return PKB_Q;
-        case KEY_W:          return PKB_W;
-        case KEY_E:          return PKB_E;
-        case KEY_R:          return PKB_R;
-        case KEY_T:          return PKB_T;
-        case KEY_Y:          return PKB_Y;
-        case KEY_U:          return PKB_U;
-        case KEY_I:          return PKB_I;
-        case KEY_O:          return PKB_O;
-        case KEY_P:          return PKB_P;
-        case KEY_A:          return PKB_A;
-        case KEY_S:          return PKB_S;
-        case KEY_D:          return PKB_D;
-        case KEY_F:          return PKB_F;
-        case KEY_G:          return PKB_G;
-        case KEY_H:          return PKB_H;
-        case KEY_J:          return PKB_J;
-        case KEY_K:          return PKB_K;
-        case KEY_L:          return PKB_L;
-        case KEY_Z:          return PKB_Z;
-        case KEY_X:          return PKB_X;
-        case KEY_C:          return PKB_C;
-        case KEY_V:          return PKB_V;
-        case KEY_B:          return PKB_B;
-        case KEY_N:          return PKB_N;
-        case KEY_M:          return PKB_M;
-        default:
-            printf("Unmapped key: %u\n", button);
-            break;
-    }
-    return PKB_NO_INPUT;
-}
 
 bool keyboard(xQueueHandle buttonQueue, float aPosX, float aPosY, float aWidth, float aHeight, const char* aTitle,
               const char* aHint, char* aOutput, size_t aOutputSize) {
@@ -129,17 +84,65 @@ bool keyboard(xQueueHandle buttonQueue, float aPosX, float aPosY, float aWidth, 
         if (xQueueReceive(buttonQueue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
             uint8_t button = buttonMessage.input;
             bool    value = buttonMessage.state;
-            int key = buttonToKey(button);
-            if (key == -1) {
-                if (value) {
-                    running = false;
-                }
-            } else if (key != PKB_NO_INPUT) {
-                if (value) {
-                    pkb_press(&kb_ctx, key);
-                } else {
-                    pkb_release(&kb_ctx, key);
-                }
+
+            switch (button) {
+                case JOYSTICK_DOWN:
+                    if (value) {
+                        pkb_press(&kb_ctx, PKB_DOWN);
+                    } else {
+                        pkb_release(&kb_ctx, PKB_DOWN);
+                    }
+                    break;
+                case JOYSTICK_UP:
+                    if (value) {
+                        pkb_press(&kb_ctx, PKB_UP);
+                    } else {
+                        pkb_release(&kb_ctx, PKB_UP);
+                    }
+                    break;
+                case JOYSTICK_LEFT:
+                    if (value) {
+                        pkb_press(&kb_ctx, PKB_LEFT);
+                    } else {
+                        pkb_release(&kb_ctx, PKB_LEFT);
+                    }
+                    break;
+                case JOYSTICK_RIGHT:
+                    if (value) {
+                        pkb_press(&kb_ctx, PKB_RIGHT);
+                    } else {
+                        pkb_release(&kb_ctx, PKB_RIGHT);
+                    }
+                    break;
+                case BUTTON_ACCEPT:
+                    if (value) {
+                        pkb_press(&kb_ctx, PKB_CHARSELECT);
+                    } else {
+                        pkb_release(&kb_ctx, PKB_CHARSELECT);
+                    }
+                    break;
+                case BUTTON_BACK:
+                    if (value) {
+                        pkb_press(&kb_ctx, PKB_DELETE_BEFORE);
+                    } else {
+                        pkb_release(&kb_ctx, PKB_DELETE_BEFORE);
+                    }
+                    break;
+                case BUTTON_SELECT:
+                    if (value) {
+                        pkb_press(&kb_ctx, PKB_MODESELECT);
+                    } else {
+                        pkb_release(&kb_ctx, PKB_MODESELECT);
+                    }
+                    break;
+                case BUTTON_START:
+                    if (value) {
+                        running = false;
+                    }
+                    break;
+                default:
+
+                    break;
             }
         }
         pkb_loop(&kb_ctx);
