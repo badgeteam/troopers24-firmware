@@ -132,7 +132,9 @@ static void place_in_sleep(xQueueHandle button_queue) {
     fflush(stderr);
     vTaskDelay(pdMS_TO_TICKS(100));
     gpio_hold_en(GPIO_LCD_BL);
+#ifdef TR23
     ili9341_power_en(get_ili9341());
+#endif
     gpio_deep_sleep_hold_en();
     vTaskDelay(pdMS_TO_TICKS(100));
     esp_deep_sleep_start();

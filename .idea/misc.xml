@@ -3,5 +3,8 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.8 (idf4.4_py3.8_env)" />
   </component>
+  <component name="CMakePythonSetting">
+    <option name="pythonIntegrationState" value="NO" />
+  </component>
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
 </project>

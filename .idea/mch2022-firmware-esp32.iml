@@ -2,7 +2,7 @@
 <module classpath="CMake" type="CPP_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Python" name="Python facet">
-      <configuration sdkName="Python 3.8 (idf4.4_py3.8_env)" />
+      <configuration sdkName="Python 3.9 (idf4.4_py3.9_env)" />
     </facet>
   </component>
 </module>

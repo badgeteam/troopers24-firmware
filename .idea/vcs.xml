@@ -147,7 +147,6 @@
     <mapping directory="$PROJECT_DIR$/components/bus-i2c" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/eeprom" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/i2c-controller" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/components/i2c-ktd2052" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/i2c-pca9555" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/keyboard" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/pax-codecs" vcs="Git" />
