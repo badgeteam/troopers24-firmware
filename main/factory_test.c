@@ -83,13 +83,13 @@ bool test_sdcard_init(uint32_t* rc) {
         return false;
     }
 
-    char* test_str = "TROOPERS23 TEST";
+    char* test_str = "TROOPERS24 TEST";
     int test_str_len = 15;
 
     fwrite(test_str, 1, test_str_len, test_fd);
     fclose(test_fd);
 
-    ESP_LOGI(TAG, "Wrote file, trying to read. You should see \"TROOPERS23 TEST\" in the next line");
+    ESP_LOGI(TAG, "Wrote file, trying to read. You should see \"TROOPERS24 TEST\" in the next line");
 
     test_fd = fopen("/sd/factory_test", "r");
     if (test_fd == NULL) {

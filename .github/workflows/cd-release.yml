@@ -32,8 +32,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: >
         gh release upload "${{ github.event.release.tag_name }}"
-        build/TROOPERS23.bin
-        build/TROOPERS23.elf
+        build/TROOPERS24.bin
+        build/TROOPERS24.elf
 
     - name: Dispatch OTA hook
       uses: peter-evans/repository-dispatch@v2
@@ -43,11 +43,11 @@ jobs:
         event-type: firmware-release
         client-payload: >
           {
-            "device_id": "troopers23",
-            "device_name": "TROOPERS23",
+            "device_id": "troopers24",
+            "device_name": "TROOPERS24",
             "tag": "${{ github.event.release.tag_name }}",
             "channel": "${{ env.RELEASE_CHANNEL }}",
-            "fw_main": "TROOPERS23.bin"
+            "fw_main": "TROOPERS24.bin"
           }
 
     - name: Generate release build report
@@ -60,7 +60,7 @@ jobs:
         previous_tag=$(git tag --sort '-refname' | grep -A1 "$tag" | tail -1)
         tag_compare_url=$(sed "s!{base}!$previous_tag!; s!{head}!$tag!" <<< $compare_url_template)
 
-        build_size_main=$(du build/TROOPERS23.bin | awk '{ print $1 }')
+        build_size_main=$(du build/TROOPERS24.bin | awk '{ print $1 }')
 
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
 
@@ -72,7 +72,7 @@ jobs:
         **Source:** [${repo}@\`${tag}\`](/${repo}/tree/${tag})
 
         ## Build details
-        **Size of \`TROOPERS23.bin\`:** $build_size_main kB
+        **Size of \`TROOPERS24.bin\`:** $build_size_main kB
 
         \`\`\`console
         \$ du -h build/*.bin build/*.elf build/*/*.bin build/*/*.elf

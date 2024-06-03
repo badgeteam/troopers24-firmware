@@ -59,6 +59,7 @@ idf_component_register(
                 ${project_dir}/resources/icons/sao.png
                 ${project_dir}/resources/icons/calendar.png
                 ${project_dir}/resources/icons/clock.png
+                ${project_dir}/resources/icons/bookmark.png
                 ${project_dir}/resources/id/id_shield.png
                 ${project_dir}/resources/id/id_ernw.png
                 ${project_dir}/resources/id/id_fucss.png

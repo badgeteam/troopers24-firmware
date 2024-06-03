@@ -14,7 +14,7 @@ x = list(map(lambda x: x.split(":"), x))
 from elftools.elf.elffile import ELFFile
 
 
-elf = ELFFile(open("build/TROOPERS23.elf", 'rb'))
+elf = ELFFile(open("build/TROOPERS24.elf", 'rb'))
 symtab = elf.get_section_by_name('.symtab')
 
 for a in x:

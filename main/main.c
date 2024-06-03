@@ -235,8 +235,7 @@ _Noreturn void app_main(void) {
         stop();
     }
 
-    // TODO: do we still need this?
-    // factory_test();
+//    factory_test();
 
     /* Start AppFS */
     res = appfs_init();

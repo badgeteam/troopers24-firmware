@@ -82,12 +82,15 @@ void render_background(pax_buf_t* pax_buffer, const char* text) {
 }
 
 void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deepsleep) {
+    // TODO: Debugging
+    menu_agenda(button_queue);
+
     if (wakeup_deepsleep) {
         show_nametag(button_queue);
     }
 
     pax_buf_t* pax_buffer = get_pax_buffer();
-    menu_t*    menu       = menu_alloc("TROOPERS23", 34, 18);
+    menu_t*    menu       = menu_alloc("TROOPERS24", 34, 18);
 
     menu->fgColor           = 0xFFF1AA13;
     menu->bgColor           = 0xFF131313;

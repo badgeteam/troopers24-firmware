@@ -1,6 +1,6 @@
-# TROOPERS23 ESP32 firmware: Launcher
+# TROOPERS24 ESP32 firmware: Launcher
 
-This repository contains the ESP32 part of the firmware for the TROOPERS23 badge. This firmware allows for device testing, setup, OTA updates and of course launching apps.
+This repository contains the ESP32 part of the firmware for the TROOPERS24 badge. This firmware allows for device testing, setup, OTA updates and of course launching apps.
 
 ## ESP-IDF and submodules
 

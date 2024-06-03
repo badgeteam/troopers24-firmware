@@ -180,6 +180,22 @@ static void file_browser_open_file(xQueueHandle button_queue, const char* filena
     return;
 }
 
+static void file_browser_delete_file(file_browser_menu_args_t* menuArgs) {
+    pax_buf_t*        pax_buffer = get_pax_buffer();
+    const pax_font_t* font       = pax_font_saira_regular;
+    pax_noclip(pax_buffer);
+    pax_background(pax_buffer, 0xFFFFFF);
+
+    if (menuArgs->type == 'f') {
+        remove(menuArgs->path);
+    } else {
+        pax_draw_text(pax_buffer, 0xFFFF0000, font, 18, 0, 0, "Currently cannot delete directory\n\nPress A or B to go back");
+        display_flush();
+        ESP_LOGE(TAG, "Currently cannot delete directory");
+        wait_for_button();
+    }
+}
+
 void file_browser(xQueueHandle button_queue, const char* initial_path) {
     pax_buf_t* pax_buffer = get_pax_buffer();
     display_boot_screen("Please wait...");
@@ -225,6 +241,7 @@ void file_browser(xQueueHandle button_queue, const char* initial_path) {
         bool                      renderbg = true;
         bool                      exit     = false;
         file_browser_menu_args_t* menuArgs = NULL;
+        bool delete = false;
 
         while (1) {
             keyboard_input_message_t buttonMessage = {0};
@@ -250,9 +267,15 @@ void file_browser(xQueueHandle button_queue, const char* initial_path) {
                         }
                         break;
                     case BUTTON_ACCEPT:
-                    case BUTTON_SELECT:
                         if (value) {
                             menuArgs = menu_get_callback_args(menu, menu_get_position(menu));
+                        }
+                        break;
+                    case BUTTON_SELECT:
+                    case JOYSTICK_PUSH:
+                        if (value && menu_get_position(menu) > 0) {
+                            menuArgs = menu_get_callback_args(menu, menu_get_position(menu));
+                            delete = true;
                         }
                         break;
                     case BUTTON_START:
@@ -267,7 +290,7 @@ void file_browser(xQueueHandle button_queue, const char* initial_path) {
                 pax_background(pax_buffer, 0xFFFFFF);
                 pax_noclip(pax_buffer);
                 const pax_font_t* font = pax_font_saira_regular;
-                pax_draw_text(pax_buffer, 0xFF000000, font, 18, 5, 240 - 19, "🅰 install  🅱 back");
+                pax_draw_text(pax_buffer, 0xFF000000, font, 18, 5, 240 - 19, "🅰 install  🅱 back 🅴 delete");
                 renderbg = false;
             }
 
@@ -278,16 +301,23 @@ void file_browser(xQueueHandle button_queue, const char* initial_path) {
             }
 
             if (menuArgs != NULL) {
-                if (menuArgs->type == 'd') {
-                    strcpy(path, menuArgs->path);
+                if (delete) {
+                    ESP_LOGD(TAG, "File selected: %c -> %s\n", menuArgs->type, menuArgs->path);
+                    file_browser_delete_file(menuArgs);
                     break;
                 } else {
-                    printf("File selected: %s\n", menuArgs->path);
-                    file_browser_open_file(button_queue, menuArgs->path, menuArgs->label);
+                    if (menuArgs->type == 'd') {
+                        strcpy(path, menuArgs->path);
+                        break;
+                    } else {
+                        printf("File selected: %s\n", menuArgs->path);
+                        file_browser_open_file(button_queue, menuArgs->path, menuArgs->label);
+                    }
+                    menuArgs = NULL;
+                    delete   = false;
+                    render   = true;
+                    renderbg = true;
                 }
-                menuArgs = NULL;
-                render   = true;
-                renderbg = true;
             }
 
             if (exit) {
