@@ -155,6 +155,7 @@ esp_err_t st77xx_set_invert(ST77XX* device, const bool state);
 esp_err_t st77xx_set_partial_scanning(ST77XX* device, const uint16_t start, const uint16_t end);
 esp_err_t st77xx_set_tearing_effect_line(ST77XX* device, const bool state);
 esp_err_t st77xx_set_idle_mode(ST77XX* device, const bool state);
+esp_err_t st77xx_set_cfg(ST77XX* device, uint8_t rotation, bool color_mode);
 
 esp_err_t st77xx_write(ST77XX* device, const uint8_t *data);
 esp_err_t st77xx_write_partial_direct(ST77XX* device, const uint8_t *buffer, uint16_t x, uint16_t y, uint16_t width, uint16_t height);

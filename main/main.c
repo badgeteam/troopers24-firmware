@@ -167,6 +167,8 @@ _Noreturn void app_main(void) {
         esp_restart();
     }
 
+
+
     /* Initialize the LEDs */
     ws2812_init(GPIO_LED_DATA, 150);
     const uint8_t led_off[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};

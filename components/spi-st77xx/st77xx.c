@@ -38,9 +38,9 @@ const uint8_t st77xx_init_data[] = {
     // Exit sleep mode
     ST77XX_SLPOUT,     0,
     // MADCTL: memory data access control Old: 0x88
-    ST77XX_MADCTL,     1, 0x88, /* Page address order RGB order */
+    ST77XX_MADCTL,     1, 0xa8, /* Page address order RGB order */
     // COLMOD: Interface Pixel format (18-bits per pixel @ 262K colors)
-    ST77XX_COLMOD,     1, 0x66, /* 18 bits per pixel, 262k of RGB interface */
+    ST77XX_COLMOD,     1, 0x55, /* 18 bits per pixel, 262k of RGB interface */
     // PORCTRK: Porch setting
     ST77XX_PORCTRK,    5, 0x0C, 0x0C, 0x00, 0x33, 0x33, /* Back porch,  Front Porch, Separate porch control, Back porch idle, Back porch partial */
     // GCTRL: Gate Control
@@ -64,9 +64,9 @@ const uint8_t st77xx_init_data[] = {
     // NVGAMCTRL: Negative Voltage Gamma control
     ST77XX_NVGAMCTRL,  14, 0xD0, 0x00, 0x05, 0x0D, 0x0C, 0x06, 0x2D, 0x44, 0x40, 0x0E, 0x1C, 0x18, 0x16, 0x19,
     // X address set
-    ST77XX_CASET,      4, 0x00, 0x00, 0x00, 0xEF,
+    ST77XX_CASET,      4, 0x00, 0x00, 0x01, 0x3F,
     // Y address set
-    ST77XX_RASET,      4, 0x00, 0x00, 0x01, 0x3F,
+    ST77XX_RASET,      4, 0x00, 0x00, 0x00, 0xEF,
     // Display on
     ST77XX_DISPON,     0,
     0x00,
@@ -264,23 +264,27 @@ esp_err_t st77xx_init(ST77XX* device) {
     res = st77xx_write_init_data(device, st77xx_init_data);
     if (res != ESP_OK) return res;
 
+//    res = st77xx_set_cfg(device, device->rotation, device->color_mode);
+//    if (res != ESP_OK) return res;
 
 
-    st77xx_send_command(device, ST77XX_RAMWR); /* Ram Write*/
-    for (uint32_t j = 0; j < 240; j++)
-    {
-//        temp_fb[j * 3] = 0xff; //colour_bars[j/5][0];
-//        temp_fb[j * 3 + 1] = 0x00;// colour_bars[j/5][0];
-//        temp_fb[j * 3 + 2] = 0x00; //colour_bars[j/5][0];
-        temp_fb[j * 3] = colour_bars[j/48][0];
-        temp_fb[j * 3 + 1] = colour_bars[j/48][1];
-        temp_fb[j * 3 + 2] = colour_bars[j/48][2];
-//        ESP_LOGE(TAG, "%d ",j/5);
-    }
 
-    for (uint32_t i = 0; i < 320; i++) {
-        st77xx_send_data(device, temp_fb, sizeof(temp_fb));
-    }
+//    st77xx_send_command(device, ST77XX_RAMWR); /* Ram Write*/
+//    for (uint32_t j = 0; j < 240; j++)
+//    {
+////        temp_fb[j * 3] = 0xff; //colour_bars[j/5][0];
+////        temp_fb[j * 3 + 1] = 0x00;// colour_bars[j/5][0];
+////        temp_fb[j * 3 + 2] = 0x00; //colour_bars[j/5][0];
+//        temp_fb[j * 3] = colour_bars[j/48][0];
+//        temp_fb[j * 3 + 1] = colour_bars[j/48][1];
+//        temp_fb[j * 3 + 2] = colour_bars[j/48][2];
+////        ESP_LOGE(TAG, "%d ",j/5);
+//    }
+//
+//    for (uint32_t i = 0; i < 320; i++) {
+//        st77xx_send_data(device, temp_fb, sizeof(temp_fb));
+//    }
+
 //    //
 ////    //Disable sleep mode
 ////    res = st77xx_set_sleep(device, false);
@@ -342,31 +346,104 @@ esp_err_t st77xx_send(ST77XX* device, const uint8_t *data, const int len, const 
     return res;
 }
 
-esp_err_t st77xx_write_partial_direct(ST77XX* device, const uint8_t *buffer, uint16_t x, uint16_t y, uint16_t width, uint16_t height) { // Without conversion
-    // TODO: Implement
-    return 0;
-//    if (device->spi_device == NULL) return ESP_FAIL;
-//    if (device->mutex != NULL) xSemaphoreTake(device->mutex, portMAX_DELAY);
+#define MADCTL_MY  0x80  ///< Bottom to top
+#define MADCTL_MX  0x40  ///< Right to left
+#define MADCTL_MV  0x20  ///< Reverse Mode
+#define MADCTL_ML  0x10  ///< LCD refresh Bottom to top
+#define MADCTL_RGB 0x00  ///< Red-Green-Blue pixel order
+#define MADCTL_BGR 0x08  ///< Blue-Green-Red pixel order
+#define MADCTL_MH  0x04 ///< LCD refresh right to left
+
+esp_err_t st77xx_set_cfg(ST77XX * device, uint8_t rotation, bool color_mode) {
+    rotation = rotation & 0x03;
+    uint8_t m = 0;
+
+    switch (rotation) {
+        case 0:
+            m |= MADCTL_MX;
+            break;
+        case 1:
+            m |= MADCTL_MV;
+            break;
+        case 2:
+            m |= MADCTL_MY;
+            break;
+        case 3:
+            m |= (MADCTL_MX | MADCTL_MY | MADCTL_MV);
+            break;
+    }
+
+    if (color_mode) {
+        m |= MADCTL_BGR;
+    } else {
+        m |= MADCTL_RGB;
+    }
+
+    uint8_t data[1] = {m};
+    esp_err_t res = st77xx_send_command(device, ST77XX_MADCTL);
+    if (res != ESP_OK) return res;
+    res = st77xx_send_data(device, data, 1);
+    return res;
+}
+
+esp_err_t st77xx_send_u32(ST77XX* device, const uint32_t data) {
+    uint8_t buffer[4];
+    buffer[0] = (data>>24)&0xFF;
+    buffer[1] = (data>>16)&0xFF;
+    buffer[2] = (data>> 8)&0xFF;
+    buffer[3] = data      &0xFF;
+    return st77xx_send_data(device, buffer, 4);
+}
+
+esp_err_t st77xx_set_addr_window(ST77XX* device, uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+    uint32_t xa = ((uint32_t)x << 16) | (x+w-1);
+    uint32_t ya = ((uint32_t)y << 16) | (y+h-1);
+    esp_err_t res;
+    res = st77xx_send_command(device, ST77XX_CASET);
+    if (res != ESP_OK) return res;
+    res = st77xx_send_u32(device, xa);
+    if (res != ESP_OK) return res;
+    res = st77xx_send_command(device, ST77XX_RASET);
+    if (res != ESP_OK) return res;
+    res = st77xx_send_u32(device, ya);
+    if (res != ESP_OK) return res;
+    res = st77xx_send_command(device, ST77XX_RAMWR);
+    return res;
+}
+
+esp_err_t st77xx_write_partial_direct(ST77XX* device, const uint8_t *buffer, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+    //    return ESP_OK;
+    ESP_LOGD(TAG, "x = %d, y = %d, width = %d, height = %d", x, y, width, height);
+    for (int i = 0; i < 20; i++) {
+        ESP_LOGD(TAG, "buffer[%d] = %x", i, buffer[0]);
+    }
+    if (device->spi_device == NULL) return ESP_FAIL;
+    if (device->mutex != NULL) xSemaphoreTake(device->mutex, portMAX_DELAY);
 //    esp_err_t res = st77xx_set_addr_window(device, x, y, width, height);
 //    if (res != ESP_OK) {
 //        if (device->mutex != NULL) xSemaphoreGive(device->mutex);
 //        return res;
 //    }
-//
-//    uint32_t position = 0;
-//    while (width * height * 2 - position > 0) {
-//        uint32_t length = device->spi_max_transfer_size;
-//        if (width * height * 2 - position < device->spi_max_transfer_size) length = width * height * 2 - position;
-//
-//        res = st77xx_send(device, &buffer[position], length, true);
-//        if (res != ESP_OK) {
-//            if (device->mutex != NULL) xSemaphoreGive(device->mutex);
-//            return res;
-//        }
-//        position += length;
-//    }
-//    if (device->mutex != NULL) xSemaphoreGive(device->mutex);
-//    return res;
+    esp_err_t res = res = st77xx_send_command(device, ST77XX_RAMWR);
+    if (res != ESP_OK) {
+        if (device->mutex != NULL) xSemaphoreGive(device->mutex);
+        return res;
+    }
+
+    uint32_t position = 0;
+    while (width * height * 2 - position > 0) {
+        uint32_t length = device->spi_max_transfer_size;
+        if (width * height * 2 - position < device->spi_max_transfer_size) length = width * height * 2 - position;
+
+        res = st77xx_send_data(device, &buffer[position], length);
+        if (res != ESP_OK) {
+            if (device->mutex != NULL) xSemaphoreGive(device->mutex);
+            return res;
+        }
+        position += length;
+    }
+    if (device->mutex != NULL) xSemaphoreGive(device->mutex);
+    return res;
 }
 
 esp_err_t st77xx_write_partial(ST77XX* device, const uint8_t *frameBuffer, uint16_t x, uint16_t y, uint16_t width, uint16_t height) { // With conversion
@@ -444,21 +521,21 @@ esp_err_t st77xx_power_en(ST77XX* device) {
 //    return res;
 //}
 //
-//esp_err_t st77xx_set_display(ST77XX* device, const bool state) {
-//    esp_err_t res;
-//    ESP_LOGI(TAG, "sleep display %s", state ? "on" : "off");
-//    if (device->mutex != NULL) xSemaphoreTake(device->mutex, portMAX_DELAY);
-//
-//    if (state) {
-//        res = st77xx_send_command(device, ST77XX_DISPON);
-//        if (res != ESP_OK) return res;
-//    } else {
-//        res = st77xx_send_command(device, ST77XX_DISPOFF);
-//        if (res != ESP_OK) return res;
-//    }
-//    if (device->mutex != NULL) xSemaphoreGive(device->mutex);
-//    return res;
-//}
+esp_err_t st77xx_set_display(ST77XX* device, const bool state) {
+    esp_err_t res;
+    ESP_LOGI(TAG, "sleep display %s", state ? "on" : "off");
+    if (device->mutex != NULL) xSemaphoreTake(device->mutex, portMAX_DELAY);
+
+    if (state) {
+        res = st77xx_send_command(device, ST77XX_DISPON);
+        if (res != ESP_OK) return res;
+    } else {
+        res = st77xx_send_command(device, ST77XX_DISPOFF);
+        if (res != ESP_OK) return res;
+    }
+    if (device->mutex != NULL) xSemaphoreGive(device->mutex);
+    return res;
+}
 //
 //esp_err_t st77xx_set_invert(ST77XX* device, const bool state) {
 //    ESP_LOGI(TAG, "invert %s", state ? "on" : "off");
@@ -510,30 +587,6 @@ esp_err_t st77xx_power_en(ST77XX* device) {
 //    if (device->mutex != NULL) xSemaphoreGive(device->mutex);
 //}
 
-//esp_err_t st77xx_send_u32(ST77XX* device, const uint32_t data) {
-//    uint8_t buffer[4];
-//    buffer[0] = (data>>24)&0xFF;
-//    buffer[1] = (data>>16)&0xFF;
-//    buffer[2] = (data>> 8)&0xFF;
-//    buffer[3] = data      &0xFF;
-//    return st77xx_send(device, buffer, 4, true);
-//}
-
-//esp_err_t st77xx_set_addr_window(ST77XX* device, uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
-//    uint32_t xa = ((uint32_t)x << 16) | (x+w-1);
-//    uint32_t ya = ((uint32_t)y << 16) | (y+h-1);
-//    esp_err_t res;
-//    res = st77xx_send_command(device, ST77XX_CASET);
-//    if (res != ESP_OK) return res;
-//    res = st77xx_send_u32(device, xa);
-//    if (res != ESP_OK) return res;
-//    res = st77xx_send_command(device, ST77XX_RASET);
-//    if (res != ESP_OK) return res;
-//    res = st77xx_send_u32(device, ya);
-//    if (res != ESP_OK) return res;
-//    res = st77xx_send_command(device, ST77XX_RAMWR);
-//    return res;
-//}
 //
 //#define MADCTL_MY  0x80  ///< Bottom to topp
 //#define MADCTL_MX  0x40  ///< Right to left
