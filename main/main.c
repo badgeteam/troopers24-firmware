@@ -100,7 +100,7 @@ static void ntp_sync_task(void* pvParameters) {
 
 static void audio_player_task(void* pvParameters) {
     vTaskDelay(pdMS_TO_TICKS(500));
-//    play_bootsound();
+    play_bootsound();
     uint8_t leds[AMOUNT_OF_LEDS * 3] = {0};
     for (uint8_t led = 0; led < AMOUNT_OF_LEDS; led++) {
         for (uint8_t part = 0; part <= 50; part++) {
