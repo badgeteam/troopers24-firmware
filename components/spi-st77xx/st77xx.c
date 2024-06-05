@@ -69,6 +69,7 @@ const uint8_t st77xx_init_data[] = {
     ST77XX_RASET,      4, 0x00, 0x00, 0x01, 0x3F,
     // Display on
     ST77XX_DISPON,     0,
+    0x00,
 };
 
 esp_err_t ST7789VI_send(ST77XX* device, const uint8_t *data, const int len,const bool dc_level) {
@@ -163,12 +164,13 @@ esp_err_t st77xx_reset(ST77XX* device) {
     return ESP_OK;
 }
 
-esp_err_t st77xx_write_init_data(ST77XX* device, const uint8_t * data, size_t size) {
+esp_err_t st77xx_write_init_data(ST77XX* device, const uint8_t * data) {
     if (device->spi_device == NULL) return ESP_FAIL;
     esp_err_t res;
     uint8_t cmd, len;
-    for (int i = 0; i < size; i++) {
+    while (true) {
         cmd = *data++;
+        if (!cmd) break;
         len = *data++;
         ESP_LOGD(TAG, "Sending command %x", cmd);
         res = st77xx_send_command(device, cmd);
@@ -197,12 +199,30 @@ esp_err_t st77xx_init(ST77XX* device) {
 
     if (device->mutex != NULL) xSemaphoreGive(device->mutex);
 
-    res = gpio_set_direction(device->pin_dcx, GPIO_MODE_OUTPUT);
+    ESP_LOGD(TAG, "pin_reset: %d", device->pin_reset);
+    ESP_LOGD(TAG, "pin_dcx: %d", device->pin_dcx);
+
+    /* Setup reset */
+    gpio_config_t reset_io_conf = {
+        .intr_type    = GPIO_INTR_DISABLE,
+        .mode         = GPIO_MODE_OUTPUT,
+        .pin_bit_mask = 1LL << device->pin_reset,
+        .pull_down_en = 0,
+        .pull_up_en   = 0,
+    };
+    res = gpio_config(&reset_io_conf);
     if (res != ESP_OK) return res;
 
-    res = gpio_set_direction(device->pin_reset, GPIO_MODE_OUTPUT);
+    /* Setup DS */
+    gpio_config_t dc_io_conf = {
+        .intr_type    = GPIO_INTR_DISABLE,
+        .mode         = GPIO_MODE_OUTPUT,
+        .pin_bit_mask = 1LL << device->pin_dcx,
+        .pull_down_en = 0,
+        .pull_up_en   = 0,
+    };
+    res = gpio_config(&dc_io_conf);
     if (res != ESP_OK) return res;
-
     res = gpio_set_level(device->pin_dcx, true);
     if (res != ESP_OK) return res;
 
@@ -241,9 +261,8 @@ esp_err_t st77xx_init(ST77XX* device) {
     ESP_LOGE(TAG, "DC pin %d", device->pin_dcx);
 
     //Send the initialization data to the LCD display
-    res = st77xx_write_init_data(device, st77xx_init_data, sizeof(st77xx_init_data) / sizeof(st77xx_init_data[0]));
+    res = st77xx_write_init_data(device, st77xx_init_data);
     if (res != ESP_OK) return res;
-
 
 
 
