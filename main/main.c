@@ -100,7 +100,7 @@ static void ntp_sync_task(void* pvParameters) {
 
 static void audio_player_task(void* pvParameters) {
     vTaskDelay(pdMS_TO_TICKS(500));
-    play_bootsound();
+//    play_bootsound();
     uint8_t leds[AMOUNT_OF_LEDS * 3] = {0};
     for (uint8_t led = 0; led < AMOUNT_OF_LEDS; led++) {
         for (uint8_t part = 0; part <= 50; part++) {
@@ -187,6 +187,7 @@ _Noreturn void app_main(void) {
     pca9555_set_gpio_value(io_expander, IO_AMP_GAIN1, 1);
 
     /* Turning the backlight on */
+#ifdef TR23
     gpio_config_t io_conf = {
         .intr_type    = GPIO_INTR_DISABLE,
         .mode         = GPIO_MODE_OUTPUT,
@@ -207,6 +208,9 @@ _Noreturn void app_main(void) {
         display_fatal_error(fatal_error_str, "Failed to turn on LCD backlight", "Flash may be corrupted", reset_board_str);
         stop();
     }
+#else
+    st77xx_backlight(true);
+#endif
 
     /* Initialize LCD screen */
     pax_buf_t* pax_buffer = get_pax_buffer();

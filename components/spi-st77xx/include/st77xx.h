@@ -135,7 +135,6 @@ typedef struct ST77XX {
     // Configuration
     uint8_t rotation;
     bool color_mode;
-    bool reset_external_pullup;
     uint32_t spi_speed;
     uint32_t spi_max_transfer_size;
     ST77XX_cb_t callback;

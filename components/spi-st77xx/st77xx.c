@@ -69,7 +69,6 @@ const uint8_t st77xx_init_data[] = {
     ST77XX_RASET,      4, 0x00, 0x00, 0x01, 0x3F,
     // Display on
     ST77XX_DISPON,     0,
-    0x00
 };
 
 esp_err_t ST7789VI_send(ST77XX* device, const uint8_t *data, const int len,const bool dc_level) {
@@ -164,17 +163,18 @@ esp_err_t st77xx_reset(ST77XX* device) {
     return ESP_OK;
 }
 
-esp_err_t st77xx_write_init_data(ST77XX* device, const uint8_t * data) {
+esp_err_t st77xx_write_init_data(ST77XX* device, const uint8_t * data, size_t size) {
     if (device->spi_device == NULL) return ESP_FAIL;
     esp_err_t res;
     uint8_t cmd, len;
-    while(true) {
+    for (int i = 0; i < size; i++) {
         cmd = *data++;
-        if (!cmd) return ESP_OK; //END
         len = *data++;
+        ESP_LOGD(TAG, "Sending command %x", cmd);
         res = st77xx_send_command(device, cmd);
         if (res != ESP_OK) break;
         if (len > 0) {
+            ESP_LOGD(TAG, "Sending %d bytes of data", len);
             res = st77xx_send_data(device, data, len);
             if (res != ESP_OK) break;
         }
@@ -189,6 +189,7 @@ esp_err_t st77xx_init(ST77XX* device) {
     
     if (device->pin_dcx < 0) return ESP_FAIL;
     if (device->pin_cs < 0) return ESP_FAIL;
+    if (device->pin_reset < 0) return ESP_FAIL;
 
     /*if (device->mutex == NULL) {
         device->mutex = xSemaphoreCreateMutex();
@@ -199,13 +200,8 @@ esp_err_t st77xx_init(ST77XX* device) {
     res = gpio_set_direction(device->pin_dcx, GPIO_MODE_OUTPUT);
     if (res != ESP_OK) return res;
 
-    if (!device->reset_external_pullup && device->pin_reset >= 0) {
-        res = gpio_hold_dis(device->pin_reset);
-        if (res != ESP_OK) return res;
-
-        res = gpio_set_direction(device->pin_reset, GPIO_MODE_OUTPUT);
-        if (res != ESP_OK) return res;
-    }
+    res = gpio_set_direction(device->pin_reset, GPIO_MODE_OUTPUT);
+    if (res != ESP_OK) return res;
 
     res = gpio_set_level(device->pin_dcx, true);
     if (res != ESP_OK) return res;
@@ -236,7 +232,6 @@ esp_err_t st77xx_init(ST77XX* device) {
         device->callback(false);
     }
 
-
     ESP_LOGE(TAG, "IO Setup complete ");
 
     //Reset the LCD display
@@ -246,7 +241,7 @@ esp_err_t st77xx_init(ST77XX* device) {
     ESP_LOGE(TAG, "DC pin %d", device->pin_dcx);
 
     //Send the initialization data to the LCD display
-    res = st77xx_write_init_data(device, st77xx_init_data);
+    res = st77xx_write_init_data(device, st77xx_init_data, sizeof(st77xx_init_data) / sizeof(st77xx_init_data[0]));
     if (res != ESP_OK) return res;
 
 
