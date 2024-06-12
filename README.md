@@ -25,6 +25,7 @@ Some source code is licensed separately, please check the following table for de
 | components/pax-keyboard |         | MIT                               | Julian Scheffers                                                                                |
 | components/sdcard       |         | MIT                               | Nicolai Electronics                                                                             |
 | components/spi-ili9341  |         | MIT                               | Nicolai Electronics                                                                             |
+| components/spi-st25r3911b/en.STSW-ST25RFAL001 | 2.10.0 | SLA0051 MyLiberty                 | STMicroelectronics |
 | components/ws2812       |         | MIT                               | Unlicense / Public domain                                                                       |
 | tools/[libusb-1.0.dll]  |         | GNU LGPL 2.1                      | See the [AUTHORS](https://github.com/libusb/libusb/blob/master/AUTHORS) document of the project |
 
