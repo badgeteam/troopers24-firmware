@@ -18,25 +18,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "st25r3911_com.h"
+#include "st25r3911.h"
+
 static const char *TAG = "st25r3911b";
 
-// from st25r3911_com.h
-#define ST25R3911_REG_OP_CONTROL        0x02U
-#define ST25R3911_REG_IO_CONF1          0x00U /*!< RW IO Configuration Register 1 */
-#define ST25R3911_REG_IO_CONF2          0x01U /*!< RW IO Configuration Register 2 */
-#define ST25R3911_REG_IO_CONF2_miso_pd1 (1U << 3)
-#define ST25R3911_REG_IO_CONF2_miso_pd2 (1U << 4)
-#define ST25R3911_REG_IO_CONF1_osc      (1U << 3)
-
-#define ST25R3911_REG_IC_IDENTITY_v2            (0x09U)
-#define ST25R3911_REG_IC_IDENTITY_ic_type       (1U << 3)
-#define ST25R3911_REG_IC_IDENTITY_mask_ic_type  (0x1FU << 3)
-#define ST25R3911_REG_IC_IDENTITY_shift_ic_type (3U)
-#define ST25R3911_REG_IC_IDENTITY_mask_ic_rev   (7U)
-
-#define ST25R3911_REG_IC_IDENTITY               0x3FU /*!< R  Chip Id: 0 for old silicon, v2 silicon: 0x09 */
-
-#define ST25R3911_CMD_SET_DEFAULT 0xC1U  // from st25r3911.h
 
 esp_err_t rfid_reg_read(ST25R3911B *device, uint8_t reg, uint8_t *value) {
     if (device->spi_device == NULL) return ESP_FAIL;
