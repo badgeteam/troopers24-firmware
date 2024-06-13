@@ -167,11 +167,10 @@ _Noreturn void app_main(void) {
         esp_restart();
     }
 
-
-
     /* Initialize the LEDs */
     ws2812_init(GPIO_LED_DATA, 150);
-    const uint8_t led_off[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    const uint8_t led_off[3*NUM_LEDS];
+    memset((void *) led_off, 0, 3*NUM_LEDS);
     ws2812_send_data(led_off, sizeof(led_off));
 
     /* Enable the amplifier */
@@ -263,14 +262,6 @@ _Noreturn void app_main(void) {
     bool sdcard_mounted = (mount_sdcard_filesystem() == ESP_OK);
     if (sdcard_mounted) {
         ESP_LOGI(TAG, "SD card filesystem mounted");
-    }
-
-    /* Upgrade required for v1 firmware */
-    if (appfsExists("python")) {
-        ESP_LOGI(TAG, "Upgrading v1 firmware");
-        appfsRename("python", "python_tr23");
-        appfsRename("python", "battleship");
-        appfsRename("python", "gnuboy_troopers23");
     }
 
     /* Ensure the directories for the hatchery exist */
