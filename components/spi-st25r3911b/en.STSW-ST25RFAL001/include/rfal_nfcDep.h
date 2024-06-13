@@ -366,12 +366,15 @@ typedef struct{
     uint8_t            DID;            /*!< Initiator's Device ID DID             */
     uint8_t            NAD;            /*!< Initiator's Node ID NAD               */
     uint8_t            BS;             /*!< Initiator's Bit Rates supported in Tx */
+#define ESP_BR BR
+#undef BR
     uint8_t            BR;             /*!< Initiator's Bit Rates supported in Rx */
+#define BR ESP_BR
+#undef ESP_BR
     uint8_t            LR;             /*!< Initiator's Length reduction          */
     uint8_t*           GB;             /*!< Initiator's General Bytes (Gi)        */
     uint8_t            GBLen;          /*!< Initiator's General Bytes length      */
 } rfalNfcDepAtrParam;
-
 
 /*! Structure of parameters to be passed in for nfcDepListenStartActivation       */
 typedef struct

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <limits.h>
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 
 //Probably unneeded
 ////#include "spi.h"
@@ -13,7 +14,7 @@
 ////#define ST25R_SS_PIN            SPI1_CS_Pin         /*!< GPIO pin used for ST25R SPI SS                */
 ////#define ST25R_SS_PORT           SPI1_CS_GPIO_Port   /*!< GPIO port used for ST25R SPI SS port          */
 ////
-////#define ST25R_INT_PIN            ST25R_IRQ_Pin            /*!< GPIO pin used for ST25R External Interrupt    */
+#define ST25R_INT_PIN            -1            /*!< GPIO pin used for ST25R External Interrupt    */
 ////#define ST25R_INT_PORT           ST25R_IRQ_GPIO_Port      /*!< GPIO port used for ST25R External Interrupt   */
 ////
 ////#ifdef LED_FIELD_Pin
@@ -40,9 +41,9 @@
 ////#define PLATFORM_USER_BUTTON_PORT    B1_GPIO_Port          /*!< GPIO port user button      */
 ////
 
-//#define platformProtectST25RComm()                do{ globalCommProtectCnt++; __DSB();NVIC_DisableIRQ(ST25R_IRQ_EXTI_IRQn);__DSB();__ISB();}while(0) /*!< Protect unique access to ST25R communication channel - IRQ disable on single thread environment (MCU) ; Mutex lock on a multi thread environment      */
-//#define platformUnprotectST25RComm()              do{ if (--globalCommProtectCnt==0U) {NVIC_EnableIRQ(ST25R_IRQ_EXTI_IRQn);} }while(0)               /*!< Unprotect unique access to ST25R communication channel - IRQ enable on a single thread environment (MCU) ; Mutex unlock on a multi thread environment */
-//
+#define platformProtectST25RComm()                  if (global_st25r3911b->spi_semaphore != NULL) xSemaphoreTake(global_st25r3911b->spi_semaphore, portMAX_DELAY);/*!< Protect unique access to ST25R communication channel - IRQ disable on single thread environment (MCU) ; Mutex lock on a multi thread environment      */
+#define platformUnprotectST25RComm()                if (global_st25r3911b->spi_semaphore != NULL) xSemaphoreGive(global_st25r3911b->spi_semaphore);/*!< Unprotect unique access to ST25R communication channel - IRQ enable on a single thread environment (MCU) ; Mutex unlock on a multi thread environment */
+
 //#define platformProtectST25RIrqStatus()           platformProtectST25RComm()                /*!< Protect unique access to IRQ status var - IRQ disable on single thread environment (MCU) ; Mutex lock on a multi thread environment */
 //#define platformUnprotectST25RIrqStatus()         platformUnprotectST25RComm()              /*!< Unprotect the IRQ status var - IRQ enable on a single thread environment (MCU) ; Mutex unlock on a multi thread environment         */
 //
@@ -65,23 +66,25 @@
 //#define platformGpioSet( port, pin )                  HAL_GPIO_WritePin(port, pin, GPIO_PIN_SET)    /*!< Turns the given GPIO High                   */
 //#define platformGpioClear( port, pin )                HAL_GPIO_WritePin(port, pin, GPIO_PIN_RESET)  /*!< Turns the given GPIO Low                    */
 //#define platformGpioToggle( port, pin )               HAL_GPIO_TogglePin(port, pin)                 /*!< Toggles the given GPIO                      */
-//#define platformGpioIsHigh( port, pin )               (HAL_GPIO_ReadPin(port, pin) == GPIO_PIN_SET) /*!< Checks if the given LED is High             */
-//#define platformGpioIsLow( port, pin )                (!platformGpioIsHigh(port, pin))              /*!< Checks if the given LED is Low              */
+#define platformGpioIsHigh( port, pin )               (gpio_get_level(pin) == true) /*!< Checks if the given LED is High             */
+#define platformGpioIsLow( port, pin )                (!platformGpioIsHigh(port, pin))              /*!< Checks if the given LED is Low              */
 //
-//#define platformTimerCreate( t )                      timerCalculateTimer(t)                        /*!< Create a timer with the given time (ms)     */
-//#define platformTimerIsExpired( timer )               timerIsExpired(timer)                         /*!< Checks if the given timer is expired        */
-//#define platformTimerDestroy( timer )                                                               /*!< Stop and release the given timer            */
-//#define platformDelay( t )                            HAL_Delay( t )                                /*!< Performs a delay for the given time (ms)    */
-//
-//#define platformGetSysTick()                          HAL_GetTick()                                 /*!< Get System Tick ( 1 tick = 1 ms)            */
-//
+
+#define MAX(a, b) ((a > b) ? a : b)
+#define platformTimerCreate( t )                      xTaskGetTickCount() + (MAX(t, 10) / portTICK_PERIOD_MS)/*!< Create a timer with the given time (ms)     */
+#define platformTimerIsExpired( timer )               (xTaskGetTickCount() > timer)                         /*!< Checks if the given timer is expired        */
+#define platformTimerDestroy( timer )                                                               /*!< Stop and release the given timer            */
+#define platformDelay( t )                            vTaskDelay( t / portTICK_PERIOD_MS )                                /*!< Performs a delay for the given time (ms)    */
+
+#define platformGetSysTick()                                                           /*!< Get System Tick ( 1 tick = 1 ms)            */
+
 //#define platformErrorHandle()                         _Error_Handler(__FILE__,__LINE__)             /*!< Global error handler or trap                */
 //
-//#define platformSpiSelect()                           platformGpioClear(ST25R_SS_PORT, ST25R_SS_PIN)/*!< SPI SS\CS: Chip|Slave Select                */
-//#define platformSpiDeselect()                         platformGpioSet(ST25R_SS_PORT, ST25R_SS_PIN)  /*!< SPI SS\CS: Chip|Slave Deselect              */
-//#define platformSpiTxRx( txBuf, rxBuf, len )          spiTxRx(txBuf, rxBuf, len)                    /*!< SPI transceive                              */
+#define platformSpiSelect()                         gpio_set_level(global_st25r3911b->pin_cs, false) /*!< SPI SS\CS: Chip|Slave Select                */
+#define platformSpiDeselect()                       gpio_set_level(global_st25r3911b->pin_cs, true) /*!< SPI SS\CS: Chip|Slave Deselect              */
+#define platformSpiTxRx( txBuf, rxBuf, len )          rfid_rxtx(global_st25r3911b, txBuf, rxBuf, len)                    /*!< SPI transceive                              */
 //
-//#define platformLog(...)                              logUsart(__VA_ARGS__)                         /*!< Log  method                                 */
+//#define platformLog(...)                              ESP_LOGI("nfc", __VA_ARGS__)                         /*!< Log  method                                 */
 
 //extern uint8_t globalCommProtectCnt;                      /* Global Protection Counter provided per platform - instantiated in main.c    */
 

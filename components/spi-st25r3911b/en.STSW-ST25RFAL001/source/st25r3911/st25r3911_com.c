@@ -98,7 +98,7 @@ void st25r3911ReadRegister(uint8_t reg, uint8_t* value)
 #else  /* ST25R_COM_SINGLETXRX */
     uint8_t  buf[2];
 #endif  /* ST25R_COM_SINGLETXRX */
-  
+
     platformProtectST25RComm();
     platformSpiSelect();
   

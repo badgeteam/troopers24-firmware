@@ -8,6 +8,13 @@
 #include <freertos/task.h>
 #include <freertos/semphr.h>
 
+#define ST25R3911
+//#define ST25R_SELFTEST
+
+#include "rfal_defConfig.h"
+#include "rfal_platform.h"
+#include "rfal_nfc.h"
+
 typedef struct ST25R3911B {
     int spi_bus;
     int pin_cs;
@@ -19,3 +26,4 @@ typedef struct ST25R3911B {
 } ST25R3911B;
 
 esp_err_t st25r3911b_init(ST25R3911B * device);
+esp_err_t rfid_rxtx(ST25R3911B *device, const uint8_t* tx, const uint8_t* rx, uint8_t length);

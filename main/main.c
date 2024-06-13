@@ -188,6 +188,10 @@ _Noreturn void app_main(void) {
     pca9555_set_gpio_value(io_expander, IO_AMP_GAIN0, 1);
     pca9555_set_gpio_value(io_expander, IO_AMP_GAIN1, 1);
 
+    /* Initialize LCD screen */
+    pax_buf_t* pax_buffer = get_pax_buffer();
+    xTaskCreate(boot_animation_task, "boot_anim_task", 4096, NULL, 12, NULL);
+
     /* Turning the backlight on */
 #ifdef TR23
     gpio_config_t io_conf = {
@@ -213,10 +217,6 @@ _Noreturn void app_main(void) {
 #else
     st77xx_backlight(true);
 #endif
-
-    /* Initialize LCD screen */
-    pax_buf_t* pax_buffer = get_pax_buffer();
-    xTaskCreate(boot_animation_task, "boot_anim_task", 4096, NULL, 12, NULL);
 
     if (!wakeup_deepsleep) {
         /* TROOPERS */

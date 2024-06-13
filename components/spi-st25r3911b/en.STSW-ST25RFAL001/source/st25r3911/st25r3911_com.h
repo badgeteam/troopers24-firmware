@@ -70,6 +70,12 @@
 */
 #include "rfal_platform.h"
 #include "rfal_utils.h"
+#include "st25r3911b.h"
+#include "st25r3911b_global.h"
+#include <driver/gpio.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#include <freertos/task.h>
 
 /*
 ******************************************************************************
