@@ -136,11 +136,11 @@ esp_err_t st77xx_write_init_data(ST77XX* device, const uint8_t * data) {
         cmd = *data++;
         if (!cmd) break;
         len = *data++;
-        ESP_LOGD(TAG, "Sending command %x", cmd);
+//        ESP_LOGD(TAG, "Sending command %x", cmd);
         res = st77xx_send_command(device, cmd);
         if (res != ESP_OK) break;
         if (len > 0) {
-            ESP_LOGD(TAG, "Sending %d bytes of data", len);
+//            ESP_LOGD(TAG, "Sending %d bytes of data", len);
             res = st77xx_send_data(device, data, len);
             if (res != ESP_OK) break;
         }
@@ -299,7 +299,7 @@ esp_err_t st77xx_set_addr_window(ST77XX* device, uint16_t x, uint16_t y, uint16_
     uint32_t xa = ((uint32_t)x << 16) | (x+w-1);
     uint32_t ya = ((uint32_t)y << 16) | (y+h-1);
     esp_err_t res;
-    ESP_LOGD(TAG, "CASET %x, RASET %x", xa, ya);
+//    ESP_LOGD(TAG, "CASET %x, RASET %x", xa, ya);
     res = st77xx_send_command(device, ST77XX_CASET);
     if (res != ESP_OK) return res;
     res = st77xx_send_u32(device, xa);
