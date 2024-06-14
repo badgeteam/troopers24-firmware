@@ -14,7 +14,7 @@
 ////#define ST25R_SS_PIN            SPI1_CS_Pin         /*!< GPIO pin used for ST25R SPI SS                */
 ////#define ST25R_SS_PORT           SPI1_CS_GPIO_Port   /*!< GPIO port used for ST25R SPI SS port          */
 ////
-#define ST25R_INT_PIN            -1            /*!< GPIO pin used for ST25R External Interrupt    */
+#define ST25R_INT_PIN            34            /*!< GPIO pin used for ST25R External Interrupt    */
 ////#define ST25R_INT_PORT           ST25R_IRQ_GPIO_Port      /*!< GPIO port used for ST25R External Interrupt   */
 ////
 ////#ifdef LED_FIELD_Pin
@@ -50,9 +50,9 @@
 //#define platformProtectWorker()                                                                     /* Protect RFAL Worker/Task/Process from concurrent execution on multi thread platforms   */
 //#define platformUnprotectWorker()                                                                   /* Unprotect RFAL Worker/Task/Process from concurrent execution on multi thread platforms */
 //
-//#define platformIrqST25RSetCallback( cb )
-//#define platformIrqST25RPinInitialize()
-//
+#define platformIrqST25RSetCallback( cb )           global_st25r3911b->irq_callback = cb
+#define platformIrqST25RPinInitialize()
+
 //#define platformIrqST25RSetCallback( cb )
 //#define platformIrqST25RPinInitialize()
 //
@@ -70,11 +70,10 @@
 #define platformGpioIsLow( port, pin )                (!platformGpioIsHigh(port, pin))              /*!< Checks if the given LED is Low              */
 //
 
-#define MAX(a, b) ((a > b) ? a : b)
-#define platformTimerCreate( t )                      xTaskGetTickCount() + (MAX(t, 10) / portTICK_PERIOD_MS)/*!< Create a timer with the given time (ms)     */
-#define platformTimerIsExpired( timer )               (xTaskGetTickCount() > timer)                         /*!< Checks if the given timer is expired        */
-#define platformTimerDestroy( timer )                                                               /*!< Stop and release the given timer            */
-#define platformDelay( t )                            vTaskDelay( t / portTICK_PERIOD_MS )                                /*!< Performs a delay for the given time (ms)    */
+#define platformTimerCreate( t )                      (xTaskGetTickCount() + pdMS_TO_TICKS(t))        /*!< Create a timer with the given time (ms)     */
+#define platformTimerIsExpired( timer )               (xTaskGetTickCount() > timer)                   /*!< Checks if the given timer is expired        */
+#define platformTimerDestroy( timer )                                                                 /*!< Stop and release the given timer            */
+#define platformDelay( t )                            vTaskDelay( pdMS_TO_TICKS(t) )                  /*!< Performs a delay for the given time (ms)    */
 
 #define platformGetSysTick()                                                           /*!< Get System Tick ( 1 tick = 1 ms)            */
 
@@ -82,7 +81,7 @@
 //
 #define platformSpiSelect()                         gpio_set_level(global_st25r3911b->pin_cs, false) /*!< SPI SS\CS: Chip|Slave Select                */
 #define platformSpiDeselect()                       gpio_set_level(global_st25r3911b->pin_cs, true) /*!< SPI SS\CS: Chip|Slave Deselect              */
-#define platformSpiTxRx( txBuf, rxBuf, len )          rfid_rxtx(global_st25r3911b, txBuf, rxBuf, len)                    /*!< SPI transceive                              */
+#define platformSpiTxRx( txBuf, rxBuf, len )          st25r3911b_rxtx(global_st25r3911b, txBuf, rxBuf, len)                    /*!< SPI transceive                              */
 //
 //#define platformLog(...)                              ESP_LOGI("nfc", __VA_ARGS__)                         /*!< Log  method                                 */
 
@@ -93,14 +92,14 @@
 #define RFAL_FEATURE_WAKEUP_MODE               true       /*!< Enable/Disable RFAL support for the Wake-Up mode                          */
 #define RFAL_FEATURE_LOWPOWER_MODE             false      /*!< Enable/Disable RFAL support for the Low Power mode                        */
 #define RFAL_FEATURE_NFCA                      true       /*!< Enable/Disable RFAL support for NFC-A (ISO14443A)                         */
-#define RFAL_FEATURE_NFCB                      true       /*!< Enable/Disable RFAL support for NFC-B (ISO14443B)                         */
-#define RFAL_FEATURE_NFCF                      true       /*!< Enable/Disable RFAL support for NFC-F (FeliCa)                            */
-#define RFAL_FEATURE_NFCV                      true       /*!< Enable/Disable RFAL support for NFC-V (ISO15693)                          */
-#define RFAL_FEATURE_T1T                       true       /*!< Enable/Disable RFAL support for T1T (Topaz)                               */
-#define RFAL_FEATURE_T2T                       true       /*!< Enable/Disable RFAL support for T2T                                       */
-#define RFAL_FEATURE_T4T                       true       /*!< Enable/Disable RFAL support for T4T                                       */
-#define RFAL_FEATURE_ST25TB                    true       /*!< Enable/Disable RFAL support for ST25TB                                    */
-#define RFAL_FEATURE_ST25xV                    true       /*!< Enable/Disable RFAL support for ST25TV/ST25DV                             */
+#define RFAL_FEATURE_NFCB                      false       /*!< Enable/Disable RFAL support for NFC-B (ISO14443B)                         */
+#define RFAL_FEATURE_NFCF                      false       /*!< Enable/Disable RFAL support for NFC-F (FeliCa)                            */
+#define RFAL_FEATURE_NFCV                      false       /*!< Enable/Disable RFAL support for NFC-V (ISO15693)                          */
+#define RFAL_FEATURE_T1T                       false       /*!< Enable/Disable RFAL support for T1T (Topaz)                               */
+#define RFAL_FEATURE_T2T                       false       /*!< Enable/Disable RFAL support for T2T                                       */
+#define RFAL_FEATURE_T4T                       false       /*!< Enable/Disable RFAL support for T4T                                       */
+#define RFAL_FEATURE_ST25TB                    false       /*!< Enable/Disable RFAL support for ST25TB                                    */
+#define RFAL_FEATURE_ST25xV                    false       /*!< Enable/Disable RFAL support for ST25TV/ST25DV                             */
 #define RFAL_FEATURE_DYNAMIC_ANALOG_CONFIG     false      /*!< Enable/Disable Analog Configs to be dynamically updated (RAM)             */
 #define RFAL_FEATURE_DPO                       false      /*!< Enable/Disable RFAL Dynamic Power Output support                          */
 #define RFAL_FEATURE_ISO_DEP                   true       /*!< Enable/Disable RFAL support for ISO-DEP (ISO14443-4)                      */

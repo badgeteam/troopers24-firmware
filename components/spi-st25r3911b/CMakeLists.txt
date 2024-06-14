@@ -24,9 +24,13 @@ idf_component_register(
         "en.STSW-ST25RFAL001/source/st25r3911/st25r3911.c"
         "en.STSW-ST25RFAL001/source/st25r3911/st25r3911_com.c"
         "en.STSW-ST25RFAL001/source/st25r3911/st25r3911_interrupt.c"
+        "NDEF/source"
   INCLUDE_DIRS
         "include"
+        "en.STSW-ST25RFAL001"
         "en.STSW-ST25RFAL001/include"
         "en.STSW-ST25RFAL001/source/st25r3911"
-        "en.STSW-ST25RFAL001"
+        "NDEF/include"
+        "NDEF/include/message"
+        "NDEF/include/poller"
 )

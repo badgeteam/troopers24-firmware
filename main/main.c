@@ -167,11 +167,10 @@ _Noreturn void app_main(void) {
         esp_restart();
     }
 
-
-
     /* Initialize the LEDs */
     ws2812_init(GPIO_LED_DATA, 150);
-    const uint8_t led_off[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    const uint8_t led_off[NUM_LEDS * 3];
+    memset((void*) led_off, 0, NUM_LEDS * 3);
     ws2812_send_data(led_off, sizeof(led_off));
 
     /* Enable the amplifier */
@@ -187,6 +186,28 @@ _Noreturn void app_main(void) {
     pca9555_set_gpio_value(io_expander, IO_AMP_ENABLE, 1);
     pca9555_set_gpio_value(io_expander, IO_AMP_GAIN0, 1);
     pca9555_set_gpio_value(io_expander, IO_AMP_GAIN1, 1);
+
+    /* Start NVS */
+    res = nvs_init();
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "NVS init failed: %d", res);
+        wait_for_boot_anim();
+        display_fatal_error(fatal_error_str, "NVS failed to initialize", "Flash may be corrupted", NULL);
+        stop();
+    }
+
+    nvs_handle_t handle;
+    res = nvs_open("system", NVS_READWRITE, &handle);
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "NVS open failed: %d", res);
+        wait_for_boot_anim();
+        display_fatal_error(fatal_error_str, "Failed to open NVS namespace", "Flash may be corrupted", reset_board_str);
+        stop();
+    }
+
+    // TODO: This is resetting the factory test status, so that factory test will run on every boot
+    nvs_set_u8_fixed("system", "factory_test", 0x00);
+    factory_test();
 
     /* Initialize LCD screen */
     pax_buf_t* pax_buffer = get_pax_buffer();
@@ -218,30 +239,11 @@ _Noreturn void app_main(void) {
     st77xx_backlight(true);
 #endif
 
+
     if (!wakeup_deepsleep) {
         /* TROOPERS */
         xTaskCreate(audio_player_task, "audio_player_task", 2048, NULL, 12, NULL);
     }
-
-    /* Start NVS */
-    res = nvs_init();
-    if (res != ESP_OK) {
-        ESP_LOGE(TAG, "NVS init failed: %d", res);
-        wait_for_boot_anim();
-        display_fatal_error(fatal_error_str, "NVS failed to initialize", "Flash may be corrupted", NULL);
-        stop();
-    }
-
-    nvs_handle_t handle;
-    res = nvs_open("system", NVS_READWRITE, &handle);
-    if (res != ESP_OK) {
-        ESP_LOGE(TAG, "NVS open failed: %d", res);
-        wait_for_boot_anim();
-        display_fatal_error(fatal_error_str, "Failed to open NVS namespace", "Flash may be corrupted", reset_board_str);
-        stop();
-    }
-
-//    factory_test();
 
     /* Start AppFS */
     res = appfs_init();

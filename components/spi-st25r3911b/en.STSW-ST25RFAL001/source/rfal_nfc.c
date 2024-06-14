@@ -45,9 +45,6 @@
 * GLOBAL DEFINES
 ******************************************************************************
 */
-#define RFAL_NFC_MAX_DEVICES          5U    /*!< Max number of devices supported */
-#define RFAL_NFC_T_FIELD_OFF          5U    /*!< tFIELD_OFF minimal duration  Activity 2.2  Table 26 */
-
 
 /*
 ******************************************************************************
@@ -73,48 +70,7 @@
 ******************************************************************************
 */
 
-/*! Buffer union, only one interface is used at a time                                                        */
-typedef union{  /*PRQA S 0750 # MISRA 19.2 - Members of the union will not be used concurrently, only one interface at a time */
-    rfalIsoDepBufFormat   isoDepBuf;                  /*!< ISO-DEP buffer format (with header/prologue)       */
-    rfalNfcDepBufFormat   nfcDepBuf;                  /*!< NFC-DEP buffer format (with header/prologue)       */
-}rfalNfcTmpBuffer;
 
-
-/*! RFAL NFC instance                                                                                */
-typedef struct{
-    rfalNfcState            state;              /*!< Main state                                      */
-    uint16_t                techsFound;         /*!< Technologies found bitmask                      */
-    uint16_t                techs2do;           /*!< Technologies still to be performed              */
-    uint16_t                techDctCnt;         /*!< Technologies detection counter (before WU)      */
-    rfalBitRate             ap2pBR;             /*!< Bit rate to poll for AP2P                       */
-    uint8_t                 selDevIdx;          /*!< Selected device index                           */
-    rfalNfcDevice           *activeDev;         /*!< Active device pointer                           */
-    rfalNfcDiscoverParam    disc;               /*!< Discovery parameters                            */
-    rfalNfcDevice           devList[RFAL_NFC_MAX_DEVICES];   /*!< Location of device list            */
-    uint8_t                 devCnt;             /*!< Decices found counter                           */
-    uint32_t                discTmr;            /*!< Discovery Total duration timer                  */
-    ReturnCode              dataExErr;          /*!< Last Data Exchange error                        */
-    rfalNfcDeactivateType   deactType;          /*!< Deactivation type                               */
-    bool                    isRxChaining;       /*!< Flag indicating Other device is chaining        */
-    uint32_t                lmMask;             /*!< Listen Mode mask                                */
-    bool                    isFieldOn;          /*!< Flag indicating Fieldon for Passive Poll        */
-    bool                    isTechInit;         /*!< Flag indicating technology has been set         */
-    bool                    isOperOngoing;      /*!< Flag indicating operation is ongoing            */
-    bool                    isDeactivating;     /*!< Flag indicating deactivation is ongoing         */
-
-    rfalNfcaSensRes         sensRes;            /*!< SENS_RES during card detection and activation   */
-    rfalNfcbSensbRes        sensbRes;           /*!< SENSB_RES during card detection and activation  */
-    uint8_t                 sensbResLen;        /*!< SENSB_RES length                                */
-
-    rfalNfcBuffer           txBuf;              /*!< Tx buffer for Data Exchange                     */
-    rfalNfcBuffer           rxBuf;              /*!< Rx buffer for Data Exchange                     */
-    uint16_t                rxLen;              /*!< Length of received data on Data Exchange        */
-    
-#if RFAL_FEATURE_NFC_DEP || RFAL_FEATURE_ISO_DEP
-    rfalNfcTmpBuffer        tmpBuf;             /*!< Tmp buffer for Data Exchange                    */
-#endif /* RFAL_FEATURE_NFC_DEP || RFAL_FEATURE_ISO_DEP */
-
-}rfalNfc;
 
   
 /*
@@ -301,6 +257,12 @@ ReturnCode rfalNfcSelect( uint8_t devIdx )
     gNfcDev.state      = RFAL_NFC_STATE_POLL_ACTIVATION;
     
     return RFAL_ERR_NONE;
+}
+
+/*******************************************************************************/
+rfalNfc* rfalNfcGetDev( void )
+{
+    return &gNfcDev;
 }
 
 /*******************************************************************************/
