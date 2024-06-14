@@ -2,15 +2,16 @@
 #include <driver/spi_master.h>
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 #include <freertos/semphr.h>
 #include <freertos/task.h>
-#include <freertos/queue.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/cdefs.h>
 #include <unistd.h>
-#include "filesystems.h"
 
 #include "audio.h"
+#include "filesystems.h"
 #include "hardware.h"
 #include "pax_gfx.h"
 #include "settings.h"
@@ -25,7 +26,7 @@ bool wait_for_key_pressed(Keyboard* keyboard, Key key) {
     keyboard_input_message_t buttonMessage = {0};
     int i = 0;
 
-    while (i < 10) {
+    while (i < 20) {
         if (xQueueReceive(keyboard->queue, &buttonMessage, 1000 / portTICK_PERIOD_MS) == pdTRUE) {
             if (buttonMessage.state && buttonMessage.input == key) {
                 return true;
@@ -60,11 +61,22 @@ bool test_keyboard_init(uint32_t* rc) {
         *rc = (uint32_t) 2;
         return false;
     }
+    ESP_LOGI(TAG, "Press UP...");
+    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+    pax_draw_text(pax_buffer, 0xFF0000FF, font, 36, 0, pax_buffer->height - 36, "Press UP");
+    display_flush();
+    if (!wait_for_key_pressed(keyboard, JOYSTICK_UP)) {
+        ESP_LOGE(TAG, "Timeout reached");
+        pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+        display_flush();
+        *rc = (uint32_t) 2;
+        return false;
+    }
 
     pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
     display_flush();
 
-    return (keyboard != NULL);
+    return true;
 }
 
 bool test_sdcard_init(uint32_t* rc) {
@@ -117,24 +129,72 @@ bool test_sdcard_init(uint32_t* rc) {
 bool test_stuck_buttons(uint32_t* rc) {
     Keyboard* keyboard = get_keyboard();
     if (keyboard == NULL) {
-        *rc = (uint32_t) 1;
+        *rc = 0xFFFFFFFF - 1;
         return false;
     }
 
-    // TODO: Replace
-//    RP2040*   rp2040 = get_rp2040();
-    uint16_t  state = 0;
-//    esp_err_t res = rp2040_read_buttons(rp2040, &state);
-//    if (res != ESP_OK) {
-//        *rc = 0xFFFFFFFF;
-//        return false;
-//    }
+    vTaskDelay(pdMS_TO_TICKS(500));
 
-//    state &= ~(1 << FPGA_CDONE);  // Ignore FPGA CDONE
+    uint16_t  state;
+
+    esp_err_t res = pca9555_get_gpio_values(keyboard->pca, &state);
+    if (res != ESP_OK) {
+        *rc = 0xFFFFFFFF - 2;
+        return false;
+    }
+    state &= 0x1ff;
+
+    ESP_LOGI(TAG, "keyboard state: %04x", state);
 
     *rc = state;
 
     return (state == 0x0000);
+}
+
+/* Test routines */
+bool test_nfc_init(uint32_t* rc) {
+    ST25R3911B* nfc = get_nfc();
+    if (nfc == NULL) {
+        *rc = 0xFFFFFFFF - 1;
+        return false;
+    }
+
+    uint8_t id = 0;
+    esp_err_t res = st25r3911b_chip_id(&id);
+    if (res != ESP_OK) {
+        *rc = 0xFFFFFFFF - 2;
+        return false;
+    }
+
+    *rc = id;
+
+    return (*rc == 0x05);
+}
+
+bool test_nfc_read_uid(uint32_t* rc) {
+    ST25R3911B* nfc = get_nfc();
+    if (nfc == NULL) {
+        *rc = 0xFFFFFFFF - 1;
+        return false;
+    }
+
+    rfalNfcDevice nfcDevice = {0};
+    bool found = false;
+    int tries = 30;
+    int remaining =  tries;
+
+    while (!found && remaining-- > 0) {
+        esp_err_t res = st25r3911b_discover(&nfcDevice, 1000);
+        if (res == ESP_ERR_TIMEOUT) {
+            continue;
+        }
+        if (res == ESP_OK) {
+            found = true;
+        }
+    }
+
+    *rc = (uint32_t) tries - remaining;
+    return (found == true);
 }
 
 bool run_basic_tests() {
@@ -152,10 +212,12 @@ bool run_basic_tests() {
 
     /* Run mandatory tests */
     RUN_TEST_MANDATORY("KEYBOARD", test_keyboard_init);
+    RUN_TEST_MANDATORY("NFC", test_nfc_init);
 
     /* Run tests */
     RUN_TEST("STUCK BUTTONS", test_stuck_buttons);
     RUN_TEST("SD CARD", test_sdcard_init);
+    RUN_TEST("NFC READ", test_nfc_read_uid);
 
 error:
     /* Fail result on screen */
@@ -169,7 +231,7 @@ uint8_t led_red[NUM_LEDS*3]   = {0};
 uint8_t led_blue[NUM_LEDS*3]  = {0};
 uint8_t led_white[NUM_LEDS*3]  = {0};
 
-void factory_test() {
+_Noreturn void factory_test() {
     for (int i = 0; i < NUM_LEDS; i++) {
         led_green[3*i] = 50;
         led_green[3*i+1] = 0;
@@ -191,6 +253,7 @@ void factory_test() {
     pax_buf_t* pax_buffer        = get_pax_buffer();
     uint8_t    factory_test_done = nvs_get_u8_default("system", "factory_test", 0);
     if (!factory_test_done) {
+        st77xx_backlight(true);
         bool result;
 
         ESP_LOGI(TAG, "Factory test start");
@@ -218,7 +281,6 @@ void factory_test() {
                 pax_background(pax_buffer, 0xa85a32);
                 display_flush();
             }
-            nvs_set_u8_fixed("system", "force_sponsors", 0x01);  // Force showing sponsors on first boot
             wifi_set_defaults();
             pax_noclip(pax_buffer);
             pax_background(pax_buffer, 0x00FF00);
@@ -226,10 +288,13 @@ void factory_test() {
             ws2812_send_data(led_green, sizeof(led_green));
 
             ESP_LOGI(TAG, "Make sure the speaker is NOT muted and a sound is playing");
+            pax_draw_text(pax_buffer, 0xffff0000, pax_font_sky_mono, 36, 0, 20, "SUCCESS!");
+            pax_draw_text(pax_buffer, 0xffff0000, pax_font_sky_mono, 16, 0, 56, "Does the speaker work?");
+            display_flush();
 
             while (true) {
-                if (result) play_bootsound();
-                vTaskDelay(4000 / portTICK_PERIOD_MS);
+                play_bootsound();
+                vTaskDelay(2000 / portTICK_PERIOD_MS);
             }
         }
 
