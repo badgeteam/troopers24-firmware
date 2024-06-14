@@ -76,15 +76,22 @@ esp_err_t rfid_reg_write(ST25R3911B *device, uint8_t reg, uint8_t value) {
 esp_err_t rfid_rxtx(ST25R3911B *device, const uint8_t* tx, const uint8_t* rx, uint8_t length) {
     if (device->spi_device == NULL) return ESP_FAIL;
 
-    ESP_LOGI(TAG, "rfid_rxtx, tx = %d, rx = %d, length = %d", tx != NULL, rx != NULL, length);
+//    ESP_LOGI(TAG, "rfid_rxtx, tx = %d, rx = %d, length = %d", tx != NULL, rx != NULL, length);
     esp_err_t res = ESP_OK;
     size_t len = length * 8;
 
     if (tx != NULL) {
         if ((tx[0] & 0xC0) == 0xC0) {
-            ESP_LOGI(TAG, "rfid_rxtx tx, len=%d op = %x", length, tx[0]);
+            ESP_LOGI(TAG, "Command %x %d", tx[0], length);
         }
     }
+
+    if (tx != NULL) {
+        if (tx[0] == 0x80) {
+            ESP_LOGI(TAG, "FIFO W %d, %x %x %x %x" , length, tx[0], tx[1], tx[2], tx[3]);
+        }
+    }
+
 
     spi_transaction_t tx_transaction = {
         .length    = len,
@@ -100,10 +107,8 @@ esp_err_t rfid_rxtx(ST25R3911B *device, const uint8_t* tx, const uint8_t* rx, ui
     }
 
     if (tx != NULL && rx != NULL) {
-        if ((tx[0] & 0xC0) == 0x80) {
-            for (int i = 0; i < length; i++) {
-                ESP_LOGI(TAG, "rfid_rxtx rx, len=%d, i=%d received = %x", length, i, rx[i]);
-            }
+        if (tx[0] == 0xBF) {
+                ESP_LOGI(TAG, "FIFO R %d, %x %x %x %x" , length, rx[0], rx[1], rx[2], rx[3]);
         }
     }
 
@@ -132,6 +137,9 @@ esp_err_t rfid_send_command(ST25R3911B *device, uint8_t command) {
 
 esp_err_t st25r_test() {
     ReturnCode err;
+
+
+    rtc_wdt_disable();
 
     err = st25r3911Initialize();
     if( err != RFAL_ERR_NONE ) {
@@ -254,6 +262,7 @@ esp_err_t st25r_test() {
         return ESP_FAIL;
     }
     ESP_LOGI(TAG, "state %d", rfalNfcGetState());
+
 
     while(1) {
         rfalNfcWorker();
