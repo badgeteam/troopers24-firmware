@@ -39,6 +39,27 @@ bool wait_for_key_pressed(Keyboard* keyboard, Key key) {
     return false;
 }
 
+bool check_key(Keyboard* keyboard, Key key, char * key_name, uint32_t* rc) {
+    char key_request[30];
+    pax_buf_t*        pax_buffer = get_pax_buffer();
+    const pax_font_t* font = pax_font_sky_mono;
+    snprintf(key_request, sizeof(key_request), "Press %s...", key_name);
+
+    ESP_LOGI(TAG, "%s",key_request);
+    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+    pax_draw_text(pax_buffer, 0xFF0000FF, font, 36, 0, pax_buffer->height - 36, key_request);
+    display_flush();
+    if (!wait_for_key_pressed(keyboard, key)) {
+        ESP_LOGE(TAG, "Timeout reached");
+        pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
+        display_flush();
+        *rc = (uint32_t) 2;
+        return false;
+    }
+    return true;
+}
+
+
 bool test_keyboard_init(uint32_t* rc) {
     Keyboard* keyboard = get_keyboard();
     if (keyboard == NULL) {
@@ -47,31 +68,16 @@ bool test_keyboard_init(uint32_t* rc) {
     }
 
     pax_buf_t*        pax_buffer = get_pax_buffer();
-    const pax_font_t* font = pax_font_sky_mono;
-
-
-    ESP_LOGI(TAG, "Press START...");
-    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
-    pax_draw_text(pax_buffer, 0xFF0000FF, font, 36, 0, pax_buffer->height - 36, "Press START");
-    display_flush();
-    if (!wait_for_key_pressed(keyboard, BUTTON_START)) {
-        ESP_LOGE(TAG, "Timeout reached");
-        pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
-        display_flush();
-        *rc = (uint32_t) 2;
-        return false;
-    }
-    ESP_LOGI(TAG, "Press UP...");
-    pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
-    pax_draw_text(pax_buffer, 0xFF0000FF, font, 36, 0, pax_buffer->height - 36, "Press UP");
-    display_flush();
-    if (!wait_for_key_pressed(keyboard, JOYSTICK_UP)) {
-        ESP_LOGE(TAG, "Timeout reached");
-        pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
-        display_flush();
-        *rc = (uint32_t) 2;
-        return false;
-    }
+    check_key(keyboard, BUTTON_SELECT, "SELECT",rc);
+    check_key(keyboard, BUTTON_START, "START",rc);
+    check_key(keyboard, BUTTON_BACK, "B",rc);
+    check_key(keyboard, BUTTON_ACCEPT, "A",rc);
+    check_key(keyboard, JOYSTICK_UP, "UP",rc);
+    check_key(keyboard, JOYSTICK_DOWN, "DOWN",rc);
+    check_key(keyboard, JOYSTICK_LEFT, "LEFT",rc);
+    check_key(keyboard, JOYSTICK_RIGHT, "RIGHT",rc);
+    check_key(keyboard, JOYSTICK_PUSH, "PUSH",rc);
+    /* TODO, think about the return code*/
 
     pax_simple_rect(pax_buffer, 0xFFFFFFFF, 0, pax_buffer->height - 36, pax_buffer->width, 36);
     display_flush();
