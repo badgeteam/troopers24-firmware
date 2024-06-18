@@ -44,6 +44,8 @@
 #include "wifi_ota.h"
 #include "ws2812.h"
 
+#define DEBUG_BOOT 1
+
 extern const uint8_t logo_screen_png_start[] asm("_binary_logo_screen_png_start");
 extern const uint8_t logo_screen_png_end[] asm("_binary_logo_screen_png_end");
 
@@ -205,13 +207,13 @@ _Noreturn void app_main(void) {
         stop();
     }
 
-    // TODO: This is resetting the factory test status, so that factory test will run on every boot
-    nvs_set_u8_fixed("system", "factory_test", 0x00);
     factory_test();
 
     /* Initialize LCD screen */
     pax_buf_t* pax_buffer = get_pax_buffer();
+#if DEBUG_BOOT == 0
     xTaskCreate(boot_animation_task, "boot_anim_task", 4096, NULL, 12, NULL);
+#endif
 
     /* Turning the backlight on */
 #ifdef TR23
@@ -239,11 +241,12 @@ _Noreturn void app_main(void) {
     st77xx_backlight(true);
 #endif
 
-
+#if DEBUG_BOOT == 0
     if (!wakeup_deepsleep) {
         /* TROOPERS */
         xTaskCreate(audio_player_task, "audio_player_task", 2048, NULL, 12, NULL);
     }
+#endif
 
     /* Start AppFS */
     res = appfs_init();
@@ -265,14 +268,6 @@ _Noreturn void app_main(void) {
     bool sdcard_mounted = (mount_sdcard_filesystem() == ESP_OK);
     if (sdcard_mounted) {
         ESP_LOGI(TAG, "SD card filesystem mounted");
-    }
-
-    /* Upgrade required for v1 firmware */
-    if (appfsExists("python")) {
-        ESP_LOGI(TAG, "Upgrading v1 firmware");
-        appfsRename("python", "python_tr23");
-        appfsRename("python", "battleship");
-        appfsRename("python", "gnuboy_troopers23");
     }
 
     /* Ensure the directories for the hatchery exist */
@@ -300,6 +295,7 @@ _Noreturn void app_main(void) {
     Controller *controller = get_controller();
     controller_enable(controller);
 
+#if DEBUG_BOOT == 0
     /* Start WiFi */
     wifi_init();
 
@@ -325,15 +321,18 @@ _Noreturn void app_main(void) {
         display_fatal_error(fatal_error_str, "Failed to initialize", "TLS certificate storage", reset_board_str);
         stop();
     }
+#endif
 
     /* Clear RTC memory */
     rtc_memory_clear();
 
+#if DEBUG_BOOT == 0
     /* Try to update the RTC */
     xTaskCreate(ntp_sync_task, "ntp_sync_task", 4096, NULL, 12, NULL);
 
     /* Wait for boot animation to complete */
     wait_for_boot_anim();
+#endif
 
     ESP_LOGW(TAG, "done");
 

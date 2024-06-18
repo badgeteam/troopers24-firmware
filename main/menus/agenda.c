@@ -2,7 +2,6 @@
 #include <freertos/queue.h>
 
 #include "app_management.h"
-#include "esp_http_client.h"
 #include "graphics_wrapper.h"
 #include "hardware.h"
 #include "http_download.h"
@@ -12,6 +11,7 @@
 #include "pax_gfx.h"
 #include "system_wrapper.h"
 #include "wifi_connect.h"
+#include "utils.h"
 
 static const char* TAG = "agenda";
 
@@ -115,7 +115,7 @@ static inline void do_init() {
     ESP_LOGI(TAG, "Successfully written initial agenda data");
 }
 
-void agenda_render_background(pax_buf_t* pax_buffer) {
+static void agenda_render_background(pax_buf_t* pax_buffer) {
     const pax_font_t* font = pax_font_saira_regular;
     pax_background(pax_buffer, 0xFF1E1E1E);
     pax_noclip(pax_buffer);
@@ -123,7 +123,7 @@ void agenda_render_background(pax_buf_t* pax_buffer) {
     pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, "🅰 Accept 🅱 Exit");
 }
 
-void details_render_background(pax_buf_t* pax_buffer, bool tracks, bool days) {
+static void details_render_background(pax_buf_t* pax_buffer, bool tracks, bool days) {
     const pax_font_t* font = pax_font_saira_regular;
     pax_background(pax_buffer, 0xFF1E1E1E);
     pax_noclip(pax_buffer);
@@ -137,14 +137,14 @@ void details_render_background(pax_buf_t* pax_buffer, bool tracks, bool days) {
     }
 }
 
-void render_topbar(pax_buf_t* pax_buffer, pax_buf_t* icon, const char* text) {
+static void render_topbar(pax_buf_t* pax_buffer, pax_buf_t* icon, const char* text) {
     const pax_font_t* font = pax_font_saira_regular;
     pax_simple_rect(pax_buffer, 0xff131313, 0, 0, 320, 34);
     pax_draw_image(pax_buffer, icon, 1, 1);
     pax_draw_text(pax_buffer, 0xFFF1AA13, font, 18, 34, 8, text);
 }
 
-int render_track(pax_buf_t* pax_buffer, pax_buf_t* icon_top, pax_buf_t* icon_bookmarked, cJSON* tracks, int track, int talk, int render_talks, int slot_height) {
+static int render_track(pax_buf_t* pax_buffer, pax_buf_t* icon_top, pax_buf_t* icon_bookmarked, cJSON* tracks, int track, int talk, int render_talks, int slot_height) {
     const pax_font_t* font = pax_font_saira_regular;
 
     cJSON* track_data = cJSON_GetArrayItem(tracks, track);
@@ -220,7 +220,7 @@ int render_track(pax_buf_t* pax_buffer, pax_buf_t* icon_top, pax_buf_t* icon_boo
     return talk_count;
 }
 
-int render_bookmarks(pax_buf_t* pax_buffer, pax_buf_t* icon, cJSON* bookmarks, int day, int talk, int render_talks, int slot_height) {
+static int render_bookmarks(pax_buf_t* pax_buffer, pax_buf_t* icon, cJSON* bookmarks, int day, int talk, int render_talks, int slot_height) {
     const pax_font_t* font = pax_font_saira_regular;
 
     int talk_count = cJSON_GetArraySize(bookmarks);
@@ -307,7 +307,7 @@ int render_bookmarks(pax_buf_t* pax_buffer, pax_buf_t* icon, cJSON* bookmarks, i
     return talk_count;
 }
 
-bool save_bookmarks() {
+static bool save_bookmarks() {
     char* json_string = cJSON_PrintUnformatted(json_my);
     if (json_string == NULL) {
         ESP_LOGE(TAG, "Cannot serialize bookmarks");
@@ -326,7 +326,7 @@ bool save_bookmarks() {
     return true;
 }
 
-bool toggle_bookmark(cJSON* track, cJSON* talk, cJSON* my_day, cJSON* bookmarks) {
+static bool toggle_bookmark(cJSON* track, cJSON* talk, cJSON* my_day, cJSON* bookmarks) {
     if (talk == NULL) {
         ESP_LOGW(TAG, "Cannot toggle bookmark if no talk is given");
         return false;
@@ -387,7 +387,7 @@ bool toggle_bookmark(cJSON* track, cJSON* talk, cJSON* my_day, cJSON* bookmarks)
     return true;
 }
 
-void details_day(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* data, cJSON* my_day, cJSON* bookmarks, pax_buf_t* icon_top, pax_buf_t* icon_bookmarked) {
+static void details_day(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* data, cJSON* my_day, cJSON* bookmarks, pax_buf_t* icon_top, pax_buf_t* icon_bookmarked) {
     int track = 0;
     cJSON* tracks = cJSON_GetObjectItem(data, "tracks");
     int track_count = cJSON_GetArraySize(tracks);
@@ -461,7 +461,7 @@ void details_day(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* data, 
     }
 }
 
-void my_agenda(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* day1, cJSON* day2, pax_buf_t* icon) {
+static void my_agenda(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* day1, cJSON* day2, pax_buf_t* icon) {
     if (day1 == NULL || day2 == NULL) {
         render_message("No talks found");
         display_flush();
@@ -534,7 +534,7 @@ void my_agenda(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* day1, cJ
 }
 
 
-void details_upcoming(pax_buf_t* pax_buffer, cJSON* data, pax_buf_t* icon) {
+static void details_upcoming(pax_buf_t* pax_buffer, cJSON* data, pax_buf_t* icon) {
     const pax_font_t* font = pax_font_saira_regular;
 
     if (data == NULL) {
@@ -622,7 +622,7 @@ void details_upcoming(pax_buf_t* pax_buffer, cJSON* data, pax_buf_t* icon) {
     wait_for_button();
 }
 
-bool need_update(unsigned long *remote_last_update) {
+static bool need_update(unsigned long *remote_last_update) {
     FILE* last_update_fd = fopen(last_update_path, "r");
     if (last_update_fd == NULL) {
         return true;
@@ -652,54 +652,10 @@ bool need_update(unsigned long *remote_last_update) {
     return *remote_last_update > local_last_update;
 }
 
-bool load_file(const char* filename, char** buf, size_t* len) {
-    FILE* fd = fopen(filename, "r");
-    if (fd == NULL) {
-        ESP_LOGE(TAG, "Unable to open file: %s", filename);
-        return false;
-    }
+static bool test_load_data() {
+    if (!load_file(TAG, day1_path_tmp, &data_day1, &size_day1)) return false;
 
-    /* Go to the end of the file. */
-    if (fseek(fd, 0L, SEEK_END) == 0) {
-        /* Get the size of the file. */
-        *len = ftell(fd);
-
-        if (*buf != NULL) {
-            free(*buf);
-        }
-
-        /* Allocate our buffer to that size. */
-        *buf = malloc(*len);
-
-        /* Go back to the start of the file. */
-        if (fseek(fd, 0L, SEEK_SET) != 0) {
-            free(*buf);
-            *len = 0;
-            ESP_LOGE(TAG, "Failed to seek to start");
-            return false;
-        }
-
-        /* Read the entire file into memory. */
-        fread(*buf, 1, *len, fd);
-        int err = ferror(fd);
-        if (err != 0) {
-            free(*buf);
-            *len = 0;
-            ESP_LOGE(TAG, "Failed to read file: %d", err);
-            return false;
-        }
-    } else {
-        ESP_LOGE(TAG, "Failed to seek to end");
-        return false;
-    }
-    fclose(fd);
-    return true;
-}
-
-bool test_load_data() {
-    if (!load_file(day1_path_tmp, &data_day1, &size_day1)) return false;
-
-    if (!load_file(day2_path_tmp, &data_day2, &size_day2)) return false;
+    if (!load_file(TAG, day2_path_tmp, &data_day2, &size_day2)) return false;
 
     json_day1 = cJSON_ParseWithLength(data_day1, size_day1);
     if (json_day1 == NULL) {
@@ -714,7 +670,7 @@ bool test_load_data() {
     return true;
 }
 
-uint find_correct_position(cJSON* my_day, long start) {
+static uint find_correct_position(cJSON* my_day, long start) {
     cJSON* next = cJSON_GetArrayItem(my_day, 0);
     int i = 0;
     while(next != NULL && cJSON_GetNumberValue(cJSON_GetObjectItem(cJSON_GetObjectItem(next, "talk"), "start")) <= start) {
@@ -724,7 +680,7 @@ uint find_correct_position(cJSON* my_day, long start) {
     return i;
 }
 
-bool load_my_data(cJSON* day, cJSON* bookmarks, cJSON* results) {
+static bool load_my_data(cJSON* day, cJSON* bookmarks, cJSON* results) {
     cJSON *bookmark;
 
     int bookmark_count = cJSON_GetArraySize(bookmarks);
@@ -792,22 +748,22 @@ bool load_my_data(cJSON* day, cJSON* bookmarks, cJSON* results) {
     return true;
 }
 
-bool load_data() {
-    if (!load_file(day1_path, &data_day1, &size_day1)) {
+static bool load_data() {
+    if (!load_file(TAG, day1_path, &data_day1, &size_day1)) {
         ESP_LOGE(TAG, "Failed to read agenda file: %s", day1_path);
         render_message("Failed to read agenda. 🅰 to retry.");
         display_flush();
         return false;
     }
 
-    if (!load_file(day2_path, &data_day2, &size_day2)) {
+    if (!load_file(TAG, day2_path, &data_day2, &size_day2)) {
         ESP_LOGE(TAG, "Failed to read agenda file: %s", day2_path);
         render_message("Failed to read agenda. 🅰 to retry.");
         display_flush();
         return false;
     }
 
-    if (!load_file(my_agenda_path, &data_my, &size_my)) {
+    if (!load_file(TAG, my_agenda_path, &data_my, &size_my)) {
         ESP_LOGE(TAG, "Failed to read agenda file: %s", my_agenda_path);
         render_message("Failed to read agenda. 🅰 to retry.");
         display_flush();
@@ -870,21 +826,7 @@ bool load_data() {
     return true;
 }
 
-bool rename_or_replace(const char* old, const char* new) {
-    if (access(new, F_OK) == 0) {
-        ESP_LOGD(TAG, "Destination file exists, deleting...");
-        // File exists, try to delete
-        if (remove(new) != 0) {
-            ESP_LOGD(TAG, "Destination file could not be deleted");
-            // Deleting failed
-            return false;
-        }
-    }
-
-    return rename(old, new) != 0;
-}
-
-bool update_agenda(xQueueHandle button_queue, bool force) {
+static bool update_agenda(xQueueHandle button_queue, bool force) {
     render_message("Updating agenda...");
     display_flush();
 
@@ -895,7 +837,7 @@ bool update_agenda(xQueueHandle button_queue, bool force) {
         return false;
     }
 
-    unsigned long last_update;
+    unsigned long last_update = 0;
     if (!need_update(&last_update) && !force) {
         ESP_LOGI(TAG, "No update needed");
         wifi_disconnect_and_disable();
@@ -929,7 +871,7 @@ bool update_agenda(xQueueHandle button_queue, bool force) {
 
 
 
-    if (rename_or_replace(day1_path_tmp,day1_path)) {
+    if (rename_or_replace(TAG, day1_path_tmp,day1_path)) {
         ESP_LOGE(TAG, "Failed to rename %s to %s", day1_path_tmp, day1_path);
         render_message("Failed to store file");
         display_flush();
@@ -938,7 +880,7 @@ bool update_agenda(xQueueHandle button_queue, bool force) {
         return true;
     }
 
-    if (rename_or_replace(day2_path_tmp, day2_path)) {
+    if (rename_or_replace(TAG, day2_path_tmp, day2_path)) {
         ESP_LOGE(TAG, "Failed to rename %s to %s", day2_path_tmp, day2_path);
         render_message("Failed to store file");
         display_flush();
@@ -963,7 +905,7 @@ bool update_agenda(xQueueHandle button_queue, bool force) {
     return true;
 }
 
-cJSON* get_current_day() {
+static cJSON* get_current_day() {
     time_t now;
     struct tm timeinfo;
     time(&now);
@@ -979,7 +921,7 @@ cJSON* get_current_day() {
     return NULL;
 }
 
-bool try_update_or_load(xQueueHandle button_queue, bool first_attempt) {
+static bool try_update_or_load(xQueueHandle button_queue, bool first_attempt) {
     if (update_agenda(button_queue, !first_attempt)) {
         return true;
     }

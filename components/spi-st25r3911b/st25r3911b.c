@@ -22,6 +22,7 @@
 #include "st25r3911.h"
 #include "st25r3911_com.h"
 #include "st25r3911b_global.h"
+#include "rfal_platform.h"
 
 static const char *TAG = "st25r3911b";
 
@@ -30,6 +31,15 @@ static uint8_t NFCID3[] = {0x01, 0xFE, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
 static uint8_t GB[] = {0x46, 0x66, 0x6d, 0x01, 0x01, 0x11, 0x02, 0x02, 0x07, 0x80, 0x03, 0x02, 0x00, 0x03, 0x04, 0x01, 0x32, 0x07, 0x01, 0x03};
 
 #define NFC_LOG_SPI 0
+
+/* 4-byte UIDs with first byte 0x08 would need random number for the subsequent 3 bytes.
+ * 4-byte UIDs with first byte 0x*F are Fixed number, not unique, use for this demo
+ * 7-byte UIDs need a manufacturer ID and need to assure uniqueness of the rest.*/
+static uint8_t ceNFCA_NFCID[]     = {0x5F, 'S', 'T', 'M'};    /* =_STM, 5F 53 54 4D NFCID1 / UID (4 bytes) */
+static uint8_t ceNFCA_SENS_RES[]  = {0x02, 0x00};             /* SENS_RES / ATQA for 4-byte UID            */
+static uint8_t ceNFCA_SEL_RES     = 0x20;                     /* SEL_RES / SAK                             */
+
+static uint8_t              rawMessageBuf[MAX_NFC_BUFFER_SIZE];
 
 #define MAX_HEX_STR_LENGTH 64
 char hexStr[MAX_HEX_STR_LENGTH * 2];
@@ -100,7 +110,7 @@ esp_err_t st25r3911b_rxtx(ST25R3911B *device, const uint8_t* tx, const uint8_t* 
     return res;
 }
 
-bool st25r3911b_get_discovery_prams(rfalNfcDiscoverParam * discParam) {
+bool st25r3911b_get_discovery_prams(rfalNfcDiscoverParam * discParam, st25r3911b_discover_mode discover_mode) {
     if (discParam == NULL) {
         return false;
     }
@@ -117,63 +127,28 @@ bool st25r3911b_get_discovery_prams(rfalNfcDiscoverParam * discParam) {
     discParam->notifyCb             = NULL;
     discParam->totalDuration        = 1000U;
     discParam->techs2Find           = RFAL_NFC_TECH_NONE;          /* For the demo, enable the NFC Technologies based on RFAL Feature switches */
-
-
-#if RFAL_FEATURE_NFCA
     discParam->techs2Find          |= RFAL_NFC_POLL_TECH_A;
-#endif /* RFAL_FEATURE_NFCA */
 
-#if RFAL_FEATURE_NFCB
-    discParam->techs2Find          |= RFAL_NFC_POLL_TECH_B;
-#endif /* RFAL_FEATURE_NFCB */
+    switch (discover_mode) {
+        case DISCOVER_MODE_LISTEN_NFCA:
+            discParam->techs2Find          |= RFAL_NFC_POLL_TECH_A;
+            break;
+        case DISCOVER_MODE_P2P_ACTIVE:
+            discParam->techs2Find |= RFAL_NFC_POLL_TECH_AP2P;
+            break;
+        case DISCOVER_MODE_P2P_PASSIVE:
+            discParam->techs2Find |= RFAL_NFC_LISTEN_TECH_AP2P;
+            break;
+    }
 
-#if RFAL_FEATURE_NFCF
-    discParam->techs2Find          |= RFAL_NFC_POLL_TECH_F;
-#endif /* RFAL_FEATURE_NFCF */
-
-#if RFAL_FEATURE_NFCV
-    discParam->techs2Find          |= RFAL_NFC_POLL_TECH_V;
-#endif /* RFAL_FEATURE_NFCV */
-
-#if RFAL_FEATURE_ST25TB
-    discParam->techs2Find          |= RFAL_NFC_POLL_TECH_ST25TB;
-#endif /* RFAL_FEATURE_ST25TB */
-
-#if RFAL_SUPPORT_MODE_POLL_ACTIVE_P2P && RFAL_FEATURE_NFC_DEP
-    discParam->techs2Find |= RFAL_NFC_POLL_TECH_AP2P;
-#endif /* RFAL_SUPPORT_MODE_POLL_ACTIVE_P2P && RFAL_FEATURE_NFC_DEP */
-
-#if RFAL_SUPPORT_MODE_LISTEN_ACTIVE_P2P && RFAL_FEATURE_NFC_DEP && RFAL_FEATURE_LISTEN_MODE
-    discParam->techs2Find |= RFAL_NFC_LISTEN_TECH_AP2P;
-#endif /* RFAL_SUPPORT_MODE_LISTEN_ACTIVE_P2P && RFAL_FEATURE_NFC_DEP && RFAL_FEATURE_LISTEN_MODE */
-
-#if RFAL_SUPPORT_CE && RFAL_FEATURE_LISTEN_MODE
-
-#if RFAL_SUPPORT_MODE_LISTEN_NFCA
-    /* Set configuration for NFC-A CE */
-    ST_MEMCPY( discParam->lmConfigPA.SENS_RES, ceNFCA_SENS_RES, RFAL_LM_SENS_RES_LEN );     /* Set SENS_RES / ATQA */
-    ST_MEMCPY( discParam->lmConfigPA.nfcid, ceNFCA_NFCID, RFAL_LM_NFCID_LEN_04 );           /* Set NFCID / UID */
-    discParam->lmConfigPA.nfcidLen = RFAL_LM_NFCID_LEN_04;                                  /* Set NFCID length to 7 bytes */
-    discParam->lmConfigPA.SEL_RES  = ceNFCA_SEL_RES;                                        /* Set SEL_RES / SAK */
-
-    discParam->techs2Find |= RFAL_NFC_LISTEN_TECH_A;
-#endif /* RFAL_SUPPORT_MODE_LISTEN_NFCA */
-
-#if RFAL_SUPPORT_MODE_LISTEN_NFCF
-    /* Set configuration for NFC-F CE */
-    ST_MEMCPY( discParam->lmConfigPF.SC, ceNFCF_SC, RFAL_LM_SENSF_SC_LEN );                 /* Set System Code */
-    ST_MEMCPY( &ceNFCF_SENSF_RES[RFAL_NFCF_CMD_LEN], ceNFCF_nfcid2, RFAL_NFCID2_LEN );     /* Load NFCID2 on SENSF_RES */
-    ST_MEMCPY( discParam->lmConfigPF.SENSF_RES, ceNFCF_SENSF_RES, RFAL_LM_SENSF_RES_LEN );  /* Set SENSF_RES / Poll Response */
-
-    discParam->techs2Find |= RFAL_NFC_LISTEN_TECH_F;
-#endif /* RFAL_SUPPORT_MODE_LISTEN_NFCF */
-#endif /* RFAL_SUPPORT_CE && RFAL_FEATURE_LISTEN_MODE */
     return true;
 }
 
-esp_err_t st25r3911b_discover(rfalNfcDevice *nfcDevice, uint32_t timeout_ms) {
+esp_err_t st25r3911b_discover(NfcDeviceCallback callback, uint32_t timeout_ms, st25r3911b_discover_mode discover_mode) {
+    rfalNfcDevice nfcDevice = {0};
+    rfalNfcDevice* pNfcDevice = &nfcDevice;
     rfalNfcDiscoverParam discParam;
-    st25r3911b_get_discovery_prams(&discParam);
+    st25r3911b_get_discovery_prams(&discParam, discover_mode);
 
     ReturnCode err = rfalNfcDiscover( &discParam );
     if( err != RFAL_ERR_NONE ) {
@@ -185,21 +160,460 @@ esp_err_t st25r3911b_discover(rfalNfcDevice *nfcDevice, uint32_t timeout_ms) {
 
     while(esp_timer_get_time() / 1000 < end) {
         rfalNfcWorker();
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+//        vTaskDelay(10 / portTICK_PERIOD_MS);
 
         if (rfalNfcIsDevActivated(rfalNfcGetState())) {
-            rfalNfcGetActiveDevice( &nfcDevice );
-            vTaskDelay(50 / portTICK_PERIOD_MS);
+            rfalNfcGetActiveDevice( &pNfcDevice );
+//            vTaskDelay(50 / portTICK_PERIOD_MS);
 
-            ESP_LOGD(TAG, "Discovered NFC device type=%d, uid=%s", nfcDevice->type, hex2Str(nfcDevice->nfcid, nfcDevice->nfcidLen ));
+            ESP_LOGI(TAG, "Discovered NFC device type=%d, uid=%s", pNfcDevice->type, hex2Str(pNfcDevice->nfcid, pNfcDevice->nfcidLen ));
+
+            esp_err_t res = callback == NULL ? ESP_OK : callback(pNfcDevice);
             rfalNfcDeactivate( RFAL_NFC_DEACTIVATE_IDLE );
-
-            return ESP_OK;
+            return res;
         }
     }
 
     rfalNfcDeactivate( RFAL_NFC_DEACTIVATE_IDLE );
     return ESP_ERR_TIMEOUT;
+}
+
+static esp_err_t st25r3911b_activate_p2p(bool isActive, rfalNfcDepDevice *nfcDepDev) {
+    rfalNfcDepAtrParam nfcDepParams;
+
+    nfcDepParams.nfcid     = NFCID3;
+    nfcDepParams.nfcidLen  = RFAL_NFCDEP_NFCID3_LEN;
+    nfcDepParams.BS        = RFAL_NFCDEP_Bx_NO_HIGH_BR;
+#define ESP_BR BR
+#undef BR
+    nfcDepParams.BR        = RFAL_NFCDEP_Bx_NO_HIGH_BR;
+#define BR ESP_BR
+#undef ESP_BR
+    nfcDepParams.LR        = RFAL_NFCDEP_LR_254;
+    nfcDepParams.DID       = RFAL_NFCDEP_DID_NO;
+    nfcDepParams.NAD       = RFAL_NFCDEP_NAD_NO;
+    nfcDepParams.GBLen     = sizeof(GB);
+    nfcDepParams.GB        = GB;
+    nfcDepParams.commMode  = ((isActive) ? RFAL_NFCDEP_COMM_ACTIVE : RFAL_NFCDEP_COMM_PASSIVE);
+    nfcDepParams.operParam = (RFAL_NFCDEP_OPER_FULL_MI_EN | RFAL_NFCDEP_OPER_EMPTY_DEP_DIS | RFAL_NFCDEP_OPER_ATN_EN | RFAL_NFCDEP_OPER_RTOX_REQ_EN);
+
+    /* Initialize NFC-DEP protocol layer */
+    rfalNfcDepInitialize();
+
+    /* Handle NFC-DEP Activation (ATR_REQ and PSL_REQ if applicable) */
+    return rfalNfcDepInitiatorHandleActivation( &nfcDepParams, RFAL_BR_424, nfcDepDev );
+}
+
+esp_err_t st25r3911b_p2p_active(rfalNfcDepDevice *nfcDepDev) {
+    ReturnCode res;
+
+    res = rfalSetMode(RFAL_MODE_POLL_ACTIVE_P2P, RFAL_BR_424, RFAL_BR_424);
+    if (res != RFAL_ERR_NONE) {
+        ESP_LOGE(TAG, "Failed to set mode: %d", res);
+        return ESP_FAIL;
+    }
+
+    rfalSetErrorHandling(RFAL_ERRORHANDLING_EMD);
+    rfalSetFDTListen(RFAL_FDT_LISTEN_AP2P_POLLER);
+    rfalSetFDTPoll(RFAL_TIMING_NONE);
+
+    rfalSetGT( RFAL_GT_AP2P_ADJUSTED );
+    res = rfalFieldOnAndStartGT();
+    if (res != RFAL_ERR_NONE) {
+        ESP_LOGE(TAG, "Failed to turn field on: %d", res);
+        return ESP_FAIL;
+    }
+
+    res = st25r3911b_activate_p2p(true, nfcDepDev);
+    if (res == RFAL_ERR_NONE) {
+        ESP_LOGI(TAG, "Discovered NFC device uid=%s", hex2Str(nfcDepDev->activation.Target.ATR_RES.NFCID3, RFAL_NFCDEP_NFCID3_LEN));
+    }
+
+    rfalFieldOff();
+    return res;
+}
+
+esp_err_t st25r3911b_poll_active_p2p(uint32_t timeout_ms) {
+    rfalFieldOff();
+    rfalWakeUpModeStop();
+    vTaskDelay(pdMS_TO_TICKS(300));
+
+    int64_t end = esp_timer_get_time() / 1000 + timeout_ms;
+
+    rfalWakeUpModeStart(NULL);
+
+    bool wokeup = false;
+
+    while(esp_timer_get_time() / 1000 < end) {
+        if(rfalWakeUpModeHasWoke()) {
+            /* If awake, go directly to Poll */
+            rfalWakeUpModeStop();
+            wokeup = true;
+            break;
+        }
+    }
+
+    if (!wokeup) {
+        return ESP_ERR_TIMEOUT;
+    }
+
+    ESP_LOGI(TAG, "wakeup complete");
+
+    ReturnCode res;
+    rfalNfcDepDevice nfcDepDev;
+    while(esp_timer_get_time() / 1000 < end) {
+        res = st25r3911b_p2p_active(&nfcDepDev);
+        if (res == ESP_OK) {
+            return res;
+        }
+        vTaskDelay(pdMS_TO_TICKS(40));
+    }
+    return ESP_ERR_TIMEOUT;
+}
+
+static esp_err_t st25r3911b_listen_nfca() {
+    ReturnCode        err;
+    bool              found = false;
+    uint8_t           devIt = 0;
+    rfalNfcaSensRes   sensRes;
+    rfalIsoDepDevice  isoDepDev;                                         /* ISO-DEP Device details                          */
+    rfalNfcDepDevice  nfcDepDev;                                         /* NFC-DEP Device details                          */
+
+    rfalNfcaPollerInitialize();   /* Initialize for NFC-A */
+    rfalFieldOnAndStartGT();      /* Turns the Field On if not already and start GT timer */
+
+    err = rfalNfcaPollerTechnologyDetection( RFAL_COMPLIANCE_MODE_NFC, &sensRes );
+    if(err == ERR_NONE)
+    {
+        rfalNfcaListenDevice nfcaDevList[1];
+        uint8_t                   devCnt;
+
+        err = rfalNfcaPollerFullCollisionResolution( RFAL_COMPLIANCE_MODE_NFC, 1, nfcaDevList, &devCnt);
+
+        if ( (err == ERR_NONE) && (devCnt > 0) )
+        {
+            found = true;
+            devIt = 0;
+
+            platformLedOn(PLATFORM_LED_A_PORT, PLATFORM_LED_A_PIN);
+
+            /* Check if it is Topaz aka T1T */
+            if( nfcaDevList[devIt].type == RFAL_NFCA_T1T )
+            {
+                /********************************************/
+                /* NFC-A T1T card found                     */
+                /* NFCID/UID is contained in: t1tRidRes.uid */
+                platformLog("ISO14443A/Topaz (NFC-A T1T) TAG found. UID: %s\r\n", hex2Str(nfcaDevList[devIt].ridRes.uid, RFAL_T1T_UID_LEN));
+            }
+            else
+            {
+                /*********************************************/
+                /* NFC-A device found                        */
+                /* NFCID/UID is contained in: nfcaDev.nfcId1 */
+                platformLog("ISO14443A/NFC-A card found. UID: %s\r\n", hex2Str(nfcaDevList[0].nfcId1, nfcaDevList[0].nfcId1Len));
+            }
+
+
+            /* Check if device supports P2P/NFC-DEP */
+            if( (nfcaDevList[devIt].type == RFAL_NFCA_NFCDEP) || (nfcaDevList[devIt].type == RFAL_NFCA_T4T_NFCDEP))
+            {
+                /* Continue with P2P Activation .... */
+
+                err = st25r3911b_activate_p2p(false, &nfcDepDev );
+                if (err == ERR_NONE)
+                {
+                    /*********************************************/
+                    /* Passive P2P device activated              */
+                    platformLog("NFCA Passive P2P device found. NFCID: %s\r\n", hex2Str(nfcDepDev.activation.Target.ATR_RES.NFCID3, RFAL_NFCDEP_NFCID3_LEN));
+
+                    /* Send an URI record */
+//                    demoSendNdefUri();
+                }
+            }
+            /* Check if device supports ISO14443-4/ISO-DEP */
+            else if (nfcaDevList[devIt].type == RFAL_NFCA_T4T)
+            {
+                /* Activate the ISO14443-4 / ISO-DEP layer */
+
+                rfalIsoDepInitialize();
+                err = rfalIsoDepPollAHandleActivation((rfalIsoDepFSxI)RFAL_ISODEP_FSDI_DEFAULT, RFAL_ISODEP_NO_DID, RFAL_BR_424, &isoDepDev);
+                if( err == ERR_NONE )
+                {
+                    platformLog("ISO14443-4/ISO-DEP layer activated. \r\n");
+
+                    /* Exchange APDUs */
+//                    demoSendAPDUs();
+                }
+            }
+        }
+    }
+    return ESP_OK;
+}
+
+#define DEMO_BUF_LEN 255
+static rfalNfcDepBufFormat      nfcDepRxBuf;                                /* NFC-DEP Rx buffer format (with header/prologue) */
+static uint8_t                  rxBuf[DEMO_BUF_LEN];                        /* Generic buffer abstraction                      */
+static uint16_t           gRxLen;
+static bool               gIsRxChaining; /*!< Received data is not complete   */
+static rfalNfcDepDevice   gNfcDepDev;    /*!< NFC-DEP device info             */
+
+static bool handle_listen(uint8_t *state, rfalLmState *lmSt, rfalBitRate *bitRate, bool *dataFlag, uint8_t *hdrLen) {
+    switch(*state){
+        case 0:
+            *lmSt = rfalListenGetState( dataFlag, bitRate );         /* Check if Initator has sent some data */
+            if( (*lmSt != RFAL_LM_STATE_IDLE)) {
+                break;
+            }
+            ESP_LOGI(TAG, "RFAL_LM_STATE_IDLE: dataFlag=%d, bitRate=%d", *dataFlag, *bitRate);
+            if (!*dataFlag) {
+                break;
+            }
+            *state = *state + 1;
+        case 1:
+            /* SB Byte only in NFC-A */
+            if (*bitRate == RFAL_BR_106) {
+                *hdrLen += RFAL_NFCDEP_SB_LEN;
+            }
+            ESP_LOGI(TAG, "Using %d as hdrLen", *hdrLen);
+            *state = *state + 1;
+        case 2:
+            ESP_LOGI(TAG, "%s", hex2Str(rxBuf, rfalConvBitsToBytes(gRxLen)));
+            if(!rfalNfcDepIsAtrReq( &rxBuf[*hdrLen], (rfalConvBitsToBytes(gRxLen) - *hdrLen), NULL ) ) {
+                ESP_LOGI(TAG, "not rfalNfcDepIsAtrReq: len=%d", rfalConvBitsToBytes(gRxLen));
+                break;
+            }
+            rfalNfcDepTargetParam      param;
+            rfalNfcDepListenActvParam  rxParam;
+
+            rfalListenSetState((RFAL_BR_106 == *bitRate) ? RFAL_LM_STATE_TARGET_A : RFAL_LM_STATE_TARGET_F);
+            rfalSetMode( RFAL_MODE_LISTEN_ACTIVE_P2P, *bitRate, *bitRate);
+
+            platformLog(" Activated as AP2P listener device \r\n" );
+
+            memcpy(param.nfcid3, NFCID3, RFAL_NFCDEP_NFCID3_LEN);
+            param.bst = RFAL_NFCDEP_Bx_NO_HIGH_BR;
+            param.brt = RFAL_NFCDEP_Bx_NO_HIGH_BR;
+            param.to = RFAL_NFCDEP_WT_TRG_MAX_D11;
+            param.ppt = (RFAL_NFCDEP_LR_254 << RFAL_NFCDEP_PP_LR_SHIFT);
+            param.GBtLen = 0;
+            param.operParam = (RFAL_NFCDEP_OPER_FULL_MI_DIS | RFAL_NFCDEP_OPER_EMPTY_DEP_EN | RFAL_NFCDEP_OPER_ATN_EN | RFAL_NFCDEP_OPER_RTOX_REQ_EN);
+            param.commMode = RFAL_NFCDEP_COMM_ACTIVE;
+
+            rxParam.rxBuf        = &nfcDepRxBuf;
+            rxParam.rxLen        = &gRxLen;
+            rxParam.isRxChaining = &gIsRxChaining;
+            rxParam.nfcDepDev    = &gNfcDepDev;
+
+            ReturnCode     res;
+
+            /* ATR_REQ received, trigger NFC-DEP layer to handle activation (sends ATR_RES and handles PSL_REQ)  */
+            res = rfalNfcDepListenStartActivation( &param, &rxBuf[*hdrLen], (rfalConvBitsToBytes(gRxLen) - *hdrLen), rxParam );
+            if(res != RFAL_ERR_NONE) {
+                ESP_LOGE(TAG, "rfalNfcDepListenStartActivation: %d", res);
+                return false;
+            }
+
+            *state = *state + 1;
+        case 3:
+            res = rfalNfcDepListenGetActivationStatus();
+            if( res == RFAL_ERR_BUSY ){
+                break;
+            }
+
+            if (res != RFAL_ERR_NONE) {
+                ESP_LOGE(TAG, "rfalNfcDepListenGetActivationStatus: %d", res);
+                return false;
+            }
+
+            *state = *state + 1;
+        case 4:
+            res = rfalNfcDepGetTransceiveStatus();
+            if( res == RFAL_ERR_BUSY ){
+                break;
+            }
+            if( res != RFAL_ERR_NONE ){
+                ESP_LOGE(TAG, "rfalNfcDepGetTransceiveStatus: %d", res);
+                return false;
+            }
+
+            rfalNfcDepTxRxParam rfalNfcDepTxRx;
+
+            platformLog(" Received %d bytes of data: %s\r\n", gRxLen, hex2Str((uint8_t*)nfcDepRxBuf.inf, gRxLen) );
+
+            /* Loop/Send back the same data that has been received */
+            rfalNfcDepTxRx.txBuf        = &nfcDepRxBuf;
+            rfalNfcDepTxRx.txBufLen     = gRxLen;
+            rfalNfcDepTxRx.rxBuf        = &nfcDepRxBuf;
+            rfalNfcDepTxRx.rxLen        = &gRxLen;
+            rfalNfcDepTxRx.DID          = RFAL_NFCDEP_DID_NO;
+            rfalNfcDepTxRx.FSx          = rfalNfcDepLR2FS( rfalNfcDepPP2LR( gNfcDepDev.activation.Initiator.ATR_REQ.PPi ) );
+            rfalNfcDepTxRx.FWT          = gNfcDepDev.info.FWT;
+            rfalNfcDepTxRx.dFWT         = gNfcDepDev.info.dFWT;
+            rfalNfcDepTxRx.isRxChaining = &gIsRxChaining;
+            rfalNfcDepTxRx.isTxChaining = gIsRxChaining;
+
+            res = rfalNfcDepStartTransceive( &rfalNfcDepTxRx );
+            if (res != RFAL_ERR_NONE) {
+                ESP_LOGE(TAG, "rfalNfcDepStartTransceive: %d", res);
+                return false;
+            }
+    }
+    return true;
+}
+
+esp_err_t st25r3911b_listen_p2p(uint32_t timeout_ms) {
+    ReturnCode     res;
+    bool           dataFlag;
+    rfalLmState    lmSt;
+    rfalBitRate    bitRate;
+    uint8_t        hdrLen = RFAL_NFCDEP_LEN_LEN;
+
+    rfalFieldOff();
+    res = rfalListenStart( RFAL_LM_MASK_ACTIVE_P2P, NULL, NULL, NULL, rxBuf, DEMO_BUF_LEN, &gRxLen );
+    if (res != RFAL_ERR_NONE) {
+        ESP_LOGE(TAG, "failed to start listening: %d", res);
+        rfalFieldOff();
+        return ESP_FAIL;
+    }
+
+    uint8_t state = 0;
+
+    int64_t end = esp_timer_get_time() / 1000 + timeout_ms;
+    while(esp_timer_get_time() / 1000 < end) {
+        rfalWorker();
+        if (!handle_listen(&state, &lmSt, &bitRate, &dataFlag, &hdrLen)) {
+            res = ESP_FAIL;
+            break;
+        }
+    }
+
+    rfalListenStop();
+    rfalFieldOff();
+    return res == RFAL_ERR_NONE ? ESP_ERR_TIMEOUT : res;
+}
+
+esp_err_t st25r3911b_read_data(rfalNfcDevice *nfcDevice, ndefConstBuffer* bufConstRawMessage) {
+    if (nfcDevice == NULL) {
+        ESP_LOGE(TAG, "No NFC device given");
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (nfcDevice->type != RFAL_NFC_LISTEN_TYPE_NFCA) {
+        ESP_LOGE(TAG, "Invalid NFC device type: %d", nfcDevice->type);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    ndefContext      ndefCtx;
+    uint32_t         rawMessageLen;
+    ndefInfo         info;
+
+    /*
+     * Perform NDEF Context Initialization
+     */
+    ReturnCode err = ndefPollerContextInitialization(&ndefCtx, nfcDevice);
+    if( err != RFAL_ERR_NONE ) {
+        ESP_LOGE(TAG, "context init failed: %d", err);
+        return ESP_FAIL;
+    }
+    /*
+     * Perform NDEF Detect procedure
+     */
+    err = ndefPollerNdefDetect(&ndefCtx, &info);
+    if(err != RFAL_ERR_NONE) {
+        ESP_LOGE(TAG, "NFC tag not found");
+        return ESP_FAIL;
+    }
+
+    err = ndefPollerReadRawMessage(&ndefCtx, rawMessageBuf, sizeof(rawMessageBuf), &rawMessageLen, true);
+    if(err != RFAL_ERR_NONE) {
+        return ESP_FAIL;
+    }
+    bufConstRawMessage->buffer = rawMessageBuf;
+    bufConstRawMessage->length = rawMessageLen;
+
+    //    err = ndefMessageDecode(&bufConstRawMessage, &message);
+    //    if (err != RFAL_ERR_NONE) {
+    //        return ESP_FAIL;
+    //    }
+
+    ESP_LOGI(TAG, "found message with length %d", rawMessageLen);
+
+    //    err = ndefMessageDump(&message, verbose);
+    //    if (err != RFAL_ERR_NONE) {
+    //        return ESP_FAIL;
+    //    }
+
+    rfalNfcaPollerSleep();
+    return ESP_OK;
+}
+
+static ReturnCode transceiveBlocking(uint8_t *txBuf, uint16_t txBufSize, uint8_t **rxData, uint16_t **rcvLen, uint32_t fwt) {
+    ReturnCode err;
+
+    err = rfalNfcDataExchangeStart(txBuf, txBufSize, rxData, rcvLen, fwt);
+    if (err == RFAL_ERR_NONE) {
+        do {
+            rfalNfcWorker();
+            err = rfalNfcDataExchangeGetStatus();
+        } while(err == RFAL_ERR_BUSY);
+    }
+    return err;
+}
+
+esp_err_t st25r3911b_p2p_listen(rfalNfcDevice *nfcDevice, ndefConstBuffer* bufConstRawMessage) {
+    if (nfcDevice == NULL) {
+        ESP_LOGE(TAG, "No NFC device given");
+        return ESP_ERR_INVALID_ARG;
+    }
+    //                    case RFAL_NFC_LISTEN_TYPE_AP2P:
+    //                    case RFAL_NFC_POLL_TYPE_AP2P:
+    if (nfcDevice->type != RFAL_NFC_POLL_TYPE_NFCA) {
+        ESP_LOGE(TAG, "Invalid NFC device type: %d", nfcDevice->type);
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (nfcDevice->rfInterface != RFAL_NFC_INTERFACE_NFCDEP) {
+        ESP_LOGE(TAG, "NFC DEP not supported: %d", nfcDevice->rfInterface);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+//
+//
+//    ReturnCode err = RFAL_ERR_INTERNAL;
+//    uint8_t *rxData;
+//    uint16_t *rcvLen;
+//    uint8_t  txBuf[150];
+//    uint16_t txLen;
+//
+//    do
+//    {
+//        rfalNfcWorker();
+//
+//        switch( rfalNfcGetState() )
+//        {
+//            case RFAL_NFC_STATE_ACTIVATED:
+//                err = transceiveBlocking( NULL, 0, &rxData, &rcvLen, 0);
+//                break;
+//
+//            case RFAL_NFC_STATE_DATAEXCHANGE:
+//            case RFAL_NFC_STATE_DATAEXCHANGE_DONE:
+//
+//                txLen = demoCeT4T( rxData, *rcvLen, txBuf, sizeof(txBuf) );
+//                err   = transceiveBlocking( txBuf, txLen, &rxData, &rcvLen, RFAL_FWT_NONE );
+//                break;
+//
+//            case RFAL_NFC_STATE_START_DISCOVERY:
+//                return ESP_OK;
+//
+//            case RFAL_NFC_STATE_LISTEN_SLEEP:
+//            default:
+//                break;
+//        }
+//    }
+//    while( (err == RFAL_ERR_NONE) || (err == RFAL_ERR_SLEEP_REQ) );
+//    if (err != RFAL_ERR_NONE) {
+//        ESP_LOGE(TAG, "Failed to write to NFC device: %d", err);
+//        return ESP_FAIL;
+//    }
+    return ESP_OK;
 }
 
 esp_err_t st25r3911b_test() {
@@ -228,7 +642,6 @@ esp_err_t st25r3911b_test() {
             ESP_LOGE(TAG, "Currently unknown silicon rev. 0x%02x", id);
             return ESP_FAIL;
     }
-    static rfalNfcDevice *nfcDevice;
 
     return ESP_OK;
 }

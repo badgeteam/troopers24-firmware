@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "agenda.h"
+#include "contacts.h"
 #include "app_update.h"
 #include "bootscreen.h"
 #include "dev.h"
@@ -68,7 +69,8 @@ typedef enum action {
     ACTION_OTA,
     ACTION_SAO,
     ACTION_ID,
-    ACTION_AGENDA
+    ACTION_AGENDA,
+    ACTION_CONTACTS,
 } menu_start_action_t;
 
 void render_background(pax_buf_t* pax_buffer, const char* text) {
@@ -83,7 +85,7 @@ void render_background(pax_buf_t* pax_buffer, const char* text) {
 
 void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deepsleep) {
     // TODO: Debugging
-    menu_agenda(button_queue);
+    menu_contacts(button_queue);
 
     if (wakeup_deepsleep) {
         show_nametag(button_queue);
@@ -212,6 +214,8 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
                 menu_id(button_queue);
             } else if (action == ACTION_AGENDA) {
                 menu_agenda(button_queue);
+            } else if (action == ACTION_CONTACTS) {
+                menu_contacts(button_queue);
             }
             action      = ACTION_NONE;
             render      = true;

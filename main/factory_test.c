@@ -178,13 +178,12 @@ bool test_nfc_read_uid(uint32_t* rc) {
         return false;
     }
 
-    rfalNfcDevice nfcDevice = {0};
     bool found = false;
     int tries = 30;
     int remaining =  tries;
 
     while (!found && remaining-- > 0) {
-        esp_err_t res = st25r3911b_discover(&nfcDevice, 1000);
+        esp_err_t res = st25r3911b_discover(NULL, 1000, DISCOVER_MODE_LISTEN_NFCA);
         if (res == ESP_ERR_TIMEOUT) {
             continue;
         }
@@ -192,6 +191,8 @@ bool test_nfc_read_uid(uint32_t* rc) {
             found = true;
         }
     }
+
+
 
     *rc = (uint32_t) tries - remaining;
     return (found == true);
@@ -231,7 +232,7 @@ uint8_t led_red[NUM_LEDS*3]   = {0};
 uint8_t led_blue[NUM_LEDS*3]  = {0};
 uint8_t led_white[NUM_LEDS*3]  = {0};
 
-_Noreturn void factory_test() {
+void factory_test() {
     for (int i = 0; i < NUM_LEDS; i++) {
         led_green[3*i] = 50;
         led_green[3*i+1] = 0;
@@ -252,54 +253,53 @@ _Noreturn void factory_test() {
 
     pax_buf_t* pax_buffer        = get_pax_buffer();
     uint8_t    factory_test_done = nvs_get_u8_default("system", "factory_test", 0);
-    if (!factory_test_done) {
-        st77xx_backlight(true);
-        bool result;
+    ESP_LOGI(TAG, "factory_test_done %d", factory_test_done);
 
-        ESP_LOGI(TAG, "Factory test start");
+    if (factory_test_done > 0) {
+        return;
+    }
 
-        result = run_basic_tests();
+    st77xx_backlight(true);
+    bool result;
 
-        if (result) {
-            ws2812_send_data(led_blue, sizeof(led_blue));
-        } else {
+    ESP_LOGI(TAG, "Factory test start");
+
+    result = run_basic_tests();
+
+    if (result) {
+        ws2812_send_data(led_blue, sizeof(led_blue));
+    } else {
+        ws2812_send_data(led_red, sizeof(led_red));
+    }
+
+    if (result) {
+        esp_err_t res = nvs_set_u8_fixed("system", "factory_test", 0x01);
+        if (res != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to store test result %d\n", res);
+            result = false;
             ws2812_send_data(led_red, sizeof(led_red));
-        }
-
-        if (!result) goto test_end;
-
-    // Wait for the operator to unplug the badge
-    test_end:
-
-        if (result) {
-            esp_err_t res = nvs_set_u8_fixed("system", "factory_test", 0x01);
-            if (res != ESP_OK) {
-                ESP_LOGE(TAG, "Failed to store test result %d\n", res);
-                result = false;
-                ws2812_send_data(led_red, sizeof(led_red));
-                pax_noclip(pax_buffer);
-                pax_background(pax_buffer, 0xa85a32);
-                display_flush();
-            }
-            wifi_set_defaults();
             pax_noclip(pax_buffer);
-            pax_background(pax_buffer, 0x00FF00);
+            pax_background(pax_buffer, 0xa85a32);
             display_flush();
-            ws2812_send_data(led_green, sizeof(led_green));
-
-            ESP_LOGI(TAG, "Make sure the speaker is NOT muted and a sound is playing");
-            pax_draw_text(pax_buffer, 0xffff0000, pax_font_sky_mono, 36, 0, 20, "SUCCESS!");
-            pax_draw_text(pax_buffer, 0xffff0000, pax_font_sky_mono, 16, 0, 56, "Does the speaker work?");
-            display_flush();
-
-            while (true) {
-                play_bootsound();
-                vTaskDelay(2000 / portTICK_PERIOD_MS);
-            }
         }
+        wifi_set_defaults();
+        pax_noclip(pax_buffer);
+        pax_background(pax_buffer, 0x00FF00);
+        display_flush();
+        ws2812_send_data(led_green, sizeof(led_green));
+
+        ESP_LOGI(TAG, "Make sure the speaker is NOT muted and a sound is playing");
+        pax_draw_text(pax_buffer, 0xffff0000, pax_font_sky_mono, 36, 0, 20, "SUCCESS!");
+        pax_draw_text(pax_buffer, 0xffff0000, pax_font_sky_mono, 16, 0, 56, "Does the speaker work?");
+        display_flush();
 
         while (true) {
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            play_bootsound();
+            vTaskDelay(2000 / portTICK_PERIOD_MS);
         }
+    }
+
+    while (true) {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
