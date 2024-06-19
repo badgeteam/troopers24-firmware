@@ -11,17 +11,18 @@
 #include "ntp_helper.h"
 #include "pax_codecs.h"
 #include "pax_gfx.h"
+#include "rtc_wdt.h"
 #include "system_wrapper.h"
 #include "utils.h"
 #include "wifi_connect.h"
-#include "rtc_wdt.h"
+#include "qrcodegen.h"
 
 static const char* TAG = "contacts";
 
 static const char* self_path        = "/internal/apps/contacts/self.json";
 static const char* database_path    = "/internal/apps/contacts/db.json";
 
-static const char* DEFAULT_SELF = "{\"name\": null, \"tel\": null, \"email\": null, \"url\": null, \"nick\": null}";
+static const char* DEFAULT_SELF = "{\"id\": 0, \"name\": null, \"tel\": null, \"email\": null, \"url\": null, \"nick\": null}";
 static const char* DEFAULT_DATABASE = "{}";
 
 char VCARD[MAX_NFC_BUFFER_SIZE];
@@ -305,6 +306,13 @@ static bool load_data() {
         cJSON_AddStringToObject(json_self, "name", name);
     }
 
+    // Always overwrite with badge_id
+    if (cJSON_HasObjectItem(json_self, "id")) {
+        cJSON_SetIntValue(cJSON_GetObjectItem(json_self, "id"), badge_id());
+    } else {
+        cJSON_AddNumberToObject(json_self, "id", badge_id());
+    }
+
     ESP_LOGI(TAG, "%s", cJSON_Print(json_self));
 
     if (json_db != NULL) {
@@ -330,7 +338,14 @@ static void append_str(char **dst, char *src, size_t len) {
 
 static void add_if_not_null(char **dst, const char *prefix, const char *key, size_t maxLen) {
     cJSON* elem = cJSON_GetObjectItem(json_self, key);
-    char* str = cJSON_GetStringValue(elem);
+    char* str = NULL;
+    if (cJSON_IsNumber(elem)) {
+        char buf[4];
+        sprintf(buf, "%d", ((uint16_t) cJSON_GetNumberValue(elem)) % 999);
+        str = buf;
+    } else {
+        str = cJSON_GetStringValue(elem);
+    }
     if (str == NULL) {
         return;
     }
@@ -350,18 +365,53 @@ static void create_vcard(size_t *len) {
     memset(VCARD, 0, MAX_NFC_BUFFER_SIZE);
     char* current = VCARD;
 
-    append_str(&current, "jtext/vcardBEGIN:VCARD\n", 23);
+//    append_str(&current, "jtext/vcard", 11);
+    append_str(&current, "BEGIN:VCARD\n", 12);
     append_str(&current, "VERSION:3.0", 11);
 
+    add_if_not_null(&current, "\nUID:", "id", 3);
     add_if_not_null(&current, "\nFN:", "name", 64);
     add_if_not_null(&current, "\nTEL:", "tel", 32);
     add_if_not_null(&current, "\nEMAIL:", "email", 128);
-    add_if_not_null(&current, "\nURL:", "url", 250);
+    add_if_not_null(&current, "\nURL:", "url", 242);
 
     append_str(&current, "\nEND:VCARD\n", 11);
 
-    // maximum: 23 + 11 + 11 + 4 + 64 + 5 + 32 + 7 + 128 + 5 + 250 = 540 bytes
-    *len = current - VCARD;
+    // maximum without header: 12 + 11 + 11 + 5 + 3 + 4 + 64 + 5 + 32 + 7 + 128 + 5 + 242 = 529 bytes
+    // maximum:           11 + 12 + 11 + 11 + 5 + 3 + 4 + 64 + 5 + 32 + 7 + 128 + 5 + 242 = 540 bytes
+    if (len != NULL) {
+        *len = current - VCARD;
+    }
+}
+
+static esp_err_t show_qr_code(char *text) {
+    enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW;  // Error correction level
+
+    // Make and print the QR Code symbol
+    uint8_t qrcode[qrcodegen_BUFFER_LEN_MAX];
+    uint8_t tempBuffer[qrcodegen_BUFFER_LEN_MAX];
+    bool ok = qrcodegen_encodeText(text, tempBuffer, qrcode, errCorLvl, qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX, qrcodegen_Mask_AUTO, true);
+    if (!ok) {
+        return ESP_FAIL;
+    }
+
+    int size = qrcodegen_getSize(qrcode);
+
+    int maxWidth = ST77XX_WIDTH;
+    int maxHeight = ST77XX_HEIGHT - 34 - 20;
+    int pixelSize = MIN(maxWidth / size, maxHeight / size);
+    int dx = (maxWidth - pixelSize * size) / 2;
+    int dy = 34 + (maxHeight - pixelSize * size) / 2;
+
+    int y, x;
+    for (y = 0; y < size; y++) {
+        for (x = 0; x < size; x++) {
+            pax_draw_rect(get_pax_buffer(), qrcodegen_getModule(qrcode, x, y) ? 0xFFFFFFFF : 0xFF131313, dx + x * pixelSize, dy + y * pixelSize, pixelSize, pixelSize);
+        }
+    }
+    display_flush();
+
+    return ESP_OK;
 }
 
 static esp_err_t handle_device(rfalNfcDevice *nfcDevice) {
@@ -496,6 +546,9 @@ void menu_contacts(xQueueHandle button_queue) {
         wait_for_button();
         return;
     }
+
+    create_vcard(NULL);
+    show_qr_code(VCARD);
 
 //    read_nfc();
     passive_p2p();
