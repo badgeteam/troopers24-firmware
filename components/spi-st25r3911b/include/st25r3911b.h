@@ -49,8 +49,12 @@ typedef esp_err_t (*NfcDeviceCallback)(rfalNfcDevice *nfcDevice);
 esp_err_t st25r3911b_init(ST25R3911B * device);
 esp_err_t st25r3911b_chip_id(uint8_t *id);
 esp_err_t st25r3911b_discover(NfcDeviceCallback callback, uint32_t timeout_ms, st25r3911b_discover_mode discover_mode);
+esp_err_t st25r3911b_p2p_transceiveBlocking(uint32_t timeout_ms, uint8_t *txBuf, uint16_t txBufSize, uint8_t **rxData, uint16_t **rcvLen, uint32_t fwt);
+esp_err_t st25r3911b_p2p_transmitBlocking(uint32_t timeout_ms, uint8_t *txBuf, uint16_t txBufSize);
+esp_err_t st25r3911b_p2p_receiveBlocking(uint32_t timeout_ms, uint8_t **rxData, uint16_t **rcvLen);
 esp_err_t st25r3911b_read_data(rfalNfcDevice *nfcDevice, ndefConstBuffer* bufConstRawMessage);
 esp_err_t st25r3911b_poll_active_p2p(uint32_t timeout_ms);
 esp_err_t st25r3911b_listen_p2p(uint32_t timeout_ms);
+
 
 esp_err_t st25r3911b_rxtx(ST25R3911B *device, const uint8_t* tx, const uint8_t* rx, uint8_t length);

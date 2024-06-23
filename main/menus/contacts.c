@@ -38,9 +38,16 @@ extern const uint8_t bookmark_png_end[] asm("_binary_bookmark_png_end");
 
 typedef enum action {
     ACTION_NONE,
-    ACTION_EDIT_SELF,
+    ACTION_EDIT,
+    ACTION_QRCODE,
     ACTION_SHARE,
     ACTION_IMPORT,
+    // Edit Self
+    ACTION_EDIT_NAME,
+    ACTION_EDIT_TEL,
+    ACTION_EDIT_EMAIL,
+    ACTION_EDIT_URL,
+    ACTION_EDIT_NICK,
 } menu_contacts_action_t;
 
 #define MIN(a, b) ((a < b) ? a : b)
@@ -53,26 +60,12 @@ static char*  data_db = NULL;
 static size_t size_db = 0;
 static cJSON* json_db = NULL;
 
-static void agenda_render_background(pax_buf_t* pax_buffer) {
+static void render_background(pax_buf_t* pax_buffer, const char* text) {
     const pax_font_t* font = pax_font_saira_regular;
     pax_background(pax_buffer, 0xFF1E1E1E);
     pax_noclip(pax_buffer);
     pax_simple_rect(pax_buffer, 0xff131313, 0, 220, 320, 20);
-    pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, "🅰 Accept 🅱 Exit");
-}
-
-static void details_render_background(pax_buf_t* pax_buffer, bool tracks, bool days) {
-    const pax_font_t* font = pax_font_saira_regular;
-    pax_background(pax_buffer, 0xFF1E1E1E);
-    pax_noclip(pax_buffer);
-    pax_simple_rect(pax_buffer, 0xff131313, 0, 220, 320, 20);
-    if (tracks) {
-        pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, "🅱 Back  ← → Track 🅴 Bookmark");
-    } else if (days) {
-        pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, "🅱 Back  ← → Day 🅴 Bookmark");
-    } else {
-        pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, "🅱 Back 🅴 Bookmark");
-    }
+    pax_draw_text(pax_buffer, 0xffffffff, font, 18, 5, 240 - 18, text);
 }
 
 static void render_topbar(pax_buf_t* pax_buffer, pax_buf_t* icon, const char* text) {
@@ -80,153 +73,6 @@ static void render_topbar(pax_buf_t* pax_buffer, pax_buf_t* icon, const char* te
     pax_simple_rect(pax_buffer, 0xff131313, 0, 0, 320, 34);
     pax_draw_image(pax_buffer, icon, 1, 1);
     pax_draw_text(pax_buffer, 0xFFF1AA13, font, 18, 34, 8, text);
-}
-
-static void details_day(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* data, cJSON* my_day, cJSON* bookmarks, pax_buf_t* icon_top, pax_buf_t* icon_bookmarked) {
-//    int track = 0;
-//    cJSON* tracks = cJSON_GetObjectItem(data, "tracks");
-//    int track_count = cJSON_GetArraySize(tracks);
-//    if (track_count == 0) {
-//        render_message("No tracks found");
-//        display_flush();
-//        wait_for_button();
-//        return;
-//    }
-//
-//    bool render = true;
-//    bool exit = false;
-//
-//    int    talk         = 0;
-//    int    render_talks = 3;
-//    int slot_height = 62;
-//    int talk_count;
-//    keyboard_input_message_t buttonMessage = {0};
-//
-//    cJSON* talks = cJSON_GetObjectItem(cJSON_GetArrayItem(tracks, track), "talks");
-//    cJSON* talk_data;
-//
-//    while(!exit) {
-//        if (render) {
-//            talk_count = render_track(pax_buffer, icon_top, icon_bookmarked, tracks, track, talk, render_talks, slot_height);
-//            render = false;
-//        }
-//
-//        clear_keyboard_queue();
-//        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
-//            if (buttonMessage.state) {
-//                switch (buttonMessage.input) {
-//                    case JOYSTICK_DOWN:
-//                        talk = (talk + 1) % talk_count;
-//                        render = true;
-//                        break;
-//                    case JOYSTICK_UP:
-//                        talk = (talk - 1 + talk_count) % talk_count;
-//                        render = true;
-//                        break;
-//                    case JOYSTICK_LEFT:
-//                        track = (track - 1 + track_count) % track_count;
-//                        // TODO: Do we need to reset the talk?
-//                        // talk = 0;
-//                        render = true;
-//                        break;
-//                    case JOYSTICK_RIGHT:
-//                        track = (track + 1) % track_count;
-//                        // TODO: Do we need to reset the talk?
-//                        // talk = 0;
-//                        render = true;
-//                        break;
-//                    case BUTTON_BACK:
-//                        exit = true;
-//                        break;
-//                    case BUTTON_SELECT:
-//                    case JOYSTICK_PUSH:
-//                        talk_data = cJSON_GetArrayItem(talks, talk);
-//                        if (cJSON_IsTrue(cJSON_GetObjectItem(talk_data, "special"))) {
-//                            // Don't allow adding breaks to bookmarks
-//                            break;
-//                        }
-//                        toggle_bookmark(cJSON_GetArrayItem(tracks, track), talk_data, my_day, bookmarks);
-//                        render = true;
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//        }
-//    }
-}
-
-static void my_agenda(pax_buf_t* pax_buffer, xQueueHandle button_queue, cJSON* day1, cJSON* day2, pax_buf_t* icon) {
-    return;
-//    if (day1 == NULL || day2 == NULL) {
-//        render_message("No talks found");
-//        display_flush();
-//        wait_for_button();
-//        return;
-//    }
-//
-//    bool render = true;
-//    bool exit = false;
-//
-//    int days = 2;
-//    int day = 0;
-//    int    talk         = 0;
-//    int    render_talks = 3;
-//    int slot_height = 62;
-//    int talk_count;
-//    keyboard_input_message_t buttonMessage = {0};
-//
-//
-//    cJSON* data = day1;
-//    cJSON* talk_data;
-//    cJSON* my_day;
-//    cJSON* bookmarks;
-//
-//    while(!exit) {
-//        if (render) {
-//            talk_count = render_bookmarks(pax_buffer, icon, data, day, talk, render_talks, slot_height);
-//            render = false;
-//        }
-//
-//        clear_keyboard_queue();
-//        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
-//            if (buttonMessage.state) {
-//                switch (buttonMessage.input) {
-//                    case JOYSTICK_DOWN:
-//                        talk = (talk + 1) % talk_count;
-//                        render = true;
-//                        break;
-//                    case JOYSTICK_UP:
-//                        talk = (talk - 1 + talk_count) % talk_count;
-//                        render = true;
-//                        break;
-//                    case JOYSTICK_LEFT:
-//                        day = (day - 1 + days) % days;
-//                        data = day == 0 ? day1 : day2;
-//                        render = true;
-//                        break;
-//                    case JOYSTICK_RIGHT:
-//                        day = (day + 1) % days;
-//                        data = day == 0 ? day1 : day2;
-//                        render = true;
-//                        break;
-//                    case BUTTON_SELECT:
-//                    case JOYSTICK_PUSH:
-//                        talk_data = cJSON_GetArrayItem(data, talk % talk_count);
-//                        my_day = cJSON_GetObjectItem(json_my, (day == 0) ? "day1" : "day2");
-//                        bookmarks = (day == 0) ? json_my_day1 : json_my_day2;
-//                        toggle_bookmark(cJSON_GetObjectItem(talk_data, "track"), cJSON_GetObjectItem(talk_data, "talk"), my_day, bookmarks);
-//                        render = true;
-//                        break;
-//                    case BUTTON_BACK:
-//                        exit = true;
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//        }
-//    }
 }
 
 static uint find_correct_position(cJSON* contacts, long id) {
@@ -373,12 +219,12 @@ static void create_vcard(size_t *len) {
     add_if_not_null(&current, "\nFN:", "name", 64);
     add_if_not_null(&current, "\nTEL:", "tel", 32);
     add_if_not_null(&current, "\nEMAIL:", "email", 128);
-    add_if_not_null(&current, "\nURL:", "url", 242);
+    add_if_not_null(&current, "\nURL:", "url", 128);
 
     append_str(&current, "\nEND:VCARD\n", 11);
 
-    // maximum without header: 12 + 11 + 11 + 5 + 3 + 4 + 64 + 5 + 32 + 7 + 128 + 5 + 242 = 529 bytes
-    // maximum:           11 + 12 + 11 + 11 + 5 + 3 + 4 + 64 + 5 + 32 + 7 + 128 + 5 + 242 = 540 bytes
+    // maximum without header: 12 + 11 + 11 + 5 + 3 + 4 + 64 + 5 + 32 + 7 + 128 + 5 + 128 = 415 bytes
+    // maximum:           11 + 12 + 11 + 11 + 5 + 3 + 4 + 64 + 5 + 32 + 7 + 128 + 5 + 128 = 426 bytes
     if (len != NULL) {
         *len = current - VCARD;
     }
@@ -428,20 +274,32 @@ static esp_err_t handle_device(rfalNfcDevice *nfcDevice) {
     return ESP_OK;
 }
 
-static esp_err_t handle_device_p2p(rfalNfcDevice *nfcDevice) {
-    ESP_LOGI(TAG, "Found NFC device");
+static esp_err_t handle_device_p2p_write(__attribute__((unused)) rfalNfcDevice *nfcDevice) {
+    ESP_LOGI(TAG, "Found NFC device. I'm the INITIATOR. Sending data");
 
+    char* info = cJSON_PrintUnformatted(json_self);
 
-
-    ndefConstBuffer bufConstRawMessage;
-
-    esp_err_t res = st25r3911b_read_data(nfcDevice, &bufConstRawMessage);
+    esp_err_t res = st25r3911b_p2p_transmitBlocking(1000, (uint8_t*) info, strlen(info));
     if (res != ESP_OK) {
-        ESP_LOGE(TAG, "failed to read data: %d", res);
+        ESP_LOGE(TAG, "failed to send data: %d", res);
+        return res;
+    }
+    return ESP_OK;
+}
+
+static esp_err_t handle_device_p2p_read(__attribute__((unused)) rfalNfcDevice *nfcDevice) {
+    ESP_LOGI(TAG, "Found NFC device. I'm the INITIATOR. Sending data");
+    // Max is 401+1 bytes {"id":999,"name":"1234567890123456789012345678901234567890123456789012345678901234","tel":"12345678901234567890123456789012","email":"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678","url":"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678"}
+    uint16_t   *rxLen;
+    uint8_t    *rxData;
+
+    esp_err_t res = st25r3911b_p2p_receiveBlocking(1000, &rxData, &rxLen);
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "failed to send data: %d", res);
         return res;
     }
 
-    printf("%.*s\n", bufConstRawMessage.length, bufConstRawMessage.buffer);
+    printf("%.*s\n", *rxLen, rxData);
     return ESP_OK;
 }
 
@@ -501,7 +359,7 @@ static void p2p_active() {
     clear_keyboard_queue();
     ESP_LOGI(TAG, "Waiting for NFC P2P connection as PASSIVE");
     while (1) {
-        res = st25r3911b_discover(&handle_device_p2p, 1000, DISCOVER_MODE_P2P_ACTIVE);
+        res = st25r3911b_poll_active_p2p(1000);
         if (res == ESP_ERR_TIMEOUT) {
             ESP_LOGI(TAG, "Retrying...");
             rtc_wdt_feed();
@@ -514,48 +372,43 @@ static void p2p_active() {
             break;
         }
     }
-
-    size_t len;
-    create_vcard(&len);
-    ESP_LOGI(TAG, "VCARD with len %d:\n%.*s\n", len, len, VCARD);
 }
 
-void menu_contacts(xQueueHandle button_queue) {
-    pax_buf_t* pax_buffer = get_pax_buffer();
+static bool p2p_passive2() {
+    esp_err_t res;
 
-    pax_noclip(pax_buffer);
-    pax_background(pax_buffer, 0xFF131313);
-
-    // Ensure directory exists
-    if (!create_dir("/internal/apps")) {
-        ESP_LOGE(TAG, "Failed to create directory in internal storage");
-        render_message("Failed to create data dir");
-        display_flush();
-        wait_for_button();
-        return;
+    clear_keyboard_queue();
+    ESP_LOGI(TAG, "Waiting for NFC P2P connection as TARGET");
+    while (1) {
+        res = st25r3911b_discover(&handle_device_p2p_read, 1000, DISCOVER_MODE_P2P_PASSIVE);
+        if (res == ESP_ERR_TIMEOUT && !key_was_pressed(BUTTON_BACK)) {
+            ESP_LOGI(TAG, "Retrying...");
+            rtc_wdt_feed();
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+            continue;
+        }
+        return res == ESP_OK;
     }
-    if (!create_dir("/internal/apps/contacts")) {
-        ESP_LOGE(TAG, "Failed to create directory in internal storage");
-        render_message("Failed to create data dir");
-        display_flush();
-        wait_for_button();
-        return;
+}
+
+static bool p2p_active2() {
+    esp_err_t res;
+
+    clear_keyboard_queue();
+    ESP_LOGI(TAG, "Waiting for NFC P2P connection as INITIATOR");
+    while (1) {
+        res = st25r3911b_discover(&handle_device_p2p_write, 1000, DISCOVER_MODE_P2P_ACTIVE);
+        if (res == ESP_ERR_TIMEOUT && !key_was_pressed(BUTTON_BACK)) {
+            ESP_LOGI(TAG, "Retrying...");
+            rtc_wdt_feed();
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+            continue;
+        }
+        return res == ESP_OK;
     }
+}
 
-    if (!load_data()) {
-        wait_for_button();
-        return;
-    }
-
-    create_vcard(NULL);
-    show_qr_code(VCARD);
-
-//    read_nfc();
-    passive_p2p();
-//    p2p_active();
-
-    menu_t*    menu       = menu_alloc("TROOPERS24 - Agenda", 34, 18);
-
+static void configure_menu(menu_t* menu) {
     menu->fgColor           = 0xFFF1AA13;
     menu->bgColor           = 0xFF131313;
     menu->bgTextColor       = 0xFF000000;
@@ -565,31 +418,27 @@ void menu_contacts(xQueueHandle button_queue) {
     menu->titleBgColor      = 0xFF1E1E1E;
     menu->scrollbarBgColor  = 0xFFCCCCCC;
     menu->scrollbarFgColor  = 0xFF555555;
+}
 
-    pax_buf_t icon_agenda;
-    pax_decode_png_buf(&icon_agenda, (void*) agenda_png_start, agenda_png_end - agenda_png_start, PAX_BUF_32_8888ARGB, 0);
-    pax_buf_t icon_clock;
-    pax_decode_png_buf(&icon_clock, (void*) clock_png_start, clock_png_end - clock_png_start, PAX_BUF_32_8888ARGB, 0);
-    pax_buf_t icon_bookmark;
-    pax_decode_png_buf(&icon_bookmark, (void*) bookmark_png_start, bookmark_png_end - bookmark_png_start, PAX_BUF_32_8888ARGB, 0);
-
-    menu_set_icon(menu, &icon_agenda);
-//    menu_insert_item_icon(menu, "Bookmarks", NULL, (void*) ACTION_MY_AGENDA, -1, &icon_bookmark);
-//    if (ntp_synced) {
-//        menu_insert_item_icon(menu, "Next up", NULL, (void*) ACTION_NEXT_UP, -1, &icon_clock);
-//    }
-//    menu_insert_item_icon(menu, "Wednesday", NULL, (void*) ACTION_WEDNESDAY, -1, &icon_agenda);
-//    menu_insert_item_icon(menu, "Thursday", NULL, (void*) ACTION_THURSDAY, -1, &icon_agenda);
+static void edit_self(pax_buf_t* pax_buffer, xQueueHandle button_queue, pax_buf_t* icon) {
+    menu_t*    menu       = menu_alloc("TROOPERS24 - Agenda", 34, 18);
+    configure_menu(menu);
 
     bool                render = true;
     menu_contacts_action_t action = ACTION_NONE;
+
+    menu_set_icon(menu, icon);
+    menu_insert_item_icon(menu, "Name", NULL, (void*) ACTION_EDIT_NAME, -1, icon);
+    menu_insert_item_icon(menu, "Telephone", NULL, (void*) ACTION_EDIT_TEL, -1, icon);
+    menu_insert_item_icon(menu, "Email", NULL, (void*) ACTION_EDIT_EMAIL, -1, icon);
+    menu_insert_item_icon(menu, "Website", NULL, (void*) ACTION_EDIT_URL, -1, icon);
 
     bool full_redraw = true;
     bool exit = false;
     while (!exit) {
         if (render) {
             if (full_redraw) {
-                agenda_render_background(pax_buffer);
+                render_background(pax_buffer, "🅰 Accept 🅱 Exit");
             }
 
             if (full_redraw) {
@@ -641,15 +490,195 @@ void menu_contacts(xQueueHandle button_queue) {
         }
 
         if (action != ACTION_NONE) {
-//            if (action == ACTION_NEXT_UP) {
-//                details_upcoming(pax_buffer, get_current_day(), &icon_clock);
-//            } else if (action == ACTION_MY_AGENDA) {
-//                my_agenda(pax_buffer, button_queue, json_my_day1, json_my_day2, &icon_bookmark);
-//            } else if (action == ACTION_WEDNESDAY) {
-//                details_day(pax_buffer, button_queue, json_day1, cJSON_GetObjectItem(json_my, "day1"), json_my_day1, &icon_agenda, &icon_bookmark);
-//            } else if (action == ACTION_THURSDAY) {
-//                details_day(pax_buffer, button_queue, json_day2, cJSON_GetObjectItem(json_my, "day2"), json_my_day2, &icon_agenda, &icon_bookmark);
-//            }
+            char data[243] = {0};
+            int maxLen = 0;
+            char* key;
+            char* title = NULL;
+            pkb_keyboard_t board = PKB_LOWERCASE;
+
+            switch (action) {
+                case ACTION_EDIT_NAME:
+                    maxLen = 64;
+                    title = "Change Name";
+                    key = "name";
+                    break;
+                case ACTION_EDIT_TEL:
+                    maxLen = 32;
+                    title = "Change Telephone";
+                    key = "tel";
+                    board = PKB_NUMBERS;
+                    break;
+                case ACTION_EDIT_EMAIL:
+                    maxLen = 128;
+                    title = "Change Email";
+                    key = "name";
+                    break;
+                case ACTION_EDIT_URL:
+                    maxLen = 242;
+                    title = "Change Website";
+                    key = "url";
+                    break;
+                default:
+                    break;
+            }
+            if (title != NULL) {
+                char* current = cJSON_GetStringValue(cJSON_GetObjectItem(json_self, key));
+                if (current != NULL) {
+                    memcpy(data, current, strlen(current));
+                }
+
+                bool accepted =
+                    keyboard_mode(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, title, "🆂 Cancel  🅴 Mode  🅱 Delete", data, maxLen, board);
+
+                if (accepted) {
+                    ESP_LOGI(TAG, "Setting %s to %s", key, data);
+                    cJSON_SetValuestring(cJSON_GetObjectItem(json_self, key), data);
+                }
+            }
+            action      = ACTION_NONE;
+            render      = true;
+            full_redraw = true;
+        }
+    }
+
+    menu_free(menu);
+}
+
+static void show_self(pax_buf_t* pax_buffer, pax_buf_t* icon) {
+    render_background(pax_buffer, "🅱 Exit");
+    render_topbar(pax_buffer, icon, "Share vCard");
+    create_vcard(NULL);
+    show_qr_code(VCARD);
+
+    wait_for_button();
+}
+
+void menu_contacts(xQueueHandle button_queue) {
+    pax_buf_t* pax_buffer = get_pax_buffer();
+
+    pax_noclip(pax_buffer);
+    pax_background(pax_buffer, 0xFF131313);
+
+    // Ensure directory exists
+    if (!create_dir("/internal/apps")) {
+        ESP_LOGE(TAG, "Failed to create directory in internal storage");
+        render_message("Failed to create data dir");
+        display_flush();
+        wait_for_button();
+        return;
+    }
+    if (!create_dir("/internal/apps/contacts")) {
+        ESP_LOGE(TAG, "Failed to create directory in internal storage");
+        render_message("Failed to create data dir");
+        display_flush();
+        wait_for_button();
+        return;
+    }
+
+    if (!load_data()) {
+        wait_for_button();
+        return;
+    }
+
+
+//    read_nfc();
+//
+//    p2p_active();
+
+    menu_t*    menu       = menu_alloc("TROOPERS24 - Agenda", 34, 18);
+    configure_menu(menu);
+
+    pax_buf_t icon_agenda;
+    pax_decode_png_buf(&icon_agenda, (void*) agenda_png_start, agenda_png_end - agenda_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_clock;
+    pax_decode_png_buf(&icon_clock, (void*) clock_png_start, clock_png_end - clock_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_bookmark;
+    pax_decode_png_buf(&icon_bookmark, (void*) bookmark_png_start, bookmark_png_end - bookmark_png_start, PAX_BUF_32_8888ARGB, 0);
+
+    menu_set_icon(menu, &icon_agenda);
+    menu_insert_item_icon(menu, "Edit", NULL, (void*) ACTION_EDIT, -1, &icon_bookmark);
+    menu_insert_item_icon(menu, "Show QR code", NULL, (void*) ACTION_QRCODE, -1, &icon_bookmark);
+    menu_insert_item_icon(menu, "Share", NULL, (void*) ACTION_SHARE, -1, &icon_bookmark);
+    menu_insert_item_icon(menu, "Receive", NULL, (void*) ACTION_IMPORT, -1, &icon_bookmark);
+//    if (ntp_synced) {
+//        menu_insert_item_icon(menu, "Next up", NULL, (void*) ACTION_NEXT_UP, -1, &icon_clock);
+//    }
+//    menu_insert_item_icon(menu, "Wednesday", NULL, (void*) ACTION_WEDNESDAY, -1, &icon_agenda);
+//    menu_insert_item_icon(menu, "Thursday", NULL, (void*) ACTION_THURSDAY, -1, &icon_agenda);
+
+    bool                render = true;
+    menu_contacts_action_t action = ACTION_NONE;
+
+    bool full_redraw = true;
+    bool exit = false;
+    while (!exit) {
+        if (render) {
+            if (full_redraw) {
+                render_background(pax_buffer, "🅰 Accept 🅱 Exit");
+            }
+
+            if (full_redraw) {
+                menu_render_grid(pax_buffer, menu, 0, 0, 320, 220);
+                display_flush();
+            } else {
+                menu_render_grid_changes(pax_buffer, menu, 0, 0, 320, 220);
+                display_flush();
+            }
+
+            render      = false;
+            full_redraw = false;
+        }
+
+        clear_keyboard_queue();
+        keyboard_input_message_t buttonMessage = {0};
+        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
+            if (buttonMessage.state) {
+                switch (buttonMessage.input) {
+                    case JOYSTICK_DOWN:
+                        menu_navigate_next_row(menu);
+                        render = true;
+                        full_redraw = true;
+                        break;
+                    case JOYSTICK_UP:
+                        menu_navigate_previous_row(menu);
+                        render = true;
+                        full_redraw = true;
+                        break;
+                    case JOYSTICK_LEFT:
+                        menu_navigate_previous(menu);
+                        render = true;
+                        break;
+                    case JOYSTICK_RIGHT:
+                        menu_navigate_next(menu);
+                        render = true;
+                        break;
+                    case BUTTON_BACK:
+                        exit = true;
+                        break;
+                    case BUTTON_ACCEPT:
+                    case BUTTON_SELECT:
+                        action = (menu_contacts_action_t) menu_get_callback_args(menu, menu_get_position(menu));
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        if (action != ACTION_NONE) {
+            if (action == ACTION_EDIT) {
+                edit_self(pax_buffer, button_queue, &icon_clock);
+            } else if (action == ACTION_QRCODE) {
+                show_self(pax_buffer, &icon_bookmark);
+            } else if (action == ACTION_SHARE) {
+                if (p2p_active2()) {
+                    ESP_LOGI(TAG, "sent own info");
+                }
+            } else if (action == ACTION_IMPORT) {
+                if (p2p_passive2()) {
+                    ESP_LOGI(TAG, "received new entry");
+                }
+            }
             action      = ACTION_NONE;
             render      = true;
             full_redraw = true;

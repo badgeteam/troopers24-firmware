@@ -51,3 +51,6 @@
 [submodule "components/pax-keyboard"]
 	path = components/pax-keyboard
 	url = https://github.com/robotman2412/pax-keyboard.git
+[submodule "components/spi-st77xx"]
+	path = components/spi-st77xx
+	url = git@github.com:badgeteam/eps32-component-spi-st77xx.git

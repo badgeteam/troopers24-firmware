@@ -63,9 +63,9 @@ idf_component_register(
                 ${project_dir}/resources/icons/clock.png
                 ${project_dir}/resources/icons/bookmark.png
                 ${project_dir}/resources/id/id_shield.png
+                ${project_dir}/resources/id/id_15.png
+                ${project_dir}/resources/id/id_glass.png
+                ${project_dir}/resources/id/id_storytellers.png
                 ${project_dir}/resources/id/id_ernw.png
-                ${project_dir}/resources/id/id_fucss.png
-                ${project_dir}/resources/id/id_fishbowl.png
-                ${project_dir}/resources/id/id_badgeteam.png
                 ${project_dir}/resources/nametag.png
 )

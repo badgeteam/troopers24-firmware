@@ -8,6 +8,5 @@ idf_component_register(
         "pax-graphics"
         "pax-codecs"
         "pax-keyboard"
-        "spi-ili9341"
         "troopers24-bsp"
 )

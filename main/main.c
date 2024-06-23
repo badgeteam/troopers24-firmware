@@ -211,35 +211,15 @@ _Noreturn void app_main(void) {
 
     /* Initialize LCD screen */
     pax_buf_t* pax_buffer = get_pax_buffer();
+    pax_background(pax_buffer, 0xFF1E1E1E);
+    display_flush();
+
 #if DEBUG_BOOT == 0
     xTaskCreate(boot_animation_task, "boot_anim_task", 4096, NULL, 12, NULL);
 #endif
 
     /* Turning the backlight on */
-#ifdef TR23
-    gpio_config_t io_conf = {
-        .intr_type    = GPIO_INTR_DISABLE,
-        .mode         = GPIO_MODE_OUTPUT,
-        .pin_bit_mask = 1LL << GPIO_LCD_BL,
-        .pull_down_en = 0,
-        .pull_up_en   = 0,
-    };
-    res = gpio_config(&io_conf);
-    printf("set pin direction\n");
-    if (res != ESP_OK) {
-        ESP_LOGE(TAG, "LCD Backlight set_direction failed: %d", res);
-        display_fatal_error(fatal_error_str, "Failed to set LCD backlight pin mode", "Flash may be corrupted", reset_board_str);
-        stop();
-    }
-    res = gpio_set_level(GPIO_LCD_BL, true);
-    if (res != ESP_OK) {
-        ESP_LOGE(TAG, "LCD Backlight set_level failed: %d", res);
-        display_fatal_error(fatal_error_str, "Failed to turn on LCD backlight", "Flash may be corrupted", reset_board_str);
-        stop();
-    }
-#else
     st77xx_backlight(true);
-#endif
 
 #if DEBUG_BOOT == 0
     if (!wakeup_deepsleep) {

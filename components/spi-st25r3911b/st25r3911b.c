@@ -27,7 +27,8 @@
 static const char *TAG = "st25r3911b";
 
 /* P2P communication data */
-static uint8_t NFCID3[] = {0x01, 0xFE, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A};
+static uint8_t NFCID3_ACTIVE[] = {0x01, 0xFE, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A};
+static uint8_t NFCID3_PASSIVE[] = {0x01, 0xFE, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0B};
 static uint8_t GB[] = {0x46, 0x66, 0x6d, 0x01, 0x01, 0x11, 0x02, 0x02, 0x07, 0x80, 0x03, 0x02, 0x00, 0x03, 0x04, 0x01, 0x32, 0x07, 0x01, 0x03};
 
 #define NFC_LOG_SPI 0
@@ -119,7 +120,7 @@ bool st25r3911b_get_discovery_prams(rfalNfcDiscoverParam * discParam, st25r3911b
 
     discParam->devLimit      = 1U;
 
-    memcpy( discParam->nfcid3, NFCID3, sizeof(NFCID3) );
+    memcpy( discParam->nfcid3, NFCID3_PASSIVE, sizeof(NFCID3_PASSIVE) );
     memcpy( discParam->GB, GB, sizeof(GB) );
     discParam->GBLen         = sizeof(GB);
     discParam->p2pNfcaPrio   = true;
@@ -134,6 +135,7 @@ bool st25r3911b_get_discovery_prams(rfalNfcDiscoverParam * discParam, st25r3911b
             discParam->techs2Find          |= RFAL_NFC_POLL_TECH_A;
             break;
         case DISCOVER_MODE_P2P_ACTIVE:
+            memcpy( discParam->nfcid3, NFCID3_ACTIVE, sizeof(NFCID3_ACTIVE) );
             discParam->techs2Find |= RFAL_NFC_POLL_TECH_AP2P;
             break;
         case DISCOVER_MODE_P2P_PASSIVE:
@@ -178,10 +180,43 @@ esp_err_t st25r3911b_discover(NfcDeviceCallback callback, uint32_t timeout_ms, s
     return ESP_ERR_TIMEOUT;
 }
 
+esp_err_t st25r3911b_p2p_transceiveBlocking(uint32_t timeout_ms, uint8_t *txBuf, uint16_t txBufSize, uint8_t **rxData, uint16_t **rcvLen, uint32_t fwt) {
+    ReturnCode err;
+
+    int64_t end = esp_timer_get_time() / 1000 + timeout_ms;
+    err = rfalNfcDataExchangeStart( txBuf, txBufSize, rxData, rcvLen, fwt );
+    if (err != ERR_NONE) {
+        ESP_LOGE(TAG, "Failed to start data exchange: %d", err);
+        return ESP_FAIL;
+    }
+    do {
+        if (esp_timer_get_time() / 1000 > end) {
+            ESP_LOGE(TAG, "Timeout while transceiving");
+            return ESP_ERR_TIMEOUT;
+        }
+        rfalNfcWorker();
+        err = rfalNfcDataExchangeGetStatus();
+    } while( err == ERR_BUSY );
+    if (err != ERR_NONE) {
+        ESP_LOGE(TAG, "Failed to transmit data: %d", err);
+    }
+    return ESP_OK;
+}
+
+esp_err_t st25r3911b_p2p_transmitBlocking(uint32_t timeout_ms, uint8_t *txBuf, uint16_t txBufSize) {
+    uint16_t   *rxLen;
+    uint8_t    *rxData;
+    return st25r3911b_p2p_transceiveBlocking(timeout_ms, txBuf, txBufSize, &rxData, &rxLen, RFAL_FWT_NONE);
+}
+
+esp_err_t st25r3911b_p2p_receiveBlocking(uint32_t timeout_ms, uint8_t **rxData, uint16_t **rcvLen) {
+    return st25r3911b_p2p_transceiveBlocking(timeout_ms, NULL, 0, rxData, rcvLen, RFAL_FWT_NONE);
+}
+
 static esp_err_t st25r3911b_activate_p2p(bool isActive, rfalNfcDepDevice *nfcDepDev) {
     rfalNfcDepAtrParam nfcDepParams;
 
-    nfcDepParams.nfcid     = NFCID3;
+    nfcDepParams.nfcid     = isActive ? NFCID3_ACTIVE : NFCID3_PASSIVE;
     nfcDepParams.nfcidLen  = RFAL_NFCDEP_NFCID3_LEN;
     nfcDepParams.BS        = RFAL_NFCDEP_Bx_NO_HIGH_BR;
 #define ESP_BR BR
@@ -390,7 +425,7 @@ static bool handle_listen(uint8_t *state, rfalLmState *lmSt, rfalBitRate *bitRat
 
             platformLog(" Activated as AP2P listener device \r\n" );
 
-            memcpy(param.nfcid3, NFCID3, RFAL_NFCDEP_NFCID3_LEN);
+            memcpy(param.nfcid3, NFCID3_PASSIVE, RFAL_NFCDEP_NFCID3_LEN);
             param.bst = RFAL_NFCDEP_Bx_NO_HIGH_BR;
             param.brt = RFAL_NFCDEP_Bx_NO_HIGH_BR;
             param.to = RFAL_NFCDEP_WT_TRG_MAX_D11;

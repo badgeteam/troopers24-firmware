@@ -53,7 +53,7 @@ void edit_nickname(xQueueHandle button_queue) {
 
     clear_keyboard_queue();
     bool accepted =
-        keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "Nickname", "🆂 cancel  🅳 D 🅴 Select 🅱 delete", nickname, sizeof(nickname) - 1);
+        keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "Nickname", "🆂 Cancel  🅴 Mode  🅱 Delete", nickname, sizeof(nickname) - 1);
 
     if (accepted) {
         nvs_set_str(handle, "nickname", nickname);
@@ -135,6 +135,7 @@ static void place_in_sleep(xQueueHandle button_queue) {
     gpio_hold_en(GPIO_LCD_BL);
     ili9341_power_en(get_ili9341());
 #endif
+    // TODO: Power enable on sleep
     gpio_deep_sleep_hold_en();
     vTaskDelay(pdMS_TO_TICKS(100));
     esp_deep_sleep_start();
