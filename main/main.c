@@ -44,7 +44,7 @@
 #include "wifi_ota.h"
 #include "ws2812.h"
 
-#define DEBUG_BOOT 1
+#define DEBUG_BOOT 0
 
 extern const uint8_t logo_screen_png_start[] asm("_binary_logo_screen_png_start");
 extern const uint8_t logo_screen_png_end[] asm("_binary_logo_screen_png_end");
@@ -78,7 +78,7 @@ void stop() {
     }
 }
 
-const char* fatal_error_str = "A fatal error occured";
+const char* fatal_error_str = "A fatal error occurred";
 const char* reset_board_str = "Reset the board to try again";
 
 static xSemaphoreHandle boot_mutex;

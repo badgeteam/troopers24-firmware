@@ -16,7 +16,7 @@
 	branch = main
 [submodule "components/esp32-component-appfs"]
 	path = components/appfs
-	url = https://github.com/badgeteam/esp32-component-appfs.git
+	url = git@github.com:hnzlmnn/esp32-component-appfs.git
 	branch = master
 [submodule "components/ws2812"]
 	path = components/ws2812

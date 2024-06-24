@@ -27,18 +27,26 @@ static const char* DEFAULT_DATABASE = "{}";
 
 char VCARD[MAX_NFC_BUFFER_SIZE];
 
-extern const uint8_t agenda_png_start[] asm("_binary_calendar_png_start");
-extern const uint8_t agenda_png_end[] asm("_binary_calendar_png_end");
+extern const uint8_t edit_png_start[] asm("_binary_edit_png_start");
+extern const uint8_t edit_png_end[] asm("_binary_edit_png_end");
 
-extern const uint8_t clock_png_start[] asm("_binary_clock_png_start");
-extern const uint8_t clock_png_end[] asm("_binary_clock_png_end");
+extern const uint8_t badge_png_start[] asm("_binary_badge_png_start");
+extern const uint8_t badge_png_end[] asm("_binary_badge_png_end");
 
-extern const uint8_t bookmark_png_start[] asm("_binary_bookmark_png_start");
-extern const uint8_t bookmark_png_end[] asm("_binary_bookmark_png_end");
+extern const uint8_t addressbook_png_start[] asm("_binary_addressbook_png_start");
+extern const uint8_t addressbook_png_end[] asm("_binary_addressbook_png_end");
+
+extern const uint8_t share_png_start[] asm("_binary_share_png_start");
+extern const uint8_t share_png_end[] asm("_binary_share_png_end");
+
+extern const uint8_t receive_png_start[] asm("_binary_receive_png_start");
+extern const uint8_t receive_png_end[] asm("_binary_receive_png_end");
+
 
 typedef enum action {
     ACTION_NONE,
     ACTION_EDIT,
+    ACTION_LIST,
     ACTION_QRCODE,
     ACTION_SHARE,
     ACTION_IMPORT,
@@ -83,6 +91,34 @@ static uint find_correct_position(cJSON* contacts, long id) {
         next = next->next;
     }
     return i;
+}
+
+static bool save(cJSON* data, const char* filename) {
+    if (data == NULL) {
+        return false;
+    }
+    char* repr = cJSON_PrintUnformatted(data);
+
+    FILE* fd = fopen(self_path, "w");
+    if (fd == NULL) {
+        ESP_LOGE(TAG, "Failed to open %s for writing", filename);
+        return false;
+    }
+
+    ESP_LOGI(TAG, "Saving: %s", repr);
+
+    fwrite(repr, 1, strlen(repr), fd);
+    fclose(fd);
+
+    return true;
+}
+
+static bool save_self() {
+    return save(json_self, self_path);
+}
+
+static bool save_db() {
+    return save(json_db, database_path);
 }
 
 static bool do_init() {
@@ -288,7 +324,7 @@ static esp_err_t handle_device_p2p_write(__attribute__((unused)) rfalNfcDevice *
 }
 
 static esp_err_t handle_device_p2p_read(__attribute__((unused)) rfalNfcDevice *nfcDevice) {
-    ESP_LOGI(TAG, "Found NFC device. I'm the INITIATOR. Sending data");
+    ESP_LOGI(TAG, "Found NFC device. I'm the TARGET. Reading data");
     // Max is 401+1 bytes {"id":999,"name":"1234567890123456789012345678901234567890123456789012345678901234","tel":"12345678901234567890123456789012","email":"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678","url":"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678"}
     uint16_t   *rxLen;
     uint8_t    *rxData;
@@ -299,8 +335,30 @@ static esp_err_t handle_device_p2p_read(__attribute__((unused)) rfalNfcDevice *n
         return res;
     }
 
-    printf("%.*s\n", *rxLen, rxData);
-    return ESP_OK;
+    cJSON* received = cJSON_ParseWithLength((char*) rxData, *rxLen);
+    if (received == NULL
+        || !cJSON_HasObjectItem(received, "id")
+        || !cJSON_IsNumber(cJSON_GetObjectItem(received, "id"))
+        || !cJSON_HasObjectItem(received, "name")
+        || !cJSON_HasObjectItem(received, "tel")
+        || !cJSON_HasObjectItem(received, "email")
+        || !cJSON_HasObjectItem(received, "url")
+        ) {
+        ESP_LOGE(TAG, "Received invalid data: %.*s", *rxLen, rxData);
+        return ESP_FAIL;
+    }
+
+    uint16_t id = (uint16_t) cJSON_GetNumberValue(cJSON_GetObjectItem(received, "id"));
+    char id_str[6];
+    itoa(id, id_str, 10);
+
+    if (cJSON_HasObjectItem(json_db, id_str)) {
+        cJSON_DeleteItemFromObject(json_db, id_str);
+    }
+
+    cJSON_AddItemToObject(json_db, id_str, received);
+
+    return save_db() ? ESP_OK : ESP_FAIL;
 }
 
 static void read_nfc() {
@@ -374,8 +432,11 @@ static void p2p_active() {
     }
 }
 
-static bool p2p_passive2() {
+static bool p2p_passive2(pax_buf_t* pax_buffer, pax_buf_t* icon) {
     esp_err_t res;
+    render_background(pax_buffer, "🅱 Abort");
+    render_topbar(pax_buffer, icon, "Importing contact");
+    display_flush();
 
     clear_keyboard_queue();
     ESP_LOGI(TAG, "Waiting for NFC P2P connection as TARGET");
@@ -391,8 +452,11 @@ static bool p2p_passive2() {
     }
 }
 
-static bool p2p_active2() {
+static bool p2p_active2(pax_buf_t* pax_buffer, pax_buf_t* icon) {
     esp_err_t res;
+    render_background(pax_buffer, "🅱 Abort");
+    render_topbar(pax_buffer, icon, "Sharing own information");
+    display_flush();
 
     clear_keyboard_queue();
     ESP_LOGI(TAG, "Waiting for NFC P2P connection as INITIATOR");
@@ -511,7 +575,7 @@ static void edit_self(pax_buf_t* pax_buffer, xQueueHandle button_queue, pax_buf_
                 case ACTION_EDIT_EMAIL:
                     maxLen = 128;
                     title = "Change Email";
-                    key = "name";
+                    key = "email";
                     break;
                 case ACTION_EDIT_URL:
                     maxLen = 242;
@@ -532,7 +596,11 @@ static void edit_self(pax_buf_t* pax_buffer, xQueueHandle button_queue, pax_buf_
 
                 if (accepted) {
                     ESP_LOGI(TAG, "Setting %s to %s", key, data);
-                    cJSON_SetValuestring(cJSON_GetObjectItem(json_self, key), data);
+                    if (cJSON_HasObjectItem(json_self, key)) {
+                        cJSON_DeleteItemFromObject(json_self, key);
+                    }
+                    cJSON_AddStringToObject(json_self, key, data);
+                    save_self();
                 }
             }
             action      = ACTION_NONE;
@@ -551,6 +619,73 @@ static void show_self(pax_buf_t* pax_buffer, pax_buf_t* icon) {
     show_qr_code(VCARD);
 
     wait_for_button();
+}
+
+static void render_entry(int height, int y, bool highlighted) {
+
+}
+
+static void show_list(pax_buf_t* pax_buffer, xQueueHandle button_queue, pax_buf_t* icon) {
+    render_background(pax_buffer, "🅱 Exit");
+    render_topbar(pax_buffer, icon, "Addressbook");
+
+    int height = 28;
+    int rows = 8;
+    int offset = 0;
+    int cursor = 0;
+    int i;
+
+    int len = cJSON_GetArraySize(json_db);
+
+    keyboard_input_message_t buttonMessage = {0};
+    bool render = true;
+    bool exit = false;
+
+    while(!exit) {
+        if (render) {
+            for (i = offset; i < len; i++) {
+                render_entry(height, 34 + height * (i - offset), i - offset == cursor);
+            }
+            render = false;
+        }
+
+        clear_keyboard_queue();
+        if (xQueueReceive(button_queue, &buttonMessage, portMAX_DELAY) == pdTRUE) {
+            if (buttonMessage.state) {
+                switch (buttonMessage.input) {
+                    case JOYSTICK_DOWN:
+                        if (cursor < rows - 1) {
+                            cursor++;
+                            render = true;
+                        } else if (offset + rows < len) {
+                            offset++;
+                            render = true;
+                        }
+                        break;
+                    case JOYSTICK_UP:
+                        if (cursor > 0) {
+                            cursor--;
+                            render = true;
+                        } else if (offset > 0) {
+                            offset--;
+                            render = true;
+                        }
+                        render = true;
+                        break;
+                    case BUTTON_BACK:
+                        exit = true;
+                        break;
+                    case BUTTON_SELECT:
+                    case JOYSTICK_PUSH:
+                        // TODO: Export
+                        render = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
 }
 
 void menu_contacts(xQueueHandle button_queue) {
@@ -588,18 +723,23 @@ void menu_contacts(xQueueHandle button_queue) {
     menu_t*    menu       = menu_alloc("TROOPERS24 - Agenda", 34, 18);
     configure_menu(menu);
 
-    pax_buf_t icon_agenda;
-    pax_decode_png_buf(&icon_agenda, (void*) agenda_png_start, agenda_png_end - agenda_png_start, PAX_BUF_32_8888ARGB, 0);
-    pax_buf_t icon_clock;
-    pax_decode_png_buf(&icon_clock, (void*) clock_png_start, clock_png_end - clock_png_start, PAX_BUF_32_8888ARGB, 0);
-    pax_buf_t icon_bookmark;
-    pax_decode_png_buf(&icon_bookmark, (void*) bookmark_png_start, bookmark_png_end - bookmark_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_edit;
+    pax_decode_png_buf(&icon_edit, (void*) edit_png_start, edit_png_end - edit_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_badge;
+    pax_decode_png_buf(&icon_badge, (void*) badge_png_start, badge_png_end - badge_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_addressbook;
+    pax_decode_png_buf(&icon_addressbook, (void*) addressbook_png_start, addressbook_png_end - addressbook_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_share;
+    pax_decode_png_buf(&icon_share, (void*) share_png_start, share_png_end - share_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_receive;
+    pax_decode_png_buf(&icon_receive, (void*) receive_png_start, receive_png_end - receive_png_start, PAX_BUF_32_8888ARGB, 0);
 
-    menu_set_icon(menu, &icon_agenda);
-    menu_insert_item_icon(menu, "Edit", NULL, (void*) ACTION_EDIT, -1, &icon_bookmark);
-    menu_insert_item_icon(menu, "Show QR code", NULL, (void*) ACTION_QRCODE, -1, &icon_bookmark);
-    menu_insert_item_icon(menu, "Share", NULL, (void*) ACTION_SHARE, -1, &icon_bookmark);
-    menu_insert_item_icon(menu, "Receive", NULL, (void*) ACTION_IMPORT, -1, &icon_bookmark);
+    menu_set_icon(menu, &icon_addressbook);
+    menu_insert_item_icon(menu, "Edit", NULL, (void*) ACTION_EDIT, -1, &icon_edit);
+    menu_insert_item_icon(menu, "Export", NULL, (void*) ACTION_QRCODE, -1, &icon_badge);
+    menu_insert_item_icon(menu, "List", NULL, (void*) ACTION_LIST, -1, &icon_addressbook);
+    menu_insert_item_icon(menu, "Share", NULL, (void*) ACTION_SHARE, -1, &icon_share);
+    menu_insert_item_icon(menu, "Receive", NULL, (void*) ACTION_IMPORT, -1, &icon_receive);
 //    if (ntp_synced) {
 //        menu_insert_item_icon(menu, "Next up", NULL, (void*) ACTION_NEXT_UP, -1, &icon_clock);
 //    }
@@ -667,17 +807,19 @@ void menu_contacts(xQueueHandle button_queue) {
 
         if (action != ACTION_NONE) {
             if (action == ACTION_EDIT) {
-                edit_self(pax_buffer, button_queue, &icon_clock);
+                edit_self(pax_buffer, button_queue, &icon_edit);
             } else if (action == ACTION_QRCODE) {
-                show_self(pax_buffer, &icon_bookmark);
+                show_self(pax_buffer, &icon_badge);
             } else if (action == ACTION_SHARE) {
-                if (p2p_active2()) {
+                if (p2p_active2(pax_buffer, &icon_share)) {
                     ESP_LOGI(TAG, "sent own info");
                 }
             } else if (action == ACTION_IMPORT) {
-                if (p2p_passive2()) {
+                if (p2p_passive2(pax_buffer, &icon_receive)) {
                     ESP_LOGI(TAG, "received new entry");
                 }
+            } else if (action == ACTION_LIST) {
+                show_list(pax_buffer, button_queue, &icon_addressbook);
             }
             action      = ACTION_NONE;
             render      = true;
@@ -687,21 +829,14 @@ void menu_contacts(xQueueHandle button_queue) {
 
     menu_free(menu);
 
-//    cJSON_Delete(json_my_day1);
-//    json_my_day1 = NULL;
-//
-//    cJSON_Delete(json_my_day2);
-//    json_my_day2 = NULL;
-//
-//    cJSON_Delete(json_my);
-//    json_my = NULL;
-//
-//    // Delete the data loaded from JSON
-//    cJSON_Delete(json_day1);
-//    json_day1 = NULL;
-//    cJSON_Delete(json_day2);
-//    json_day2 = NULL;
+    cJSON_Delete(json_self);
+    json_self = NULL;
+    cJSON_Delete(json_db);
+    json_db = NULL;
 
-    pax_buf_destroy(&icon_agenda);
-    pax_buf_destroy(&icon_clock);
+    pax_buf_destroy(&icon_receive);
+    pax_buf_destroy(&icon_share);
+    pax_buf_destroy(&icon_badge);
+    pax_buf_destroy(&icon_edit);
+    pax_buf_destroy(&icon_addressbook);
 }

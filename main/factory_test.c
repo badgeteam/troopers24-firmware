@@ -255,7 +255,7 @@ void factory_test() {
     uint8_t    factory_test_done = nvs_get_u8_default("system", "factory_test", 0);
     ESP_LOGI(TAG, "factory_test_done %d", factory_test_done);
 
-    if (factory_test_done > 0) {
+    if (!key_currently_pressed(BUTTON_START) || !key_currently_pressed(BUTTON_SELECT)) {
         return;
     }
 
