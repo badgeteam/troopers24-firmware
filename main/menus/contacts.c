@@ -139,7 +139,7 @@ static bool do_init() {
         ESP_LOGE(TAG, "Failed to create contacts file: %s", database_path);
         return false;
     }
-    fwrite(DEFAULT_DATABASE, 1, strlen(DEFAULT_SELF), db_fd);
+    fwrite(DEFAULT_DATABASE, 1, strlen(DEFAULT_DATABASE), db_fd);
     fclose(db_fd);
 
     return true;
@@ -203,6 +203,7 @@ static bool load_data() {
     json_db = cJSON_ParseWithLength(data_db, size_db);
     if (json_db == NULL) {
         ESP_LOGE(TAG, "Failed to parse contacts file: %s", database_path);
+        ESP_LOGE(TAG, "DEBUG %d: %s", size_db, data_db);
         render_message("Failed to parse contacts");
         display_flush();
         return false;
@@ -218,8 +219,8 @@ static void append_str(char **dst, char *src, size_t len) {
     *dst += len;
 }
 
-static void add_if_not_null(char **dst, const char *prefix, const char *key, size_t maxLen) {
-    cJSON* elem = cJSON_GetObjectItem(json_self, key);
+static void add_if_not_null(cJSON* data, char **dst, const char *prefix, const char *key, size_t maxLen) {
+    cJSON* elem = cJSON_GetObjectItem(data, key);
     char* str = NULL;
     if (cJSON_IsNumber(elem)) {
         char buf[4];
@@ -243,7 +244,7 @@ static void add_if_not_null(char **dst, const char *prefix, const char *key, siz
     append_str(dst, str, MIN(len, maxLen));
 }
 
-static void create_vcard(size_t *len) {
+static void create_vcard(cJSON* elem, size_t *len) {
     memset(VCARD, 0, MAX_NFC_BUFFER_SIZE);
     char* current = VCARD;
 
@@ -251,11 +252,11 @@ static void create_vcard(size_t *len) {
     append_str(&current, "BEGIN:VCARD\n", 12);
     append_str(&current, "VERSION:3.0", 11);
 
-    add_if_not_null(&current, "\nUID:", "id", 3);
-    add_if_not_null(&current, "\nFN:", "name", 64);
-    add_if_not_null(&current, "\nTEL:", "tel", 32);
-    add_if_not_null(&current, "\nEMAIL:", "email", 128);
-    add_if_not_null(&current, "\nURL:", "url", 128);
+    add_if_not_null(elem, &current, "\nUID:", "id", 3);
+    add_if_not_null(elem, &current, "\nFN:", "name", 64);
+    add_if_not_null(elem, &current, "\nTEL:", "tel", 32);
+    add_if_not_null(elem, &current, "\nEMAIL:", "email", 128);
+    add_if_not_null(elem, &current, "\nURL:", "url", 128);
 
     append_str(&current, "\nEND:VCARD\n", 11);
 
@@ -382,7 +383,7 @@ static void read_nfc() {
     }
 
     size_t len;
-    create_vcard(&len);
+    create_vcard(json_self, &len);
     ESP_LOGI(TAG, "VCARD with len %d:\n%.*s\n", len, len, VCARD);
 }
 
@@ -407,7 +408,7 @@ static void passive_p2p() {
     }
 
     size_t len;
-    create_vcard(&len);
+    create_vcard(json_self, &len);
     ESP_LOGI(TAG, "VCARD with len %d:\n%.*s\n", len, len, VCARD);
 }
 
@@ -434,7 +435,7 @@ static void p2p_active() {
 
 static bool p2p_passive2(pax_buf_t* pax_buffer, pax_buf_t* icon) {
     esp_err_t res;
-    render_background(pax_buffer, "🅱 Abort");
+    render_background(pax_buffer, "🅱 Cancel");
     render_topbar(pax_buffer, icon, "Importing contact");
     display_flush();
 
@@ -612,24 +613,41 @@ static void edit_self(pax_buf_t* pax_buffer, xQueueHandle button_queue, pax_buf_
     menu_free(menu);
 }
 
-static void show_self(pax_buf_t* pax_buffer, pax_buf_t* icon) {
+static void show_vcard(pax_buf_t* pax_buffer, cJSON* data, pax_buf_t* icon) {
     render_background(pax_buffer, "🅱 Exit");
     render_topbar(pax_buffer, icon, "Share vCard");
-    create_vcard(NULL);
+    create_vcard(data, NULL);
     show_qr_code(VCARD);
 
     wait_for_button();
 }
 
-static void render_entry(int height, int y, bool highlighted) {
+static void show_self(pax_buf_t* pax_buffer, pax_buf_t* icon) {
+    show_vcard(pax_buffer, json_self, icon);
+}
 
+static void render_entry(pax_buf_t* pax_buffer, int height, int y, bool highlighted, cJSON* elem) {
+    const pax_font_t* font = pax_font_saira_regular;
+    uint16_t id = (uint16_t) cJSON_GetNumberValue(cJSON_GetObjectItem(elem, "id"));
+    char* name = cJSON_GetStringValue(cJSON_GetObjectItem(elem, "name"));
+    char* id_str[5] = {0};
+    itoa(id % 1000, id_str, 10);
+    pax_col_t background = 0xFF131313;
+    pax_col_t color = 0xffeaa307;
+    if (highlighted) {
+        background = 0xffeaa307;
+        color = 0xff131313;
+    }
+    pax_simple_rect(pax_buffer, background, 0, y, ST77XX_WIDTH, height);
+    pax_draw_text(pax_buffer, color, font, height - 6, 8, y + 3, id_str);
+    pax_draw_text(pax_buffer, color, font, height - 4, 80, y + 2, name);
 }
 
 static void show_list(pax_buf_t* pax_buffer, xQueueHandle button_queue, pax_buf_t* icon) {
-    render_background(pax_buffer, "🅱 Exit");
+    render_background(pax_buffer, "🅱 Exit  🅴 Export");
     render_topbar(pax_buffer, icon, "Addressbook");
 
-    int height = 28;
+    int height = 22;
     int rows = 8;
     int offset = 0;
     int cursor = 0;
@@ -640,12 +658,15 @@ static void show_list(pax_buf_t* pax_buffer, xQueueHandle button_queue, pax_buf_
     keyboard_input_message_t buttonMessage = {0};
     bool render = true;
     bool exit = false;
+    cJSON* elem;
 
     while(!exit) {
         if (render) {
-            for (i = offset; i < len; i++) {
-                render_entry(height, 34 + height * (i - offset), i - offset == cursor);
+            for (i = offset; i < offset + rows; i++) {
+                elem = cJSON_GetArrayItem(json_db, i);
+                render_entry(pax_buffer, height, 40 + height * (i - offset), i - offset == cursor, elem);
             }
+            display_flush();
             render = false;
         }
 
@@ -677,7 +698,7 @@ static void show_list(pax_buf_t* pax_buffer, xQueueHandle button_queue, pax_buf_
                         break;
                     case BUTTON_SELECT:
                     case JOYSTICK_PUSH:
-                        // TODO: Export
+                        show_vcard(pax_buffer, cJSON_GetArrayItem(json_db, offset + cursor), icon);
                         render = true;
                         break;
                     default:
@@ -720,7 +741,7 @@ void menu_contacts(xQueueHandle button_queue) {
 //
 //    p2p_active();
 
-    menu_t*    menu       = menu_alloc("TROOPERS24 - Agenda", 34, 18);
+    menu_t*    menu       = menu_alloc("TROOPERS24 - Addressbook", 34, 18);
     configure_menu(menu);
 
     pax_buf_t icon_edit;
@@ -740,11 +761,7 @@ void menu_contacts(xQueueHandle button_queue) {
     menu_insert_item_icon(menu, "List", NULL, (void*) ACTION_LIST, -1, &icon_addressbook);
     menu_insert_item_icon(menu, "Share", NULL, (void*) ACTION_SHARE, -1, &icon_share);
     menu_insert_item_icon(menu, "Receive", NULL, (void*) ACTION_IMPORT, -1, &icon_receive);
-//    if (ntp_synced) {
-//        menu_insert_item_icon(menu, "Next up", NULL, (void*) ACTION_NEXT_UP, -1, &icon_clock);
-//    }
-//    menu_insert_item_icon(menu, "Wednesday", NULL, (void*) ACTION_WEDNESDAY, -1, &icon_agenda);
-//    menu_insert_item_icon(menu, "Thursday", NULL, (void*) ACTION_THURSDAY, -1, &icon_agenda);
+
 
     bool                render = true;
     menu_contacts_action_t action = ACTION_NONE;

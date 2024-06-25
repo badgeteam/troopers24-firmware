@@ -10,6 +10,7 @@
 
 #include "agenda.h"
 #include "contacts.h"
+#include "nfcreader.h"
 #include "app_update.h"
 #include "bootscreen.h"
 #include "dev.h"
@@ -54,6 +55,12 @@ extern const uint8_t update_png_end[] asm("_binary_update_png_end");
 extern const uint8_t agenda_png_start[] asm("_binary_calendar_png_start");
 extern const uint8_t agenda_png_end[] asm("_binary_calendar_png_end");
 
+extern const uint8_t addressbook_png_start[] asm("_binary_addressbook_png_start");
+extern const uint8_t addressbook_png_end[] asm("_binary_addressbook_png_end");
+
+extern const uint8_t nfc_png_start[] asm("_binary_badge_png_start");
+extern const uint8_t nfc_png_end[] asm("_binary_badge_png_end");
+
 extern const uint8_t id_png_start[] asm("_binary_sao_png_start");
 extern const uint8_t id_png_end[] asm("_binary_sao_png_end");
 
@@ -71,6 +78,7 @@ typedef enum action {
     ACTION_ID,
     ACTION_AGENDA,
     ACTION_CONTACTS,
+    ACTION_NFCREADER,
 } menu_start_action_t;
 
 void render_background(pax_buf_t* pax_buffer, const char* text) {
@@ -84,15 +92,12 @@ void render_background(pax_buf_t* pax_buffer, const char* text) {
 }
 
 void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deepsleep) {
-    // TODO: Debugging
-    menu_contacts(button_queue);
-
     if (wakeup_deepsleep) {
         show_nametag(button_queue);
     }
 
     pax_buf_t* pax_buffer = get_pax_buffer();
-    menu_t*    menu       = menu_alloc("TROOPERS24", 34, 18);
+    menu_t*    menu       = menu_alloc("TROOPERS24", 34, 16);
 
     menu->fgColor           = 0xFFF1AA13;
     menu->bgColor           = 0xFF131313;
@@ -124,11 +129,17 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
     pax_decode_png_buf(&icon_id, (void*) id_png_start, id_png_end - id_png_start, PAX_BUF_32_8888ARGB, 0);
     pax_buf_t icon_agenda;
     pax_decode_png_buf(&icon_agenda, (void*) agenda_png_start, agenda_png_end - agenda_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_addressbook;
+    pax_decode_png_buf(&icon_addressbook, (void*) addressbook_png_start, addressbook_png_end - addressbook_png_start, PAX_BUF_32_8888ARGB, 0);
+    pax_buf_t icon_nfc;
+    pax_decode_png_buf(&icon_nfc, (void*) nfc_png_start, nfc_png_end - nfc_png_start, PAX_BUF_32_8888ARGB, 0);
 
     menu_set_icon(menu, &icon_home);
     menu_insert_item_icon(menu, "Name tag", NULL, (void*) ACTION_NAMETAG, -1, &icon_tag);
     menu_insert_item_icon(menu, "ID", NULL, (void*) ACTION_ID, -1, &icon_tag);
     menu_insert_item_icon(menu, "Agenda", NULL, (void*) ACTION_AGENDA, -1, &icon_agenda);
+    menu_insert_item_icon(menu, "Addressbook", NULL, (void*) ACTION_CONTACTS, -1, &icon_addressbook);
+    menu_insert_item_icon(menu, "NFC Reader", NULL, (void*) ACTION_NFCREADER, -1, &icon_nfc);
     menu_insert_item_icon(menu, "Apps", NULL, (void*) ACTION_LAUNCHER, -1, &icon_apps);
     menu_insert_item_icon(menu, "Hatchery", NULL, (void*) ACTION_HATCHERY, -1, &icon_hatchery);
     menu_insert_item_icon(menu, "Tools", NULL, (void*) ACTION_DEV, -1, &icon_dev);
@@ -216,6 +227,8 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
                 menu_agenda(button_queue);
             } else if (action == ACTION_CONTACTS) {
                 menu_contacts(button_queue);
+            } else if (action == ACTION_NFCREADER) {
+                menu_nfcreader(button_queue);
             }
             action      = ACTION_NONE;
             render      = true;
@@ -232,4 +245,6 @@ void menu_start(xQueueHandle button_queue, const char* version, bool wakeup_deep
     pax_buf_destroy(&icon_settings);
     pax_buf_destroy(&icon_update);
     pax_buf_destroy(&icon_id);
+    pax_buf_destroy(&icon_addressbook);
+    pax_buf_destroy(&icon_nfc);
 }

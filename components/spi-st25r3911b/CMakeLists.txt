@@ -28,6 +28,10 @@ idf_component_register(
         "NDEF/source/poller/ndef_poller_rf.c"
         "NDEF/source/poller/ndef_poller_message.c"
         "NDEF/source/poller/ndef_t2t.c"
+        "NDEF/source/poller/ndef_t3t.c"
+        "NDEF/source/poller/ndef_t4t.c"
+        "NDEF/source/poller/ndef_t5t.c"
+        "NDEF/source/poller/ndef_t5t_rf.c"
   INCLUDE_DIRS
         "include"
         "en.STSW-ST25RFAL001"

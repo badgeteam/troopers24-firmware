@@ -18,6 +18,7 @@ idf_component_register(
          "menus/id.c"
          "menus/agenda.c"
          "menus/contacts.c"
+         "menus/nfcreader.c"
          "nametag.c"
          "file_browser.c"
          "test_common.c"
