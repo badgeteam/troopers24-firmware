@@ -77,4 +77,5 @@ idf_component_register(
         ${project_dir}/resources/id/id_storytellers.png
         ${project_dir}/resources/id/id_ernw.png
         ${project_dir}/resources/nametag.png
+        ${project_dir}/resources/tr23_nametag.png
 )
