@@ -14,22 +14,24 @@ The source code contained in this repository is licensed under terms of the MIT 
 
 Some source code is licensed separately, please check the following table for details.
 
-| Location                | Version | License                           | Author                                                                                          |
-|-------------------------|---------|-----------------------------------|-------------------------------------------------------------------------------------------------|
-| esp-idf                 | 4.4.7   | Apache License 2.0                | Espressif Systems (Shanghai) CO LTD                                                             |
-| components/appfs        |         | THE BEER-WARE LICENSE Revision 42 | Jeroen Domburg <jeroen@spritesmods.com>                                                         |
-| components/bus-i2c      |         | MIT                               | Nicolai Electronics                                                                             |
-| components/i2c-pca9555  |         | MIT                               | Renze Nicolai and Malte Heinzelmann <malte@cybaer.ninja>                                        |
-| components/keyboard     |         | MIT                               | Malte Heinzelmann <malte@cybaer.ninja>                                        |
-| components/pax-graphics |         | MIT                               | Julian Scheffers                                                                                |
-| components/pax-keyboard |         | MIT                               | Julian Scheffers                                                                                |
-| components/sdcard       |         | MIT                               | Nicolai Electronics                                                                             |
-| components/spi-ili9341  |         | MIT                               | Nicolai Electronics                                                                             |
-| components/spi-st25r3911b/en.STSW-ST25RFAL001 | 2.10.0 | SLA0051 MyLiberty                 | STMicroelectronics |
-| components/ws2812       |         | MIT                               | Unlicense / Public domain                                                                       |
-| tools/[libusb-1.0.dll]  |         | GNU LGPL 2.1                      | See the [AUTHORS](https://github.com/libusb/libusb/blob/master/AUTHORS) document of the project |
+| Location                                      | Version | License                           | Author                                                                                          |
+|-----------------------------------------------|---------|-----------------------------------|-------------------------------------------------------------------------------------------------|
+| esp-idf                                       | 4.4.7   | Apache License 2.0                | Espressif Systems (Shanghai) CO LTD                                                             |
+| components/appfs                              |         | THE BEER-WARE LICENSE Revision 42 | Jeroen Domburg <jeroen@spritesmods.com>                                                         |
+| components/bus-i2c                            |         | MIT                               | Nicolai Electronics                                                                             |
+| components/i2c-pca9555                        |         | MIT                               | Renze Nicolai and Malte Heinzelmann <malte@cybaer.ninja>                                        |
+| components/keyboard                           |         | MIT                               | Malte Heinzelmann <malte@cybaer.ninja>                                                          |
+| components/pax-graphics                       |         | MIT                               | Julian Scheffers                                                                                |
+| components/pax-keyboard                       |         | MIT                               | Julian Scheffers                                                                                |
+| components/sdcard                             |         | MIT                               | Nicolai Electronics                                                                             |
+| components/spi-ili9341                        |         | MIT                               | Nicolai Electronics                                                                             |
+| components/spi-st25r3911b/en.STSW-ST25RFAL001 | 2.10.0  | SLA0051 MyLiberty                 | STMicroelectronics                                                                              |
+| components/ws2812                             |         | MIT                               | Unlicense / Public domain                                                                       |
+| components/[qrcode]                             |         | MIT                               | Project Nayuki                                                                      |
+| tools/[libusb-1.0.dll]                        |         | GNU LGPL 2.1                      | See the [AUTHORS](https://github.com/libusb/libusb/blob/master/AUTHORS) document of the project |
 
 [libusb-1.0.dll]: https://libusb.info
+[qrcode]: https://www.nayuki.io/page/qr-code-generator-library
 
 Some of the icons in `resources/icons` are licensed under MIT license `Copyright (c) 2019-2021 The Bootstrap Authors`. The source files for these icons can be found at https://icons.getbootstrap.com/.
 

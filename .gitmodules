@@ -16,7 +16,7 @@
 	branch = main
 [submodule "components/esp32-component-appfs"]
 	path = components/appfs
-	url = https://github.com/badgeteam/esp32-component-appfs.git
+	url = git@github.com:hnzlmnn/esp32-component-appfs.git
 	branch = master
 [submodule "components/ws2812"]
 	path = components/ws2812
@@ -51,3 +51,6 @@
 [submodule "components/pax-keyboard"]
 	path = components/pax-keyboard
 	url = https://github.com/robotman2412/pax-keyboard.git
+[submodule "components/spi-st77xx"]
+	path = components/spi-st77xx
+	url = git@github.com:badgeteam/eps32-component-spi-st77xx.git

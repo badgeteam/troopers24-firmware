@@ -14,7 +14,6 @@
 #include "esp_vfs.h"
 #include "esp_vfs_fat.h"
 #include "hardware.h"
-#include "ili9341.h"
 #include "menu.h"
 #include "pax_gfx.h"
 #include "system_wrapper.h"

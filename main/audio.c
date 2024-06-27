@@ -9,6 +9,12 @@
 #include "driver/i2s.h"
 #include "driver/rtc_io.h"
 #include "esp_system.h"
+#include "esp_log.h"
+
+static const char* TAG = "audio";
+
+static xSemaphoreHandle audio_mutex;
+bool audio_playing = false;
 
 void _audio_init(int i2s_num) {
     i2s_config_t i2s_config = {.mode                 = I2S_MODE_MASTER | I2S_MODE_TX,
@@ -27,57 +33,82 @@ void _audio_init(int i2s_num) {
     i2s_pin_config_t pin_config = {.mck_io_num = -1, .bck_io_num = GPIO_I2S_BCLK, .ws_io_num = GPIO_I2S_WS, .data_out_num = GPIO_I2S_DATA, .data_in_num = I2S_PIN_NO_CHANGE};
 
     i2s_set_pin(i2s_num, &pin_config);
+    audio_mutex = xSemaphoreCreateBinary();
+    xSemaphoreGive(audio_mutex);
 }
 
 typedef struct _audio_player_cfg {
     uint8_t* buffer;
+    size_t   current;
     size_t   size;
-    bool     free_buffer;
 } audio_player_cfg_t;
 
-void audio_player_task(void* arg) {
-    audio_player_cfg_t* config        = (audio_player_cfg_t*) arg;
-    size_t              sample_length = config->size;
-    uint8_t*            sample_buffer = config->buffer;
 
-    size_t count;
-    size_t position = 0;
+extern const uint8_t boot_mp3_start[] asm("_binary_boot_mp3_start");
+extern const uint8_t boot_mp3_end[] asm("_binary_boot_mp3_end");
 
-    while (position < sample_length) {
-        size_t length = sample_length - position;
-        if (length > 256) length = 256;
-        uint8_t buffer[256];
-        memcpy(buffer, &sample_buffer[position], length);
-        for (size_t l = 0; l < length; l += 2) {
-            int16_t* sample = (int16_t*) &buffer[l];
-            *sample *= 0.55;
-        }
-        i2s_write(0, buffer, length, &count, portMAX_DELAY);
-        if (count != length) {
-            printf("i2s_write_bytes: count (%d) != length (%d)\n", count, length);
-            abort();
-        }
-        position += length;
-    }
+//extern const uint8_t happy_snd_start[] asm("_binary_happy_pcm_start");
+//extern const uint8_t happy_snd_end[] asm("_binary_happy_pcm_end");
 
-    i2s_zero_dma_buffer(0);  // Fill buffer with silence
-    if (config->free_buffer) free(sample_buffer);
-    vTaskDelete(NULL);  // Tell FreeRTOS that the task is done
+extern const uint8_t happy_mp3_start[] asm("_binary_happy_mp3_start");
+extern const uint8_t happy_mp3_end[] asm("_binary_happy_mp3_end");
+
+static ssize_t play_from_resource(void* config, void* buf, size_t len) {
+    audio_player_cfg_t* cfg = (audio_player_cfg_t*) config;
+    size_t remaining = cfg->size - cfg->current;
+    size_t read = remaining < len ? remaining : len;
+    memcpy(buf, cfg->buffer + cfg->current, read);
+    cfg->current += read;
+    return (ssize_t) read;
 }
 
-void audio_init() { _audio_init(0); }
+static ssize_t seek_from_resource(void* config, size_t pos, size_t unknown) {
+    audio_player_cfg_t* cfg = (audio_player_cfg_t*) config;
+    cfg->current = pos;
+    return 0;
+}
 
-extern const uint8_t boot_snd_start[] asm("_binary_boot_pcm_start");
-extern const uint8_t boot_snd_end[] asm("_binary_boot_pcm_end");
+static ssize_t audio_ended(void* handle, size_t a, size_t b) {
+    audio_playing = false;
+    return 0;
+}
 
-audio_player_cfg_t bootsound;
+int play_from_resources(audio_player_cfg_t* cfg, const uint8_t* start, const uint8_t* end) {
+    cfg->buffer    = (uint8_t*) (start);
+    cfg->size      = end - start;
+    cfg->current   = 0;
+
+    int id = sndmixer_queue_mp3_stream(play_from_resource, seek_from_resource, (void*) cfg);
+    sndmixer_set_volume(id, 128);
+    sndmixer_play(id);
+    return id;
+}
+
+audio_player_cfg_t cfg_boot;
+audio_player_cfg_t cfg_happy;
 
 void play_bootsound() {
-    TaskHandle_t handle;
+    play_from_resources(&cfg_boot, boot_mp3_start, boot_mp3_end);
+}
 
-    bootsound.buffer      = (uint8_t*) (boot_snd_start);
-    bootsound.size        = boot_snd_end - boot_snd_start;
-    bootsound.free_buffer = false;
+void play_happy_birthday(bool connected) {
+    if (!connected || audio_playing) {
+        return;
+    }
+    audio_playing = true;
+    int id = play_from_resources(&cfg_happy, happy_mp3_start, happy_mp3_end);
+    sndmixer_set_callback(id, audio_ended, NULL);
+}
 
-    xTaskCreate(&audio_player_task, "Audio player", 4096, (void*) &bootsound, 10, &handle);
+void audio_init() {
+//    _audio_init(0);
+    i2s_pin_config_t pin_config = {
+        .mck_io_num = -1,
+        .bck_io_num = GPIO_I2S_BCLK,
+        .ws_io_num = GPIO_I2S_WS,
+        .data_out_num = GPIO_I2S_DATA,
+        .data_in_num = I2S_PIN_NO_CHANGE
+    };
+    sndmixer_init(1, false, &pin_config);
+    set_sao_callback_tr24(&play_happy_birthday);
 }

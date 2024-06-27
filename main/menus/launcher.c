@@ -19,7 +19,6 @@
 #include "graphics_wrapper.h"
 #include "gui_element_header.h"
 #include "hardware.h"
-#include "ili9341.h"
 #include "menu.h"
 #include "metadata.h"
 #include "pax_codecs.h"

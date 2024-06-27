@@ -35,6 +35,11 @@ void render_message(char* message) {
 
 bool keyboard(xQueueHandle buttonQueue, float aPosX, float aPosY, float aWidth, float aHeight, const char* aTitle,
               const char* aHint, char* aOutput, size_t aOutputSize) {
+    return keyboard_mode(buttonQueue, aPosX, aPosY, aWidth, aHeight, aTitle, aHint, aOutput, aOutputSize, PKB_LOWERCASE);
+}
+
+bool keyboard_mode(xQueueHandle buttonQueue, float aPosX, float aPosY, float aWidth, float aHeight, const char* aTitle,
+              const char* aHint, char* aOutput, size_t aOutputSize, pkb_keyboard_t board) {
     pax_buf_t* pax_buffer = get_pax_buffer();
     const pax_font_t* font     = pax_font_saira_regular;
     bool              accepted = false;
@@ -51,6 +56,7 @@ bool keyboard(xQueueHandle buttonQueue, float aPosX, float aPosY, float aWidth, 
     pax_col_t titleColor   = 0xFFFFFFFF;
     pax_col_t selColor     = 0xff007fff;
 
+    kb_ctx.board_sel    = board;
     kb_ctx.text_col     = borderColor;
     kb_ctx.sel_text_col = bgColor;
     kb_ctx.sel_col      = selColor;

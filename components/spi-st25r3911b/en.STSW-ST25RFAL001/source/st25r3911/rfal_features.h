@@ -46,14 +46,14 @@
 ******************************************************************************
 */
 
-#define RFAL_SUPPORT_MODE_POLL_NFCA                true          /*!< RFAL Poll NFCA mode support switch    */
-#define RFAL_SUPPORT_MODE_POLL_NFCB                true          /*!< RFAL Poll NFCB mode support switch    */    
-#define RFAL_SUPPORT_MODE_POLL_NFCF                true          /*!< RFAL Poll NFCF mode support switch    */
-#define RFAL_SUPPORT_MODE_POLL_NFCV                true          /*!< RFAL Poll NFCV mode support switch    */
+#define RFAL_SUPPORT_MODE_POLL_NFCA                true           /*!< RFAL Poll NFCA mode support switch    */
+#define RFAL_SUPPORT_MODE_POLL_NFCB                false          /*!< RFAL Poll NFCB mode support switch    */
+#define RFAL_SUPPORT_MODE_POLL_NFCF                false          /*!< RFAL Poll NFCF mode support switch    */
+#define RFAL_SUPPORT_MODE_POLL_NFCV                false          /*!< RFAL Poll NFCV mode support switch    */
 #define RFAL_SUPPORT_MODE_POLL_ACTIVE_P2P          true          /*!< RFAL Poll AP2P mode support switch    */
-#define RFAL_SUPPORT_MODE_LISTEN_NFCA              false         /*!< RFAL Listen NFCA mode support switch  */
-#define RFAL_SUPPORT_MODE_LISTEN_NFCB              false         /*!< RFAL Listen NFCB mode support switch  */
-#define RFAL_SUPPORT_MODE_LISTEN_NFCF              false         /*!< RFAL Listen NFCF mode support switch  */
+#define RFAL_SUPPORT_MODE_LISTEN_NFCA              false           /*!< RFAL Listen NFCA mode support switch  */
+#define RFAL_SUPPORT_MODE_LISTEN_NFCB              false          /*!< RFAL Listen NFCB mode support switch  */
+#define RFAL_SUPPORT_MODE_LISTEN_NFCF              false          /*!< RFAL Listen NFCF mode support switch  */
 #define RFAL_SUPPORT_MODE_LISTEN_ACTIVE_P2P        true          /*!< RFAL Listen AP2P mode support switch  */
 
 /*******************************************************************************/

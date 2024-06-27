@@ -73,7 +73,7 @@ static esp_err_t validate_image_header(esp_app_desc_t *new_app_info) {
 }
 
 static esp_err_t _http_client_init_cb(esp_http_client_handle_t http_client) {
-    if (esp_http_client_set_header(http_client, "Badge-Type", "MCH2022") != ESP_OK) {
+    if (esp_http_client_set_header(http_client, "Badge-Type", "TROOPERS24") != ESP_OK) {
         ESP_LOGW(TAG, "Failed to add type header");
     }
     const esp_partition_t *running = esp_ota_get_running_partition();
@@ -128,7 +128,7 @@ void display_ota_state(const char *text, bool nightly) {
 void ota_update(bool nightly) {
     display_ota_state("Connecting to WiFi...", nightly);
 
-    char *ota_url = nightly ? "https://mch2022.ota.bodge.team/troopers23_dev.bin" : "https://mch2022.ota.bodge.team/troopers23.bin";
+    char *ota_url = nightly ? "https://mch2022.ota.bodge.team/troopers24_dev.bin" : "https://mch2022.ota.bodge.team/troopers24.bin";
 
     if (!wifi_connect_to_stored()) {
         display_ota_state("Failed to connect to WiFi", nightly);

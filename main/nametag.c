@@ -27,10 +27,13 @@
 #define SLEEP_DELAY 10000
 static const char *TAG = "nametag";
 
+extern const uint8_t troopers23_png_start[] asm("_binary_tr23_nametag_png_start");
+extern const uint8_t troopers23_png_end[] asm("_binary_tr23_nametag_png_end");
+
 extern const uint8_t troopers_png_start[] asm("_binary_nametag_png_start");
 extern const uint8_t troopers_png_end[] asm("_binary_nametag_png_end");
 
-typedef enum { NICKNAME_THEME_HELLO = 0, NICKNAME_THEME_SIMPLE, NICKNAME_THEME_GAMER, NICKNAME_THEME_TROOPERS, NICKNAME_THEME_LAST } nickname_theme_t;
+typedef enum { NICKNAME_THEME_HELLO = 0, NICKNAME_THEME_SIMPLE, NICKNAME_THEME_GAMER, NICKNAME_THEME_TROOPERS, NICKNAME_THEME_TROOPERS23, NICKNAME_THEME_LAST } nickname_theme_t;
 
 static int hue = 0;
 
@@ -53,7 +56,7 @@ void edit_nickname(xQueueHandle button_queue) {
 
     clear_keyboard_queue();
     bool accepted =
-        keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "Nickname", "🆂 cancel  🅳 D 🅴 Select 🅱 delete", nickname, sizeof(nickname) - 1);
+        keyboard(button_queue, 30, 30, pax_buffer->width - 60, pax_buffer->height - 60, "Nickname", "🆂 Cancel  🅴 Mode  🅱 Delete", nickname, sizeof(nickname) - 1);
 
     if (accepted) {
         nvs_set_str(handle, "nickname", nickname);
@@ -69,7 +72,7 @@ static void show_name(xQueueHandle button_queue, const char *name, nickname_them
     const pax_font_t *name_font;
     if (theme == NICKNAME_THEME_HELLO || theme == NICKNAME_THEME_GAMER) {
         name_font = pax_font_marker;
-    } else if (theme == NICKNAME_THEME_TROOPERS) {
+    } else if (theme == NICKNAME_THEME_TROOPERS || theme == NICKNAME_THEME_TROOPERS23) {
         name_font = pax_font_sky_mono;
     } else {
         name_font = pax_font_saira_condensed;
@@ -112,6 +115,9 @@ static void show_name(xQueueHandle button_queue, const char *name, nickname_them
     } else if (theme == NICKNAME_THEME_TROOPERS) {
         pax_insert_png_buf(pax_buffer, troopers_png_start, troopers_png_end - troopers_png_start, 0, 0, 0);
         pax_center_text(pax_buffer, 0xFFF1AA13, name_font, 24, pax_buffer->width / 2, 140, name);
+    } else if (theme == NICKNAME_THEME_TROOPERS23) {
+        pax_insert_png_buf(pax_buffer, troopers23_png_start, troopers23_png_end - troopers23_png_start, 0, 0, 0);
+        pax_center_text(pax_buffer, 0xFFF1AA13, name_font, 24, pax_buffer->width / 2, 140, name);
     } else {
         pax_background(pax_buffer, 0x000000);
         pax_center_text(pax_buffer, 0xFFFFFFFF, name_font, scale, pax_buffer->width / 2, (pax_buffer->height - dims.y) / 2, name);
@@ -131,10 +137,8 @@ static void place_in_sleep(xQueueHandle button_queue) {
     fflush(stdout);
     fflush(stderr);
     vTaskDelay(pdMS_TO_TICKS(100));
-#ifdef TR23
-    gpio_hold_en(GPIO_LCD_BL);
-    ili9341_power_en(get_ili9341());
-#endif
+
+    st77xx_power_en(get_st77xx());
     gpio_deep_sleep_hold_en();
     vTaskDelay(pdMS_TO_TICKS(100));
     esp_deep_sleep_start();

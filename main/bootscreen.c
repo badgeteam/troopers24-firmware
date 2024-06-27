@@ -32,6 +32,9 @@ extern const uint8_t frame5_png_end[] asm("_binary_boot5_png_end");
 extern const uint8_t frame6_png_start[] asm("_binary_boot6_png_start");
 extern const uint8_t frame6_png_end[] asm("_binary_boot6_png_end");
 
+extern const uint8_t boot_png_start[] asm("_binary_boot_png_start");
+extern const uint8_t boot_png_end[] asm("_binary_boot_png_end");
+
 void display_frame(const uint8_t start[], const uint8_t end[]) {
     pax_buf_t*        pax_buffer = get_pax_buffer();
     pax_noclip(pax_buffer);
@@ -65,12 +68,9 @@ void display_boot_animation() {
 
 void display_story_splash() {
     pax_buf_t*        pax_buffer = get_pax_buffer();
-    const pax_font_t* font       = pax_font_saira_regular;
-    const char* text = "You enter a forest\nclearing, and find\nan old shield\nresting on the\nground.\n\nMaybe this can\nprotect you on the\njourney ahead...";
     pax_noclip(pax_buffer);
-    pax_background(pax_buffer, 0x131313);
-    pax_vec1_t size = pax_text_size(font, 22, text);
-    pax_draw_text(pax_buffer, 0xFFF1AA13, font, 22, 160 - (size.x/2), 120 - (size.y/2), text);
+    pax_background(pax_buffer, 0xFFFFFF);
+    pax_insert_png_buf(pax_buffer, boot_png_start, boot_png_end - boot_png_start, 0, 0, 0);
     display_flush();
     vTaskDelay(pdMS_TO_TICKS(500));
 }

@@ -44,6 +44,8 @@
 #include "wifi_ota.h"
 #include "ws2812.h"
 
+#define DEBUG_BOOT 0
+
 extern const uint8_t logo_screen_png_start[] asm("_binary_logo_screen_png_start");
 extern const uint8_t logo_screen_png_end[] asm("_binary_logo_screen_png_end");
 
@@ -76,7 +78,7 @@ void stop() {
     }
 }
 
-const char* fatal_error_str = "A fatal error occured";
+const char* fatal_error_str = "A fatal error occurred";
 const char* reset_board_str = "Reset the board to try again";
 
 static xSemaphoreHandle boot_mutex;
@@ -205,45 +207,26 @@ _Noreturn void app_main(void) {
         stop();
     }
 
-    // TODO: This is resetting the factory test status, so that factory test will run on every boot
-    nvs_set_u8_fixed("system", "factory_test", 0x00);
     factory_test();
 
     /* Initialize LCD screen */
     pax_buf_t* pax_buffer = get_pax_buffer();
-    xTaskCreate(boot_animation_task, "boot_anim_task", 4096, NULL, 12, NULL);
+    pax_background(pax_buffer, 0xFF1E1E1E);
+    display_flush();
 
-    /* Turning the backlight on */
-#ifdef TR23
-    gpio_config_t io_conf = {
-        .intr_type    = GPIO_INTR_DISABLE,
-        .mode         = GPIO_MODE_OUTPUT,
-        .pin_bit_mask = 1LL << GPIO_LCD_BL,
-        .pull_down_en = 0,
-        .pull_up_en   = 0,
-    };
-    res = gpio_config(&io_conf);
-    printf("set pin direction\n");
-    if (res != ESP_OK) {
-        ESP_LOGE(TAG, "LCD Backlight set_direction failed: %d", res);
-        display_fatal_error(fatal_error_str, "Failed to set LCD backlight pin mode", "Flash may be corrupted", reset_board_str);
-        stop();
-    }
-    res = gpio_set_level(GPIO_LCD_BL, true);
-    if (res != ESP_OK) {
-        ESP_LOGE(TAG, "LCD Backlight set_level failed: %d", res);
-        display_fatal_error(fatal_error_str, "Failed to turn on LCD backlight", "Flash may be corrupted", reset_board_str);
-        stop();
-    }
-#else
-    st77xx_backlight(true);
+#if DEBUG_BOOT == 0
+    xTaskCreate(boot_animation_task, "boot_anim_task", 4096, NULL, 12, NULL);
 #endif
 
+    /* Turning the backlight on */
+    st77xx_backlight(true);
 
+#if DEBUG_BOOT == 0
     if (!wakeup_deepsleep) {
         /* TROOPERS */
         xTaskCreate(audio_player_task, "audio_player_task", 2048, NULL, 12, NULL);
     }
+#endif
 
     /* Start AppFS */
     res = appfs_init();
@@ -292,6 +275,7 @@ _Noreturn void app_main(void) {
     Controller *controller = get_controller();
     controller_enable(controller);
 
+#if DEBUG_BOOT == 0
     /* Start WiFi */
     wifi_init();
 
@@ -317,15 +301,18 @@ _Noreturn void app_main(void) {
         display_fatal_error(fatal_error_str, "Failed to initialize", "TLS certificate storage", reset_board_str);
         stop();
     }
+#endif
 
     /* Clear RTC memory */
     rtc_memory_clear();
 
+#if DEBUG_BOOT == 0
     /* Try to update the RTC */
     xTaskCreate(ntp_sync_task, "ntp_sync_task", 4096, NULL, 12, NULL);
 
     /* Wait for boot animation to complete */
     wait_for_boot_anim();
+#endif
 
     ESP_LOGW(TAG, "done");
 
