@@ -162,7 +162,7 @@ _Noreturn void app_main(void) {
     efuse_protect();
     ESP_LOGI(TAG, "badge id = %d", badge_id());
 
-    printf("U-Boot licence: %x-%x-%x-%x-%x\n", 8932, 5861, 1530, 4735, 6252);
+    printf("U-Boot licence: %x-%x-%x-%x-%x\n", 5412, 5167, 1530, 6449, 7162);
 
     if (bsp_init() != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize basic board support functions");
