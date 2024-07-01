@@ -26,8 +26,9 @@ Some source code is licensed separately, please check the following table for de
 | components/sdcard                             |         | MIT                               | Nicolai Electronics                                                                             |
 | components/spi-ili9341                        |         | MIT                               | Nicolai Electronics                                                                             |
 | components/spi-st25r3911b/en.STSW-ST25RFAL001 | 2.10.0  | SLA0051 MyLiberty                 | STMicroelectronics                                                                              |
+| components/spi-st25r3911b/NDEF                |         | SLA0051 MyLiberty                 | STMicroelectronics                                                                              |
 | components/ws2812                             |         | MIT                               | Unlicense / Public domain                                                                       |
-| components/[qrcode]                             |         | MIT                               | Project Nayuki                                                                      |
+| components/[qrcode]                           |         | MIT                               | Project Nayuki                                                                                  |
 | tools/[libusb-1.0.dll]                        |         | GNU LGPL 2.1                      | See the [AUTHORS](https://github.com/libusb/libusb/blob/master/AUTHORS) document of the project |
 
 [libusb-1.0.dll]: https://libusb.info
@@ -42,8 +43,8 @@ The [BadgePython logo](resources/icons/python.png) may only be used as icon for 
 Downloading the source code, installing the SDK and building the firmware can be done using the following commands:
 
 ```sh
-git clone --recursive https://github.com/badgeteam/mch2022-firmware-esp32
-cd mch2022-firmware-esp32
+git clone --recursive https://github.com/badgeteam/troopers24-firmware
+cd troopers24-firmware
 make prepare
 make build
 ```
